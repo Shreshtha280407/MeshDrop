@@ -1,0 +1,92 @@
+
+> meshdrop@0.0.0 demo:p0 /home/Shreshtha/documents/MeshDrop
+> tsx scripts/local-dev/demo.ts
+
+MeshDrop P0 synthetic lifecycle — no networking, file writes, or authorization.
+┌─────────┬────────────┬─────────────┬───────────────┐
+│ (index) │ room       │ peer        │ transfer      │
+├─────────┼────────────┼─────────────┼───────────────┤
+│ 0       │ 'created'  │ 'idle'      │ 'preparing'   │
+│ 1       │ 'pending'  │ 'idle'      │ 'preparing'   │
+│ 2       │ 'approved' │ 'idle'      │ 'preparing'   │
+│ 3       │ 'approved' │ 'signaling' │ 'preparing'   │
+│ 4       │ 'approved' │ 'checking'  │ 'preparing'   │
+│ 5       │ 'approved' │ 'connected' │ 'preparing'   │
+│ 6       │ 'approved' │ 'connected' │ 'negotiating' │
+│ 7       │ 'approved' │ 'connected' │ 'active'      │
+│ 8       │ 'approved' │ 'connected' │ 'verifying'   │
+│ 9       │ 'approved' │ 'connected' │ 'complete'    │
+│ 10      │ 'closed'   │ 'connected' │ 'complete'    │
+│ 11      │ 'closed'   │ 'closed'    │ 'complete'    │
+└─────────┴────────────┴─────────────┴───────────────┘
+
+Permitted room transitions (including idempotent repeats):
+created + REQUEST_JOIN -> pending
+created + REJECT -> created
+created + CLOSE -> closed
+created + EXPIRE -> closed
+created + REVOKE -> closed
+pending + REQUEST_JOIN -> pending
+pending + APPROVE -> approved
+pending + REJECT -> created
+pending + CLOSE -> closed
+pending + EXPIRE -> closed
+pending + REVOKE -> closed
+approved + APPROVE -> approved
+approved + CLOSE -> closed
+approved + EXPIRE -> closed
+approved + REVOKE -> closed
+closed + CLOSE -> closed
+closed + EXPIRE -> closed
+closed + REVOKE -> closed
+
+Permitted peer transitions (including idempotent repeats):
+idle + BEGIN_SIGNALING -> signaling
+idle + CLOSE -> closed
+signaling + BEGIN_SIGNALING -> signaling
+signaling + CHECK_CONNECTIVITY -> checking
+signaling + CLOSE -> closed
+checking + CHECK_CONNECTIVITY -> checking
+checking + CONNECT -> connected
+checking + DISCONNECT -> reconnecting
+checking + CLOSE -> closed
+connected + CONNECT -> connected
+connected + DISCONNECT -> reconnecting
+connected + CLOSE -> closed
+reconnecting + DISCONNECT -> reconnecting
+reconnecting + RETRY -> signaling
+reconnecting + CONNECT -> connected
+reconnecting + CLOSE -> closed
+closed + CLOSE -> closed
+
+Permitted transfer transitions (including idempotent repeats):
+preparing + PREPARED -> negotiating
+preparing + FAIL -> failed
+preparing + CANCEL -> cancelled
+negotiating + PREPARED -> negotiating
+negotiating + ACCEPT -> active
+negotiating + DISCONNECT -> reconnecting
+negotiating + FAIL -> failed
+negotiating + CANCEL -> cancelled
+active + ACCEPT -> active
+active + PAUSE -> paused
+active + DISCONNECT -> reconnecting
+active + ALL_BLOCKS_COMMITTED -> verifying
+active + FAIL -> failed
+active + CANCEL -> cancelled
+paused + PAUSE -> paused
+paused + RESUME -> active
+paused + DISCONNECT -> reconnecting
+paused + FAIL -> failed
+paused + CANCEL -> cancelled
+reconnecting + DISCONNECT -> reconnecting
+reconnecting + RECONNECTED -> negotiating
+reconnecting + FAIL -> failed
+reconnecting + CANCEL -> cancelled
+verifying + ALL_BLOCKS_COMMITTED -> verifying
+verifying + VERIFY_SUCCESS -> complete
+verifying + FAIL -> failed
+verifying + CANCEL -> cancelled
+complete + VERIFY_SUCCESS -> complete
+failed + FAIL -> failed
+cancelled + CANCEL -> cancelled

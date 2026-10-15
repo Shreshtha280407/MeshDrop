@@ -1,0 +1,1 @@
+MeshDrop synthetic fixture. No private files, credentials, SDP, or addresses.

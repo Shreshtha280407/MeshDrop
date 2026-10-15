@@ -1,0 +1,9 @@
+export const PROTOCOL_VERSION = 1 as const;
+export const MAX_CONTROL_MESSAGE_BYTES = 64 * 1024;
+export const MAX_SDP_BYTES = 48 * 1024;
+export const MAX_ICE_CANDIDATE_BYTES = 4 * 1024;
+export const DEFAULT_FRAME_BYTES = 16 * 1024;
+export const FRAME_HEADER_BYTES = 64;
+export const DEFAULT_PAYLOAD_BYTES = DEFAULT_FRAME_BYTES - FRAME_HEADER_BYTES;
+export const VERIFICATION_BLOCK_BYTES = 1024 * 1024;
+export const MAX_UINT32 = 0xffff_ffff;

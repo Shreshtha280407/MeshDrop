@@ -1,0 +1,17 @@
+{
+  "name": "@meshdrop/peer-connection",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@meshdrop/protocol": "workspace:*",
+    "@meshdrop/shared-types": "workspace:*"
+  }
+}

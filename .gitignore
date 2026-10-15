@@ -1,0 +1,15 @@
+node_modules/
+.pnpm-store/
+dist/
+.wrangler/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+.dev.vars
+.aws/
+*.log
+*.tsbuildinfo
+.DS_Store

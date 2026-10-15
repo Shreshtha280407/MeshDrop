@@ -1,0 +1,41 @@
+{
+  "name": "meshdrop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=22.12.0 <27",
+    "pnpm": ">=10 <11"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "dev:web": "pnpm --filter @meshdrop/web dev",
+    "dev:signaling": "pnpm --filter @meshdrop/signaling dev",
+    "demo:p0": "tsx scripts/local-dev/demo.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "test:unit": "vitest run --project unit --reporter verbose",
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed --project chromium",
+    "test:faults": "vitest run --project faults",
+    "build": "pnpm -r build",
+    "check": "pnpm -r typecheck && pnpm typecheck && pnpm lint && pnpm test:unit && pnpm test:integration && pnpm test:faults && pnpm build && pnpm test:e2e"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@meshdrop/protocol": "workspace:*",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.10.1",
+    "esbuild": "0.27.3",
+    "eslint": "10.12.0",
+    "miniflare": "4.20260730.0",
+    "prettier": "3.8.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "4.0.18"
+  }
+}
