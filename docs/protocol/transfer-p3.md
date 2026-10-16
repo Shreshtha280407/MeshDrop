@@ -2,6 +2,8 @@
 
 P3 implements correct, bounded, consented transfer on the P2 reliable ordered data channel. Cloudflare still receives only authorization/signaling traffic. File bytes, file names, manifests, block hashes and transfer receipts stay on the peer data plane or the user's device. No HTTP file route was added.
 
+This note preserves the P3 baseline. [P4](storage-p4.md) now replaces its volatile sink with an IndexedDB commit ledger, restart rehash, retention, quota retry and recovered export. ACKs wait for ledger transaction completion. The P3 wire format remains unchanged; P5 network resume is still unavailable.
+
 ## Admission, identity and offers
 
 Both devices independently compare the P2 code and explicitly confirm it. A signed, epoch/transcript-bound `PAIRING_CONFIRMED` control lets the other device observe that confirmation; approval or an open encrypted channel alone does not enable files. Each endpoint's local verified flag and remote confirmation must both be present. This is a cooperative application policy, not hardware attestation or proof of a person's name.

@@ -1,35 +1,49 @@
 /// <reference lib="webworker" />
 import { sha256 } from '@noble/hashes/sha2.js';
 import { VERIFICATION_BLOCK_BYTES } from '@meshdrop/protocol';
-import type { TransferFile } from '@meshdrop/protocol';
+import type { TransferFile, TransferManifest, TransferReceipt } from '@meshdrop/protocol';
+import {
+  CheckpointDB,
+  OpfsReceiverStore,
+  StorageFailure,
+  isQuotaError,
+  retentionExpiry,
+} from '@meshdrop/storage';
+import type { RetentionPolicy } from '@meshdrop/storage';
+import { digestManifest, hashLocalFile, hexDigest } from '@meshdrop/storage';
 import type { SourceEntry } from './HashWorker';
 import { blockLength } from './Manifest';
-
-// This is a P3 temporary destination with a volatile commit frontier, not a P4 checkpoint database.
 const sources = new Map<string, File>();
-const stores = new Map<
-  string,
-  {
-    meta: TransferFile;
-    handle: FileSystemFileHandle;
-    access: FileSystemSyncAccessHandle;
-    nextBlock: number;
-    finalized: boolean;
+let store: OpfsReceiverStore | null = null;
+let retry: {
+  fileId: string;
+  index: number;
+  bytes: Uint8Array<ArrayBuffer>;
+  digest: string;
+} | null = null;
+async function commit(block: NonNullable<typeof retry>): Promise<void> {
+  if (!store) throw new Error('Destination unavailable.');
+  try {
+    await store.writeBlock(block.fileId, block.index, block.bytes);
+    await store.commitBlock(block.fileId, block.index, block.digest);
+    retry = null;
+  } catch (error) {
+    if (isQuotaError(error)) {
+      retry = block;
+      await store.db
+        .put({ ...store.record, state: 'storage-full', updatedAt: Date.now() })
+        .catch(() => {});
+      throw new StorageFailure(
+        'quota',
+        'Browser storage is full. Valid committed blocks are retained.',
+      );
+    }
+    throw error;
   }
->();
-const hex = (bytes: Uint8Array) =>
-  Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-async function hashFile(file: File): Promise<string> {
-  const hash = sha256.create();
-  for (let offset = 0; offset < file.size; offset += VERIFICATION_BLOCK_BYTES)
-    hash.update(
-      new Uint8Array(await file.slice(offset, offset + VERIFICATION_BLOCK_BYTES).arrayBuffer()),
-    );
-  return hex(hash.digest());
 }
 async function run(operation: string, payload: unknown): Promise<unknown> {
   if (operation === 'sources') {
-    if (sources.size || stores.size) throw new Error('Worker already owns a transfer.');
+    if (sources.size || store) throw new Error('Worker already owns a transfer.');
     const entries = payload as SourceEntry[];
     const result: TransferFile[] = [];
     for (const entry of entries) {
@@ -38,10 +52,29 @@ async function run(operation: string, payload: unknown): Promise<unknown> {
         fileId: entry.fileId,
         path: entry.path,
         size: entry.file.size,
-        sha256: await hashFile(entry.file),
+        sha256: await hashLocalFile(entry.file),
       });
     }
     return result;
+  }
+  if (operation === 'remember-sources') {
+    const { manifest, retention } = payload as {
+      manifest: TransferManifest;
+      retention: RetentionPolicy;
+    };
+    if (retention !== 'discard') {
+      const db = new CheckpointDB();
+      const old = await db.sources();
+      if (old.length >= 32)
+        await db.removeSource(old.sort((a, b) => a.expiresAt - b.expiresAt)[0]!.transferId);
+      await db.rememberSource({
+        transferId: manifest.transferId,
+        manifest,
+        manifestDigest: digestManifest(manifest),
+        expiresAt: retentionExpiry(retention),
+      });
+    }
+    return null;
   }
   if (operation === 'source-block') {
     const { fileId, index } = payload as { fileId: string; index: number };
@@ -53,92 +86,37 @@ async function run(operation: string, payload: unknown): Promise<unknown> {
         .slice(index * VERIFICATION_BLOCK_BYTES, index * VERIFICATION_BLOCK_BYTES + length)
         .arrayBuffer(),
     );
-    if (bytes.length !== length) throw new Error('Source file changed or could not be read.');
-    return { bytes, digest: hex(sha256(bytes)) };
+    if (bytes.length !== length) throw new Error('Source file could not be read.');
+    return { bytes, digest: hexDigest(sha256(bytes)) };
   }
   if (operation === 'receiver') {
-    if (sources.size || stores.size) throw new Error('Worker already owns a transfer.');
-    const { storageKey, files } = payload as { storageKey: string; files: TransferFile[] };
-    const estimate = await navigator.storage.estimate();
-    const total = files.reduce((sum, file) => sum + file.size, 0);
-    if (
-      estimate.quota !== undefined &&
-      estimate.usage !== undefined &&
-      estimate.quota - estimate.usage < total + 4 * VERIFICATION_BLOCK_BYTES
-    )
-      throw new Error('Insufficient browser storage for this transfer.');
-    const root = await navigator.storage.getDirectory();
-    const parent = await root.getDirectoryHandle('meshdrop-p3-sessions', { create: true });
-    const directory = await parent.getDirectoryHandle(storageKey, { create: true });
-    for (const meta of files) {
-      const handle = await directory.getFileHandle(meta.fileId, { create: true });
-      if (typeof handle.createSyncAccessHandle !== 'function')
-        throw new Error('This browser cannot provide a flushable temporary destination.');
-      const access = await handle.createSyncAccessHandle();
-      await access.truncate(0);
-      stores.set(meta.fileId, { meta, handle, access, nextBlock: 0, finalized: false });
-    }
-    return null;
+    if (store || sources.size) throw new Error('Worker already owns a transfer.');
+    const { storageKey, manifest, retention } = payload as {
+      storageKey: string;
+      manifest: TransferManifest;
+      retention: RetentionPolicy;
+    };
+    store = new OpfsReceiverStore();
+    return store.prepare(manifest, { storageKey, retention });
   }
   if (operation === 'commit') {
-    const { fileId, index, bytes, digest } = payload as {
-      fileId: string;
-      index: number;
-      bytes: Uint8Array<ArrayBuffer>;
-      digest: string;
-    };
-    const store = stores.get(fileId);
-    if (
-      !store ||
-      store.finalized ||
-      index !== store.nextBlock ||
-      bytes.length !== blockLength(store.meta.size, index)
-    )
-      throw new Error('Invalid block commit.');
-    if (hex(sha256(bytes)) !== digest) throw new Error('Block SHA-256 mismatch.');
-    let written = 0;
-    while (written < bytes.length) {
-      const count = store.access.write(bytes.subarray(written), {
-        at: index * VERIFICATION_BLOCK_BYTES + written,
-      });
-      if (count <= 0) throw new Error('Destination write made no progress.');
-      written += count;
-    }
-    await store.access.flush();
-    // The in-session frontier advances only after successful validation, write and flush.
-    store.nextBlock++;
+    await commit(payload as NonNullable<typeof retry>);
+    return null;
+  }
+  if (operation === 'retry-commit') {
+    if (!retry) throw new Error('No pending storage retry.');
+    await commit(retry);
     return null;
   }
   if (operation === 'finalize') {
-    const { fileId } = payload as { fileId: string };
-    const store = stores.get(fileId);
-    if (
-      !store ||
-      store.finalized ||
-      store.nextBlock !== Math.ceil(store.meta.size / VERIFICATION_BLOCK_BYTES) ||
-      store.access.getSize() !== store.meta.size
-    )
-      throw new Error('Destination is incomplete.');
-    const hash = sha256.create();
-    const buffer = new Uint8Array(VERIFICATION_BLOCK_BYTES);
-    for (let offset = 0; offset < store.meta.size; offset += buffer.length) {
-      const length = Math.min(buffer.length, store.meta.size - offset);
-      let read = 0;
-      while (read < length) {
-        const count = store.access.read(buffer.subarray(read, length), { at: offset + read });
-        if (count <= 0) throw new Error('Stored file could not be fully reread.');
-        read += count;
-      }
-      hash.update(buffer.subarray(0, length));
-    }
-    const actual = hex(hash.digest());
-    if (actual !== store.meta.sha256) throw new Error('Stored file SHA-256 mismatch.');
-    await store.access.flush();
-    await store.access.close();
-    store.finalized = true;
-    const file = await store.handle.getFile();
-    if (file.size !== store.meta.size) throw new Error('Finalized size mismatch.');
-    return { file, sha256: actual };
+    if (!store) throw new Error('Destination unavailable.');
+    return store.finalize((payload as { fileId: string }).fileId);
+  }
+  if (operation === 'receipt') {
+    if (!store) throw new Error('Destination unavailable.');
+    await store.rememberReceipt(payload as TransferReceipt);
+    await store.close();
+    return null;
   }
   throw new Error('Unknown hash/storage operation.');
 }
@@ -159,16 +137,21 @@ self.onmessage = (event: MessageEvent<{ id: number; operation: string; payload: 
       self.postMessage({ id, ok: true, result }, transfer);
     })
     .catch((error: unknown) => {
-      // No file names, paths, keys or source contents in error responses.
-      const message =
-        error instanceof DOMException && error.name === 'QuotaExceededError'
-          ? 'Browser storage is full.'
-          : error instanceof DOMException
-            ? `${error.name}: temporary storage operation failed.`
-            : error instanceof Error && !('code' in error)
-              ? error.message
-              : 'Hash/storage operation failed.';
-      self.postMessage({ id, ok: false, error: message });
+      const code = isQuotaError(error)
+        ? 'quota'
+        : error instanceof StorageFailure
+          ? error.code
+          : 'unavailable';
+      // Local filenames, raw paths, capabilities and OS messages never enter error responses.
+      self.postMessage({
+        id,
+        ok: false,
+        code,
+        error:
+          code === 'quota'
+            ? 'Browser storage is full. Valid blocks are retained.'
+            : 'File integrity or local storage operation failed.',
+      });
     })
     .finally(() => {
       busy = false;

@@ -1,4 +1,6 @@
-import type { TransferFile } from '@meshdrop/protocol';
+import type { TransferFile, TransferManifest, TransferReceipt } from '@meshdrop/protocol';
+import { CheckpointDB, purgeStoredTransfer, StorageFailure } from '@meshdrop/storage';
+import type { RetentionPolicy, CapacityResult } from '@meshdrop/storage';
 
 export interface SourceEntry {
   fileId: string;
@@ -11,7 +13,15 @@ export interface HashStorage {
     fileId: string,
     index: number,
   ): Promise<{ bytes: Uint8Array<ArrayBuffer>; digest: string }>;
-  prepareReceiver(storageKey: string, files: readonly TransferFile[]): Promise<void>;
+  prepareReceiver(
+    storageKey: string,
+    files: readonly TransferFile[],
+    manifest?: TransferManifest,
+    retention?: RetentionPolicy,
+  ): Promise<CapacityResult | void>;
+  rememberSources?(manifest: TransferManifest, retention: RetentionPolicy): Promise<void>;
+  retryCommit?(): Promise<void>;
+  rememberReceipt?(receipt: TransferReceipt): Promise<void>;
   commitBlock(
     fileId: string,
     index: number,
@@ -36,14 +46,26 @@ export class HashWorker implements HashStorage {
       type: 'module',
     });
     this.worker.onmessage = (
-      event: MessageEvent<{ id: number; ok: boolean; result?: unknown; error?: string }>,
+      event: MessageEvent<{
+        id: number;
+        ok: boolean;
+        result?: unknown;
+        error?: string;
+        code?: string;
+      }>,
     ) => {
       if (!this.pending || event.data.id !== this.pending.id) return;
       const pending = this.pending;
       this.pending = null;
       clearTimeout(pending.timer);
       if (event.data.ok) pending.resolve(event.data.result);
-      else pending.reject(new Error(event.data.error ?? 'Hash/storage worker failed.'));
+      else
+        pending.reject(
+          new StorageFailure(
+            event.data.code === 'quota' ? 'quota' : 'unavailable',
+            event.data.error ?? 'Hash/storage worker failed.',
+          ),
+        );
     };
     this.worker.onerror = () => this.dispose();
   }
@@ -76,8 +98,23 @@ export class HashWorker implements HashStorage {
   ): Promise<{ bytes: Uint8Array<ArrayBuffer>; digest: string }> {
     return this.request('source-block', { fileId, index });
   }
-  async prepareReceiver(storageKey: string, files: readonly TransferFile[]): Promise<void> {
-    await this.request('receiver', { storageKey, files });
+  async prepareReceiver(
+    storageKey: string,
+    _files: readonly TransferFile[],
+    manifest?: TransferManifest,
+    retention: RetentionPolicy = '24-hours',
+  ): Promise<CapacityResult> {
+    if (!manifest) throw new Error('A full manifest is required for checkpoint storage.');
+    return this.request('receiver', { storageKey, manifest, retention });
+  }
+  async rememberSources(manifest: TransferManifest, retention: RetentionPolicy): Promise<void> {
+    await this.request('remember-sources', { manifest, retention });
+  }
+  async retryCommit(): Promise<void> {
+    await this.request('retry-commit', null);
+  }
+  async rememberReceipt(receipt: TransferReceipt): Promise<void> {
+    await this.request('receipt', receipt);
   }
   async commitBlock(
     fileId: string,
@@ -103,6 +140,20 @@ export class HashWorker implements HashStorage {
 export const TEMPORARY_STORE_DIRECTORY = 'meshdrop-p3-sessions';
 export async function purgeTemporaryStore(storageKey: string | null): Promise<void> {
   if (!storageKey) return;
+  const record = await new CheckpointDB().getByStorageKey(storageKey);
+  if (record) {
+    // Worker termination releases locks asynchronously; wait briefly for our own worker to exit.
+    for (let attempt = 0; ; attempt++)
+      try {
+        await purgeStoredTransfer(record.transferId);
+        break;
+      } catch (error) {
+        if (!(error instanceof StorageFailure && error.code === 'busy') || attempt >= 20)
+          throw error;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    return;
+  }
   const root = await navigator.storage.getDirectory();
   try {
     const directory = await root.getDirectoryHandle(TEMPORARY_STORE_DIRECTORY);

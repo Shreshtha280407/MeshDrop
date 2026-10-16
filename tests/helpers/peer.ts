@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 import type { Browser, BrowserContextOptions, Page } from '@playwright/test';
 
 export async function pairPages(owner: Page, receiver: Page): Promise<void> {
@@ -27,8 +28,19 @@ export async function pairForTransfer(
   browser: Browser,
   contextOptions: BrowserContextOptions = {},
 ): Promise<{ owner: Page; receiver: Page; close(): Promise<void> }> {
-  const a = await browser.newContext({ ...contextOptions, acceptDownloads: true });
-  const b = await browser.newContext({ ...contextOptions, acceptDownloads: true });
+  // Unrelated local cases get independent rate buckets; the two peers still share one address.
+  // Cloudflare supplies/overwrites this header at the public edge. These are documentation IPs.
+  const suffix = randomUUID().replaceAll('-', '').slice(0, 24).match(/.{4}/g)!.join(':');
+  const options = {
+    ...contextOptions,
+    acceptDownloads: true,
+    extraHTTPHeaders: {
+      'CF-Connecting-IP': `2001:db8:${suffix}`,
+      ...contextOptions.extraHTTPHeaders,
+    },
+  };
+  const a = await browser.newContext(options);
+  const b = await browser.newContext(options);
   const owner = await a.newPage();
   const receiver = await b.newPage();
   try {

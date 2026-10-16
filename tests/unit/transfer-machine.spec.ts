@@ -6,6 +6,8 @@ import { TransferMachine } from '../../packages/transfer-core/src/TransferMachin
 import { encodeTransferFrame } from '../../packages/transfer-core/src/FrameCodec';
 import type { HashStorage, SourceEntry } from '../../packages/transfer-core/src/HashWorker';
 import { manifestDigest } from '../../packages/transfer-core/src/Manifest';
+import { StorageFailure } from '../../packages/storage/src/ReceiverStore';
+import type { RetentionPolicy } from '../../packages/storage/src/ReceiverStore';
 
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 const context = {
@@ -70,12 +72,17 @@ function fakeStorage(): HashStorage & {
     dispose: () => {},
   };
 }
-function harness(role: 'owner' | 'receiver', storage = fakeStorage()) {
+function harness(
+  role: 'owner' | 'receiver',
+  storage = fakeStorage(),
+  retention: RetentionPolicy = 'discard',
+) {
   const controls: FileControlInput[] = [];
   const frames: Uint8Array[] = [];
   const purged = vi.fn(async () => {});
   const machine = new TransferMachine({
     role,
+    retention,
     epoch: 1,
     frameBytes: 16384,
     onChange: () => {},
@@ -94,8 +101,8 @@ function harness(role: 'owner' | 'receiver', storage = fakeStorage()) {
   });
   return { machine, storage, controls, frames, purged };
 }
-async function receiverWith(bytes: Uint8Array) {
-  const h = harness('receiver');
+async function receiverWith(bytes: Uint8Array, retention: RetentionPolicy = 'discard') {
+  const h = harness('receiver', fakeStorage(), retention);
   const fileId = randomUUID();
   const transferId = randomUUID();
   const manifest: TransferManifest = {
@@ -421,4 +428,55 @@ it('a repeated valid block ACK is idempotent and does not count bytes twice', as
   } finally {
     await h.machine.dispose();
   }
+});
+
+it('quota pauses without an ACK, then retry commits once before unpausing', async () => {
+  const h = await receiverWith(new Uint8Array([9]), '24-hours');
+  h.storage.commitBlock.mockRejectedValueOnce(new StorageFailure('quota', 'Full'));
+  h.storage.retryCommit = vi.fn(async () => {});
+  try {
+    await h.machine.receiveControl(
+      message({
+        type: 'BLOCK_START',
+        transferId: h.transferId,
+        payload: { fileId: h.fileId, blockIndex: 0, bytes: 1, digest: sha(new Uint8Array([9])) },
+      }),
+    );
+    await h.machine.receiveFrame(
+      encodeTransferFrame({
+        transferId: h.transferId,
+        fileId: h.fileId,
+        epoch: 1,
+        blockIndex: 0,
+        blockOffset: 0,
+        sequence: 0,
+        fragmentIndex: 0,
+        fragmentCount: 1,
+        payload: new Uint8Array([9]),
+      }),
+    );
+    expect(h.machine.snapshot.state).toBe('paused');
+    expect(h.machine.snapshot.storageFull).toBe(true);
+    expect(h.machine.snapshot.committedBytes).toBe(0);
+    expect(h.controls.filter((c) => c.type === 'BLOCK_ACK')).toHaveLength(0);
+    await h.machine.setPaused(false);
+    expect(h.machine.snapshot.state).toBe('paused');
+    await h.machine.retryStorage();
+    expect(h.storage.retryCommit).toHaveBeenCalledTimes(1);
+    expect(h.machine.snapshot.storageFull).toBe(false);
+    expect(h.machine.snapshot.localPaused).toBe(false);
+    expect(h.machine.snapshot.committedBytes).toBe(1);
+    expect(h.controls.filter((c) => c.type === 'BLOCK_ACK')).toHaveLength(1);
+  } finally {
+    await h.machine.dispose();
+  }
+});
+it('disconnect retains opted-in partial data while explicit clear still purges it', async () => {
+  const h = await receiverWith(new Uint8Array([9]), '24-hours');
+  h.machine.disconnect();
+  await vi.waitFor(() => expect(h.machine.snapshot.state).toBe('failed'));
+  await h.machine.dispose(false);
+  expect(h.purged).not.toHaveBeenCalled();
+  await h.machine.dispose();
+  expect(h.purged).toHaveBeenCalledTimes(1);
 });

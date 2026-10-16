@@ -81,6 +81,9 @@ importers:
       '@meshdrop/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@meshdrop/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@meshdrop/transfer-core':
         specifier: workspace:*
         version: link:../../packages/transfer-core
@@ -137,15 +140,27 @@ importers:
 
   packages/storage:
     dependencies:
+      '@meshdrop/protocol':
+        specifier: workspace:*
+        version: link:../protocol
       '@meshdrop/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
 
   packages/transfer-core:
     dependencies:
       '@meshdrop/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@meshdrop/storage':
+        specifier: workspace:*
+        version: link:../storage
       '@noble/hashes':
         specifier: 2.4.0
         version: 2.4.0

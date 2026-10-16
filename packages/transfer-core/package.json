@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@meshdrop/protocol": "workspace:*",
-    "@noble/hashes": "2.4.0"
+    "@noble/hashes": "2.4.0",
+    "@meshdrop/storage": "workspace:*"
   }
 }

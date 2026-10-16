@@ -589,3 +589,22 @@ input[type='file'] {
   border-radius: 12px;
   background: #e6f0e4;
 }
+
+.saved-panel {
+  grid-column: 1 / -1;
+}
+.saved-transfer {
+  border-top: 1px solid var(--line, #d7dfd8);
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  overflow-wrap: anywhere;
+}
+select {
+  max-width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #cbd6cb;
+  border-radius: 0.4rem;
+  color: inherit;
+  background: #f7f9f4;
+  font: inherit;
+}

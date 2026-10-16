@@ -1,0 +1,33 @@
+{
+  "phase": "P4",
+  "startedAt": "2026-10-16T18:50:35.120Z",
+  "pass": true,
+  "directory": "/home/Shreshtha/documents/MeshDrop/.meshdrop-artifacts/phase-4-storage/run-HJo9Du",
+  "totalBytes": 402653184,
+  "targetBytes": 314572800,
+  "browserFlag": "--disable-features=WebRtcHideLocalIpsWithMdns (isolated test processes only; application defaults unchanged)",
+  "scope": "Actual WebRTC transfer between isolated owner and receiver contexts; disk-backed persistent receiver profile; all transfer browser processes closed; fresh receiver process; checkpoint rehash without any additional file transfer.",
+  "browser": "156.0.8078.4",
+  "expectedPrefixSha256": "2114245cd64cd1ad3a4c3ddaa90e5d3e615a5fd24eaed4f6f7efb3e50d3cf881",
+  "confirmedBeforeClose": 314572800,
+  "closedAllTransferBrowserProcesses": true,
+  "restoredBytes": 314572800,
+  "rangesText": "Verified block ranges: [[0,299]]",
+  "reopenMs": 5074,
+  "recoveredPrefixSha256": "2114245cd64cd1ad3a4c3ddaa90e5d3e615a5fd24eaed4f6f7efb3e50d3cf881",
+  "recoveredPhysicalBytes": 314572800,
+  "signalingRequestsAfterReopen": 0,
+  "checkpoint": {
+    "schemaVersion": 1,
+    "transferId": "18948fd2-d9cd-47b7-b991-9e7a7b047290",
+    "manifestDigest": "a017e612a4cd96b428bf83611f991df6c3e45f8feeca69c7f1f48cd74f61c007",
+    "blockSize": 1048576,
+    "verifiedRanges": [[0, 299]],
+    "storageKey": "b697c7d7-9394-426d-80a3-17e8b93a1d07",
+    "updatedAt": 1792176688053,
+    "expiresAt": 1792263075756,
+    "retention": "24-hours"
+  },
+  "explicitPurgeSurvivedReload": true,
+  "completedAt": "2026-10-16T18:51:33.445Z"
+}

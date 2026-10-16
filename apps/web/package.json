@@ -16,7 +16,8 @@
     "@meshdrop/shared-types": "workspace:*",
     "@meshdrop/platform": "workspace:*",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "@meshdrop/storage": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "19.2.14",

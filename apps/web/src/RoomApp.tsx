@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { TransferPanel } from './features/transfer/TransferPanel';
+import { SavedTransfersPanel } from './features/transfer/SavedTransfersPanel';
 import { PairingPanel } from './features/pairing/PairingPanel';
 import { RoomClient } from './features/pairing/RoomClient';
 import { detectDeviceCapabilities } from '@meshdrop/platform';
@@ -32,7 +33,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </a>
         <span className="phase-label">
           <i />
-          Verified transfers / Phase 3
+          Local checkpoints / Phase 4
         </span>
       </header>
       <main>
@@ -258,6 +259,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </section>
         {status && <PairingPanel key={view.peer.epoch} client={client} view={view} />}
         {status && <TransferPanel client={client} view={view} />}
+        <SavedTransfersPanel />
         <section className="details-grid">
           <div>
             <p className="eyebrow">ON THIS BROWSER</p>
@@ -297,9 +299,9 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               storage contains credential verifiers and temporary room state.
             </p>
             <div className="next-phase">
-              <span>UP NEXT · PHASE 4</span>
-              <strong>Crash-safe local checkpoints</strong>
-              <p>Persistent manifests, verified checkpoints, and recovery after reloading.</p>
+              <span>UP NEXT · PHASE 5</span>
+              <strong>Fault-tolerant resume</strong>
+              <p>Authenticate returning peers and request only missing or invalid blocks.</p>
             </div>
           </div>
         </section>

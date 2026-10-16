@@ -1,5 +1,7 @@
 # P3 file-transfer verification
 
+P4 now supplies the persistent commit ledger and startup rehash described in the [storage runbook](storage-recovery.md). This P3 harness remains a correctness/memory regression for the live engine. Its saved report uses the original P3 gate label even when run against the newer storage implementation.
+
 Run `pnpm dev` and open <http://127.0.0.1:5173> in two independent regular browser profiles. Create/join/approve the room. Independently compare and confirm the code on **both** devices. The owner selects files and clicks Offer files; confirmed progress remains zero while the receiver considers the offer. The receiver chooses Accept files to prepare temporary browser storage. Verify visible committed bytes, final SHA-256 values and successful receipt on both devices. Save each received file and receipt, then Clear transfer to remove temporary browser data. A completed file can still be saved after room revocation.
 
 Pause/resume/cancel and decline are real protocol actions. An in-flight block may finish after pause. Corrupt, incomplete, refused or cancelled transfers must never show completion or expose partial downloads. Private browsing/browser mode may deny OPFS even when the API exists; use a regular supported browser and check free disk space. Storage failure must remain visible, with no false ACK.

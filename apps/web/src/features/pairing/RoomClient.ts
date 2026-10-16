@@ -16,6 +16,7 @@ import type { FileControl } from '@meshdrop/protocol';
 import { INITIAL_PEER, PeerSession } from '@meshdrop/peer-connection';
 import type { PeerSignal, PeerView } from '@meshdrop/peer-connection';
 import type { SessionStatus, SignalingEnvelope } from '@meshdrop/protocol';
+import type { RetentionPolicy } from '@meshdrop/storage';
 
 interface Credentials {
   roomId: string;
@@ -31,6 +32,7 @@ export interface RoomView {
   events: readonly string[];
   peer: PeerView;
   transfer: TransferView;
+  retention: RetentionPolicy;
 }
 const INITIAL: RoomView = {
   status: null,
@@ -41,6 +43,7 @@ const INITIAL: RoomView = {
   events: [],
   peer: INITIAL_PEER,
   transfer: INITIAL_TRANSFER,
+  retention: '24-hours',
 };
 export function parseInvitation(value: string): { roomId: string; capability: string } {
   const url = new URL(value);
@@ -484,6 +487,7 @@ export class RoomClient {
         waitForDrain: (signal) => peer.waitForDrain(signal),
       },
       onChange: (transfer) => this.update({ transfer }),
+      retention: this.view.retention,
     });
   }
   private async receiveFileControl(message: FileControl): Promise<void> {
@@ -516,6 +520,13 @@ export class RoomClient {
   async acceptFiles(): Promise<void> {
     await this.transfer?.accept();
   }
+  setRetention(retention: RetentionPolicy): void {
+    this.transfer?.setRetention(retention);
+    this.update({ retention });
+  }
+  async retryStorage(): Promise<void> {
+    await this.transfer?.retryStorage();
+  }
   async rejectFiles(): Promise<void> {
     await this.transfer?.reject();
   }
@@ -526,7 +537,14 @@ export class RoomClient {
     await this.transfer?.cancel();
   }
   async clearTransfer(): Promise<void> {
-    await this.transfer?.dispose();
+    const removed = await this.transfer?.dispose();
+    if (removed === false) {
+      this.update({
+        error:
+          'Local data could not be deleted. Close other tabs using this transfer and try Clear transfer again.',
+      });
+      return;
+    }
     this.transfer = null;
     for (const url of this.downloadUrls.values()) URL.revokeObjectURL(url);
     this.downloadUrls.clear();
@@ -597,7 +615,7 @@ export class RoomClient {
     this.update({ ...INITIAL });
   }
   dispose(): void {
-    void this.transfer?.dispose();
+    void this.transfer?.dispose(false);
     this.transfer = null;
     for (const url of this.downloadUrls.values()) URL.revokeObjectURL(url);
     this.downloadUrls.clear();

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { estimateCapacity } from '@meshdrop/storage';
+import type { CapacityResult, RetentionPolicy } from '@meshdrop/storage';
 import type { RoomClient, RoomView } from '../pairing/RoomClient';
 const bytes = (value: number) =>
   value < 1024
@@ -18,6 +20,30 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
   const done =
     transfer.state === 'complete' || transfer.state === 'cancelled' || transfer.state === 'failed';
   const total = transfer.manifest?.totalBytes ?? 0;
+  const [capacity, setCapacity] = useState<CapacityResult | null>(null);
+  useEffect(() => {
+    let current = true;
+    setCapacity(null);
+    if (!isOwner && transfer.state === 'negotiating')
+      void estimateCapacity(total)
+        .then((result) => {
+          if (current) setCapacity(result);
+        })
+        .catch(() => {
+          if (current)
+            setCapacity({
+              available: false,
+              estimatedFreeBytes: null,
+              persistent: false,
+              warnings: [
+                'Browser storage could not be checked. Use a regular browser and free local disk space.',
+              ],
+            });
+        });
+    return () => {
+      current = false;
+    };
+  }, [isOwner, transfer.state, total]);
   return (
     <section
       className="demo-panel transfer-panel"
@@ -35,8 +61,8 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
         </span>
       </div>
       <p className="demo-note">
-        Received files go to temporary storage in this browser. Save a copy after verification.
-        Reload recovery is not available yet.
+        Received files stay in this browser with a verified local checkpoint. Save a copy after
+        verification. Reopening checks surviving bytes; network resume is not available yet.
       </p>
       {!paired && (
         <p className="status-note">
@@ -112,11 +138,34 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
         <div className="approval-box">
           <h3>Accept these files?</h3>
           <p>
-            Destination: temporary browser storage. Files are isolated from existing downloads and
-            verified before completion.
+            Destination: browser storage with local checkpoints. Files are isolated from existing
+            downloads and verified before completion. Clearing site data removes these files.
           </p>
+          <label htmlFor="partial-retention">Retain interrupted files</label>
+          <select
+            id="partial-retention"
+            value={view.retention}
+            onChange={(event) => client.setRetention(event.target.value as RetentionPolicy)}
+          >
+            <option value="24-hours">24 hours after the last committed block</option>
+            <option value="7-days">7 days after the last committed block</option>
+            <option value="discard">Delete after interruption or reopening</option>
+          </select>
+          <p className="muted">
+            Cancel and Clear transfer delete partial files. Expired data is cleaned when MeshDrop
+            opens.
+          </p>
+          {capacity && (
+            <p className="status-note" data-testid="quota-preflight">
+              {capacity.estimatedFreeBytes === null
+                ? 'Free space unknown.'
+                : `${bytes(capacity.estimatedFreeBytes)} estimated free.`}{' '}
+              {capacity.warnings.join(' ')}
+            </p>
+          )}
           <div className="actions">
             <button
+              disabled={!capacity?.available}
               onClick={() => {
                 void client.acceptFiles();
               }}
@@ -137,7 +186,7 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
       {isOwner && transfer.state === 'negotiating' && (
         <p role="status">Waiting for the receiver to accept the offer.</p>
       )}
-      {(transfer.state === 'active' || transfer.state === 'paused') && (
+      {(transfer.state === 'active' || transfer.state === 'paused') && !transfer.storageFull && (
         <div className="actions">
           <button
             className="secondary"
@@ -148,6 +197,16 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
             {transfer.localPaused ? 'Resume transfer' : 'Pause transfer'}
           </button>
         </div>
+      )}
+      {transfer.storageFull && (
+        <button
+          className="secondary"
+          onClick={() => {
+            void client.retryStorage();
+          }}
+        >
+          Retry storage
+        </button>
       )}
       {transfer.remotePaused && (
         <p className="status-note">

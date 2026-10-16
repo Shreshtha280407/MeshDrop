@@ -11,6 +11,9 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@meshdrop/shared-types": "workspace:*"
+    "@meshdrop/shared-types": "workspace:*",
+    "@meshdrop/protocol": "workspace:*",
+    "@noble/hashes": "2.4.0",
+    "zod": "4.6.7"
   }
 }

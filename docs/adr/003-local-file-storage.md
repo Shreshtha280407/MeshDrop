@@ -1,6 +1,6 @@
 # ADR-003: Files and diagnostics stay on devices
 
-Status: accepted for P0; storage implementation in P4, 2026-10-16.
+Status: accepted in P0; implemented in P4, 2026-10-17. See the [storage contract](../protocol/storage-p4.md).
 
 Use OPFS for partial blocks and IndexedDB for metadata/checkpoints. Add direct-save adapters only after feature detection and device validation. API presence does not guarantee permission, persistence, quota or large-file export. Memory fallback cannot claim restart-safe recovery.
 

@@ -20,6 +20,8 @@ import { decodeTransferFrame } from './FrameCodec';
 import { ReceiverAssembler } from './ReceiverAssembler';
 import { SenderScheduler } from './SenderScheduler';
 import type { TransferTransport } from './SenderScheduler';
+import { CheckpointDB, isQuotaError } from '@meshdrop/storage';
+import type { CapacityResult, RetentionPolicy } from '@meshdrop/storage';
 
 export interface TransferView {
   state: TransferState | null;
@@ -33,6 +35,8 @@ export interface TransferView {
   destinationReady: boolean;
   peakBufferedBytes: number;
   peakBlockBytes: number;
+  capacity: CapacityResult | null;
+  storageFull: boolean;
 }
 export const INITIAL_TRANSFER: TransferView = {
   state: null,
@@ -46,6 +50,8 @@ export const INITIAL_TRANSFER: TransferView = {
   destinationReady: false,
   peakBufferedBytes: 0,
   peakBlockBytes: 0,
+  capacity: null,
+  storageFull: false,
 };
 const terminal = (state: TransferState | null) =>
   state === 'complete' || state === 'failed' || state === 'cancelled';
@@ -58,6 +64,7 @@ export interface TransferOptions {
   createStorage?: () => HashStorage;
   purgeStorage?: (key: string) => Promise<void>;
   timeoutMs?: number;
+  retention?: RetentionPolicy;
 }
 export class TransferMachine {
   private view: TransferView = { ...INITIAL_TRANSFER };
@@ -69,6 +76,12 @@ export class TransferMachine {
   private scheduler: SenderScheduler;
   private fileIndex = 0;
   private nextBlock = 0;
+  private pendingStorage: {
+    fileId: string;
+    blockIndex: number;
+    digest: string;
+    length: number;
+  } | null = null;
   private lastAcknowledgment: Extract<FileControl, { type: 'BLOCK_ACK' }>['payload'] | null = null;
   private lastActivity = Date.now();
   private verifying = false;
@@ -107,6 +120,10 @@ export class TransferMachine {
   }
   get epoch(): number {
     return this.options.epoch;
+  }
+  setRetention(retention: RetentionPolicy): void {
+    if (!this.view.state || (this.view.state === 'negotiating' && !this.storage))
+      this.options.retention = retention;
   }
   private get paused(): boolean {
     return this.view.localPaused || this.view.remotePaused;
@@ -158,6 +175,8 @@ export class TransferMachine {
       this.digest = await manifestDigest(manifest);
       if (!this.active) return;
       this.update({ manifest });
+      await this.storage.rememberSources?.(manifest, this.options.retention ?? 'discard');
+      if (!this.active) return;
       this.transition({ type: 'PREPARED' });
       this.touch();
       await this.send('TRANSFER_OFFER', { manifest, manifestDigest: this.digest });
@@ -180,14 +199,19 @@ export class TransferMachine {
     this.storageKey = crypto.randomUUID();
     this.storage = this.makeStorage();
     try {
-      await this.storage.prepareReceiver(this.storageKey, manifest.files);
+      const capacity = await this.storage.prepareReceiver(
+        this.storageKey,
+        manifest.files,
+        manifest,
+        this.options.retention ?? 'discard',
+      );
       if (!this.active) return;
       this.assembler = new ReceiverAssembler(
         manifest.transferId,
         this.options.epoch,
         this.options.frameBytes,
       );
-      this.update({ destinationReady: true });
+      this.update({ destinationReady: true, capacity: capacity ?? null });
       this.transition({ type: 'ACCEPT' });
       this.maybeVerifying();
       this.touch();
@@ -273,7 +297,10 @@ export class TransferMachine {
         return;
       }
       if (message.type === 'TRANSFER_CANCEL' || message.type === 'TRANSFER_REJECT') {
-        await this.cancel(false);
+        await this.cancel(
+          false,
+          message.type === 'TRANSFER_CANCEL' && message.payload.reason !== 'user',
+        );
         return;
       }
       if (message.type === 'FLOW_STATE') {
@@ -456,7 +483,7 @@ export class TransferMachine {
           manifestDigest: this.digest,
         });
         this.update({ receipt });
-        this.complete();
+        await this.complete();
         return;
       }
       if (message.type === 'RECEIPT_ACK') {
@@ -466,7 +493,7 @@ export class TransferMachine {
           this.view.state !== 'verifying'
         )
           throw new Error('Invalid receipt acknowledgment.');
-        this.complete();
+        await this.complete();
         return;
       }
       throw new Error('Unexpected transfer control.');
@@ -493,25 +520,76 @@ export class TransferMachine {
       this.touch();
       if (!block) return;
       const length = block.bytes.length;
-      await this.storage.commitBlock(block.fileId, block.blockIndex, block.bytes, block.digest);
-      if (!this.active) return;
-      this.nextBlock++;
-      this.update({
-        committedBytes: this.view.committedBytes + length,
-        peakBlockBytes: this.assembler.peakBytes,
-      });
-      this.maybeVerifying();
-      await this.send('BLOCK_ACK', {
+      this.pendingStorage = {
         fileId: block.fileId,
         blockIndex: block.blockIndex,
         digest: block.digest,
-        committedBytes: this.view.committedBytes,
-      });
-    } catch {
+        length,
+      };
+      await this.storage.commitBlock(block.fileId, block.blockIndex, block.bytes, block.digest);
+      if (!this.active) return;
+      await this.acknowledgeStoredBlock();
+    } catch (error) {
+      if (isQuotaError(error) && this.pendingStorage && this.active) {
+        this.update({
+          storageFull: true,
+          error:
+            'Browser storage is full. Transfer paused; verified blocks are retained. Free space, then retry storage.',
+        });
+        await this.setPaused(true).catch(() => this.disconnect());
+        return;
+      }
       await this.fail(
         'A file fragment failed integrity or storage checks. No block acknowledgment was issued.',
         'invalid-data',
       );
+    }
+  }
+  private async acknowledgeStoredBlock(): Promise<void> {
+    const block = this.pendingStorage;
+    if (!block) return;
+    this.pendingStorage = null;
+    this.nextBlock++;
+    this.update({
+      committedBytes: this.view.committedBytes + block.length,
+      peakBlockBytes: this.assembler?.peakBytes ?? 0,
+      storageFull: false,
+      error: '',
+    });
+    this.maybeVerifying();
+    await this.send('BLOCK_ACK', {
+      fileId: block.fileId,
+      blockIndex: block.blockIndex,
+      digest: block.digest,
+      committedBytes: this.view.committedBytes,
+    });
+  }
+  async retryStorage(): Promise<void> {
+    if (
+      !this.active ||
+      !this.view.storageFull ||
+      !this.pendingStorage ||
+      !this.storage?.retryCommit
+    )
+      return;
+    try {
+      await this.storage.retryCommit();
+      if (!this.active) return;
+      // Clear flow pause before the final ACK can transition this endpoint to verifying.
+      this.update({ storageFull: false });
+      await this.setPaused(false);
+      await this.acknowledgeStoredBlock();
+    } catch (error) {
+      if (isQuotaError(error))
+        this.update({
+          error:
+            'Browser storage is still full. Valid blocks remain saved. Free more space or cancel.',
+        });
+      else
+        await this.fail(
+          'Storage retry failed. Valid blocks can be checked after reopening.',
+          'storage',
+        );
     }
   }
   private waitFor(
@@ -582,6 +660,7 @@ export class TransferMachine {
   }
   async setPaused(paused: boolean): Promise<void> {
     if (this.view.state !== 'active' && this.view.state !== 'paused') return;
+    if (!paused && this.view.storageFull) return;
     if (this.view.localPaused === paused) return;
     this.update({ localPaused: paused });
     this.applyPauseState();
@@ -597,7 +676,9 @@ export class TransferMachine {
     this.wake?.();
     this.wake = null;
   }
-  private complete(): void {
+  private async complete(): Promise<void> {
+    if (this.options.role === 'receiver' && this.view.receipt)
+      await this.storage?.rememberReceipt?.(this.view.receipt);
     this.transition({ type: 'VERIFY_SUCCESS', integrityVerified: true, storageFinalized: true });
     this.storage?.dispose();
     this.storage = null;
@@ -614,13 +695,13 @@ export class TransferMachine {
     this.storage = null;
     clearInterval(this.timer);
   }
-  async cancel(notify = true): Promise<void> {
+  async cancel(notify = true, preserve = false): Promise<void> {
     if (!this.active) return;
     this.transition({ type: 'CANCEL' });
     this.stop();
     if (notify && this.view.manifest)
       await this.send('TRANSFER_CANCEL', { reason: 'user' }).catch(() => {});
-    await this.cleanup();
+    if (!preserve || (this.options.retention ?? 'discard') === 'discard') await this.cleanup();
   }
   private async fail(
     message: string,
@@ -631,34 +712,44 @@ export class TransferMachine {
     this.update({ error: message });
     this.stop();
     if (this.view.manifest) await this.send('TRANSFER_CANCEL', { reason }).catch(() => {});
-    await this.cleanup();
+    if ((this.options.retention ?? 'discard') === 'discard') await this.cleanup();
   }
   disconnect(): void {
     if (this.active)
       void this.fail(
-        'Connection changed. This phase cannot resume partial files; start a new transfer.',
+        'Connection changed. Retained blocks can be checked in Saved transfers after reopening. Network resume is not available yet.',
         'connection',
       );
   }
   download(fileId: string): File | undefined {
     return this.view.state === 'complete' ? this.outputs.get(fileId) : undefined;
   }
-  private async cleanup(): Promise<void> {
-    if (!this.storageKey) return;
+  private async cleanup(): Promise<boolean> {
     try {
+      if (
+        this.options.role === 'owner' &&
+        this.view.manifest &&
+        this.options.retention &&
+        typeof indexedDB !== 'undefined'
+      )
+        await new CheckpointDB().removeSource(this.view.manifest.transferId);
+      if (!this.storageKey) return true;
       await (this.options.purgeStorage ?? purgeTemporaryStore)(this.storageKey);
       this.storageKey = null;
       this.outputs.clear();
+      return true;
     } catch {
       this.update({
         error:
           this.view.error ||
           'Temporary browser data could not be removed. Clear site data if needed.',
       });
+      return false;
     }
   }
-  async dispose(): Promise<void> {
+  async dispose(purge = true): Promise<boolean> {
     this.stop();
-    await this.cleanup();
+    if (purge || (this.options.retention ?? 'discard') === 'discard') return this.cleanup();
+    return true;
   }
 }

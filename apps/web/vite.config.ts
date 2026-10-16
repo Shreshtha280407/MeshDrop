@@ -3,7 +3,13 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: { include: ['@meshdrop/transfer-core > @noble/hashes/sha2.js'] },
+  optimizeDeps: {
+    include: [
+      '@meshdrop/transfer-core > @noble/hashes/sha2.js',
+      '@meshdrop/storage > @noble/hashes/sha2.js',
+      '@meshdrop/storage > zod',
+    ],
+  },
   worker: { format: 'es' },
   server: {
     host: '127.0.0.1',
