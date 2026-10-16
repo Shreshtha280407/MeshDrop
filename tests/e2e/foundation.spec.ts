@@ -10,7 +10,7 @@ test('two isolated browser contexts drive the same validated synthetic lifecycle
       const page = await context.newPage();
       const errors: string[] = [];
       page.on('pageerror', (error) => errors.push(error.message));
-      await page.goto('/');
+      await page.goto('/foundation');
       await expect(page.getByText('It does not create a room', { exact: false })).toBeVisible();
       await expect(page.getByTestId('room-state')).toHaveText('created');
       await page.getByRole('button', { name: 'Approve peer', exact: true }).click();
@@ -35,7 +35,7 @@ test('two isolated browser contexts drive the same validated synthetic lifecycle
 });
 
 test('shell reports observed capabilities and fits the viewport', async ({ page }, testInfo) => {
-  await page.goto('/');
+  await page.goto('/foundation');
   await expect(page.getByRole('heading', { name: 'Capabilities, observed.' })).toBeVisible();
   const observed = await page.evaluate(() => ({
     rtc: typeof RTCPeerConnection !== 'undefined',

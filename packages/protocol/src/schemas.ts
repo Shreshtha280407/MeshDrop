@@ -37,6 +37,16 @@ export const ERROR_CODES = [
   'CAPACITY_EXCEEDED',
   'RATE_LIMITED',
   'NOT_IMPLEMENTED',
+  'INVALID_ORIGIN',
+  'INVITE_EXPIRED',
+  'INVITE_REVOKED',
+  'INVITE_USED',
+  'TICKET_EXPIRED',
+  'TICKET_USED',
+  'CONFLICT',
+  'PEER_UNAVAILABLE',
+  'SERVICE_UNAVAILABLE',
+  'INTERNAL_ERROR',
 ] as const;
 export const errorPayloadSchema = z.strictObject({
   code: z.enum(ERROR_CODES),

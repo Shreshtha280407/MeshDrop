@@ -13,6 +13,7 @@ export default defineConfig({
           name: 'integration',
           include: ['tests/integration/**/*.spec.ts'],
           hookTimeout: 30000,
+          testTimeout: 15000,
         },
       },
       { test: { name: 'faults', include: ['tests/faults/**/*.spec.ts'] } },

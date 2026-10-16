@@ -20,4 +20,6 @@ Assets: capabilities, peer identity, room isolation, file bytes, checkpoint inte
 | Secrets/SDP/IP/labels → logs     | Redaction, no routine upload                                                 | Parser errors hide input; log audit P1/P6/P8        |
 | Suspension → user                | Lifetime limits, truthful recovery                                           | No background promise; actual phones P7             |
 
-P0 review: no upload/authentication backdoor is exposed; shared contracts are independent of framework/runtime code; completion is guarded at the lifecycle boundary. Session security, real storage, TURN and phone compatibility remain future gates. Production requires HTTPS/WSS; local loopback is permitted for development.
+P0 review: no upload/authentication backdoor is exposed; shared contracts are independent of framework/runtime code; completion is guarded at the lifecycle boundary. Production requires HTTPS/WSS; local loopback is permitted for development.
+
+P1 adds tested capability admission, owner approval, two-peer isolation, single-use origin/revision/epoch-bound tickets, per-message membership/sequence checks, stale-socket generations, alarm expiry and row cleanup. Actual hibernation eviction verifies restored authorization. All raw capabilities remain outside SQLite and logs. See the [P1 signaling contract](protocol/signaling-p1.md) and [secret handling](security/secrets.md). Independent peer identity, file integrity, persistent recovery, TURN and physical phone compatibility remain later-phase gates.

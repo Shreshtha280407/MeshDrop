@@ -443,3 +443,81 @@ footer {
     flex-direction: column;
   }
 }
+
+.entry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin: 30px 0 10px;
+}
+h3,
+label {
+  font-size: 14px;
+  font-weight: 600;
+}
+h3 {
+  margin: 0 0 12px;
+}
+label {
+  display: block;
+}
+input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #ccd9c5;
+  border-radius: 7px;
+  margin: 12px 0;
+  background: #fafbf8;
+  color: #183b35;
+  font-family: inherit;
+  font-size: 12px;
+}
+input:focus-visible {
+  outline: 2px solid #92ad76;
+  outline-offset: 2px;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button:disabled:hover {
+  background: #16453d;
+}
+.invitation-box,
+.approval-box {
+  padding: 20px;
+  margin-top: 24px;
+  background: #f4f7ee;
+  border: 1px solid #dce5d4;
+  border-radius: 9px;
+}
+.approval-box {
+  border-left: 3px solid #769a57;
+}
+.approval-box .actions {
+  margin-bottom: 0;
+}
+.status-note {
+  padding: 16px;
+  border-left: 3px solid #7a9a61;
+  background: #f1f5ea;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.signaling-panel {
+  grid-column: 1 / -1;
+}
+footer a {
+  color: inherit;
+}
+@media (max-width: 640px) {
+  .entry-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .state-card strong {
+    font-size: 11px;
+  }
+}
