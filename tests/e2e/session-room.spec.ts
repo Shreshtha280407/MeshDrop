@@ -45,16 +45,18 @@ test('owner approval gates real signaling and a third browser is blocked', async
     await receiver.getByRole('button', { name: 'Request to join', exact: true }).click();
     await expect(receiver.getByTestId('admission-state')).toHaveText('pending');
     await expect(
-      receiver.getByRole('button', { name: 'Send signaling probe', exact: true }),
+      receiver.getByRole('button', { name: 'Send signed ping', exact: true }),
     ).toBeDisabled();
     await expect(owner.getByTestId('live-room-state')).toHaveText('pending');
     await owner.getByRole('button', { name: 'Approve receiver', exact: true }).click();
     await expect(receiver.getByTestId('admission-state')).toHaveText('approved');
     await expect(receiver.getByTestId('connection-state')).toHaveText('connected');
-    await owner.getByRole('button', { name: 'Send signaling probe', exact: true }).click();
-    await expect(receiver.getByTestId('received-signals')).toHaveText('1');
-    await receiver.getByRole('button', { name: 'Send signaling probe', exact: true }).click();
-    await expect(owner.getByTestId('received-signals')).toHaveText('1');
+    await expect(owner.getByTestId('peer-state')).toHaveText('connected', { timeout: 30000 });
+    await expect(receiver.getByTestId('peer-state')).toHaveText('connected', { timeout: 30000 });
+    await owner.getByRole('button', { name: 'Send signed ping', exact: true }).click();
+    await expect(receiver.getByTestId('received-pings')).toHaveText('1');
+    await receiver.getByRole('button', { name: 'Send signed ping', exact: true }).click();
+    await expect(owner.getByTestId('received-pings')).toHaveText('1');
     await third.goto(invitation);
     await third.getByRole('button', { name: 'Request to join', exact: true }).click();
     await expect(third.getByRole('alert')).toContainText('INVITE_USED');

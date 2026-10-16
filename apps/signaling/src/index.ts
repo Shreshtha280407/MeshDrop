@@ -24,7 +24,7 @@ export default {
         return secureResponse(
           Response.json({
             service: 'meshdrop-signaling',
-            phase: 'P1',
+            phase: 'P2',
             status: 'ready',
             sessionsAvailable: true,
           }),
@@ -61,6 +61,8 @@ export default {
               join: 'POST',
               decisions: 'POST',
               'ws-ticket': 'POST',
+              'ice-credentials': 'POST',
+              connection: 'POST',
               ws: 'GET',
               close: 'DELETE',
             } as Record<string, string>

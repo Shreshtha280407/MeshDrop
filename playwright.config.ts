@@ -14,7 +14,11 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
+    {
+      name: 'mobile-chromium',
+      testIgnore: '**/cross-browser.spec.ts',
+      use: { ...devices['Pixel 7'] },
+    },
   ],
   webServer: [
     {

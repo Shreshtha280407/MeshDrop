@@ -53,9 +53,20 @@ export const errorPayloadSchema = z.strictObject({
   message: boundedText(256),
   retryable: z.boolean(),
 });
+const peerPair = { ownerPeerId: uuidSchema, receiverPeerId: uuidSchema };
 const sdpPayload = z.strictObject({ sdp: boundedText(MAX_SDP_BYTES).min(1) });
 
 export const signalingEnvelopeSchema = z.discriminatedUnion('type', [
+  z.strictObject({ ...base, type: z.literal('PEER_READY'), payload: z.strictObject(peerPair) }),
+  z.strictObject({
+    ...base,
+    type: z.literal('CONNECTION_EPOCH'),
+    payload: z.strictObject({
+      ...peerPair,
+      epoch: uint32,
+      mode: z.enum(['ice-restart', 'new-connection']),
+    }),
+  }),
   z.strictObject({
     ...base,
     type: z.literal('JOINED'),
@@ -83,6 +94,7 @@ export const signalingEnvelopeSchema = z.discriminatedUnion('type', [
     type: z.literal('ICE_CANDIDATE'),
     payload: z.strictObject({
       candidate: boundedText(MAX_ICE_CANDIDATE_BYTES),
+      usernameFragment: boundedText(256).nullable().optional(),
       sdpMid: boundedText(256).nullable(),
       sdpMLineIndex: z.number().int().min(0).max(65535).nullable(),
     }),

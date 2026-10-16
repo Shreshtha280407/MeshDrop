@@ -521,3 +521,36 @@ footer a {
     font-size: 11px;
   }
 }
+
+.pairing-box {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: #f3f7f4;
+  border-radius: 12px;
+}
+.pairing-code {
+  display: block;
+  font-family: monospace;
+  font-size: clamp(1rem, 3vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 1.3rem 0;
+  overflow-wrap: anywhere;
+}
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.checkbox-label input {
+  width: auto;
+  flex: 0 0 auto;
+  margin-top: 0.2rem;
+}
+.fingerprint {
+  display: block;
+  overflow-wrap: anywhere;
+  margin: 0.6rem 0;
+}

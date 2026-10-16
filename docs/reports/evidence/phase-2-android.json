@@ -1,0 +1,17 @@
+{
+  "kind": "physical-android",
+  "startedAt": "2026-10-16T14:27:59.446Z",
+  "desktopBrowser": "156.0.8078.4",
+  "phoneBrowser": "154.0.8037.126",
+  "note": "Signaling uses USB port forwarding; WebRTC ICE selects the data path. Automated comparison exercises the UI; it is not a human identity attestation.",
+  "checks": [
+    "approval, signed hello, equal pairing transcript, signed ping/pong both ways, explicit comparison workflow",
+    "ICE restart at epoch 2, fresh code, verification reset, signed ping/pong",
+    "receiver-requested fresh peer connection at epoch 3, signed ping/pong",
+    "room revocation closes both peer transports"
+  ],
+  "path": "direct",
+  "mobileLayoutFits": true,
+  "pass": true,
+  "completedAt": "2026-10-16T14:28:09.152Z"
+}

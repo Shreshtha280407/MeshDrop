@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { PairingPanel } from './features/pairing/PairingPanel';
 import { RoomClient } from './features/pairing/RoomClient';
 import { detectDeviceCapabilities } from '@meshdrop/platform';
 
@@ -30,7 +31,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </a>
         <span className="phase-label">
           <i />
-          Secure rooms / Phase 1
+          Peer connectivity / Phase 2
         </span>
       </header>
       <main>
@@ -58,12 +59,12 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
           <div className="connection-line">
             <span>AUTHORIZED SIGNALING</span>
             <div />
-            <small>Live in Phase 1</small>
+            <small>Live peer connection</small>
           </div>
           <div className="device">
             <span>↙</span>Other device<small>Approved receiver</small>
           </div>
-          <p>File transport is planned in Phases 2–3.</p>
+          <p>Connect and verify now. File transfer follows in Phase 3.</p>
         </aside>
         <section className="demo-panel room-panel" aria-labelledby="room-title">
           <div className="panel-heading">
@@ -74,8 +75,8 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
             <span className="pill">Live local backend</span>
           </div>
           <p className="demo-note">
-            This phase provides real room authorization and signaling. File transfer is not
-            available yet. Keep both browser windows open.
+            Connect two approved devices and compare their pairing codes. Keep both browser windows
+            open.
           </p>
           {!status ? (
             <div className="entry-grid">
@@ -254,43 +255,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
             </p>
           )}
         </section>
-        {status && (
-          <section className="demo-panel signaling-panel" aria-labelledby="signal-title">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">PHASE 1 VERIFICATION</p>
-                <h2 id="signal-title">Try the signaling path.</h2>
-              </div>
-              <span className="pill">No file data</span>
-            </div>
-            <p className="demo-note">
-              After approval, send a harmless signaling probe. Its receipt appears on the other
-              device. This checks room isolation; it does not open a WebRTC connection.
-            </p>
-            <button
-              disabled={view.connection !== 'connected' || status.state !== 'approved'}
-              onClick={() => client.sendProbe()}
-            >
-              Send signaling probe
-            </button>
-            <p className="muted">
-              Probes received:{' '}
-              <strong data-testid="received-signals">{view.receivedSignals}</strong>
-            </p>
-            <div className="event-log" aria-live="polite">
-              <span className="log-label">ROOM EVENTS</span>
-              {view.events.length ? (
-                <ol>
-                  {view.events.map((event, index) => (
-                    <li key={index}>{event}</li>
-                  ))}
-                </ol>
-              ) : (
-                <p>No room events yet.</p>
-              )}
-            </div>
-          </section>
-        )}
+        {status && <PairingPanel key={view.peer.epoch} client={client} view={view} />}
         <section className="details-grid">
           <div>
             <p className="eyebrow">ON THIS BROWSER</p>
@@ -330,9 +295,9 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               storage contains credential verifiers and temporary room state.
             </p>
             <div className="next-phase">
-              <span>UP NEXT · PHASE 2</span>
-              <strong>Peer connectivity and independent verification</strong>
-              <p>Real WebRTC negotiation, ICE paths, and a code comparison flow.</p>
+              <span>UP NEXT · PHASE 3</span>
+              <strong>Chunked file transfer and integrity</strong>
+              <p>Bounded file frames, SHA-256 validation, and receiver-confirmed progress.</p>
             </div>
           </div>
         </section>

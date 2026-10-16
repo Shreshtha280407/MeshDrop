@@ -54,7 +54,10 @@ export async function createSession(
   );
 }
 export function roomRoute(path: string): { roomId: string; action: string } | null {
-  const match = /^\/v1\/sessions\/([^/]+)(?:\/(status|join|decisions|ws-ticket|ws))?$/.exec(path);
+  const match =
+    /^\/v1\/sessions\/([^/]+)(?:\/(status|join|decisions|ws-ticket|ws|connection|ice-credentials))?$/.exec(
+      path,
+    );
   if (!match) return null;
   const parsed = uuidSchema.safeParse(match[1]);
   if (!parsed.success) throw new HttpError(400, 'INVALID_MESSAGE', 'Invalid room identifier.');

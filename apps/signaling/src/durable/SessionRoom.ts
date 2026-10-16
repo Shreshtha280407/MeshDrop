@@ -1,6 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
   CLIENT_SIGNAL_TYPES,
+  connectionRequestSchema,
+  MAX_UINT32,
   MAX_CONTROL_MESSAGE_BYTES,
   ProtocolValidationError,
   decisionRequestSchema,
@@ -12,6 +14,7 @@ import {
   uuidSchema,
 } from '@meshdrop/protocol';
 import type { ErrorCode, RoomState, SignalingEnvelope } from '@meshdrop/protocol';
+import { iceCredentials } from '../routes/ice-credentials';
 import { bearer, randomCapability, verifier } from '../auth/capabilities';
 import { SOCKET_PROTOCOL, socketCredential } from '../auth/tickets';
 import { allowedOrigins, duration } from '../env';
@@ -164,6 +167,19 @@ export class SessionRoom extends DurableObject<Env> {
       if (action === 'status' && request.method === 'GET') return Response.json(this.status(peer));
       if (action === 'decisions' && request.method === 'POST')
         return await this.decide(request, peer.peer_id);
+      if (action === 'connection' && request.method === 'POST')
+        return await this.advanceConnection(request, peer.peer_id);
+      if (action === 'ice-credentials' && request.method === 'POST') {
+        if (!ticketRequestSchema.safeParse(await readJson(request)).success)
+          throw new HttpError(400, 'INVALID_MESSAGE', 'Invalid ICE request.');
+        if (this.peer(peer.peer_id)?.approval !== 'approved' || this.active().state !== 'approved')
+          throw new HttpError(403, 'FORBIDDEN', 'Approved room membership is required.');
+        const configuration = await iceCredentials(this.env, this.active().expires_at);
+        this.active();
+        if (this.peer(peer.peer_id)?.approval !== 'approved')
+          throw new HttpError(403, 'FORBIDDEN', 'Peer approval was revoked.');
+        return Response.json(configuration);
+      }
       if (action === 'ws-ticket' && request.method === 'POST')
         return await this.issueTicket(request, peer.peer_id);
       throw new HttpError(404, 'NOT_FOUND', 'Route unavailable.');
@@ -424,11 +440,71 @@ export class SessionRoom extends DurableObject<Env> {
       violations: 0,
     } satisfies Attachment);
     this.sendEvent(server, 'JOINED', { approval: 'approved' });
+    const participants = this.connectedPair();
+    if (participants)
+      for (const ws of this.ctx.getWebSockets()) this.sendEvent(ws, 'PEER_READY', participants);
     return new Response(null, {
       status: 101,
       webSocket: client,
       headers: { 'Sec-WebSocket-Protocol': SOCKET_PROTOCOL },
     });
+  }
+  private connectedPair(): { ownerPeerId: string; receiverPeerId: string } | null {
+    const room = this.active();
+    if (room.state !== 'approved') return null;
+    const connected = new Map<string, PeerRow>();
+    for (const ws of this.ctx.getWebSockets()) {
+      try {
+        if (ws.readyState === WebSocket.OPEN) {
+          const { peer } = this.validateSocket(ws);
+          connected.set(peer.peer_id, peer);
+        }
+      } catch {
+        /* Stale sockets are never counted as participants. */
+      }
+    }
+    const receiver = [...connected.values()].find((peer) => peer.role === 'receiver');
+    return connected.has(room.owner_peer_id) && receiver
+      ? { ownerPeerId: room.owner_peer_id, receiverPeerId: receiver.peer_id }
+      : null;
+  }
+  private async advanceConnection(request: Request, peerId: string): Promise<Response> {
+    const parsed = connectionRequestSchema.safeParse(await readJson(request));
+    if (!parsed.success) throw new HttpError(400, 'INVALID_MESSAGE', 'Invalid connection request.');
+    let result;
+    this.ctx.storage.transactionSync(() => {
+      const room = this.active();
+      if (this.peer(peerId)?.role !== 'owner')
+        throw new HttpError(403, 'FORBIDDEN', 'Only the owner may advance the connection epoch.');
+      if (room.epoch !== parsed.data.expectedEpoch || room.epoch === MAX_UINT32)
+        throw new HttpError(
+          409,
+          'STALE_EPOCH',
+          'Connection epoch changed. Refresh before retrying.',
+        );
+      const pair = this.connectedPair();
+      if (!pair)
+        throw new HttpError(
+          409,
+          'PEER_UNAVAILABLE',
+          'Both approved signaling peers must be online.',
+          true,
+        );
+      if (room.epoch === 0 && parsed.data.mode !== 'new-connection')
+        throw new HttpError(409, 'CONFLICT', 'The first connection must be new.');
+      this.ctx.storage.sql.exec('UPDATE room_meta SET epoch = epoch + 1, revision = revision + 1');
+      this.ctx.storage.sql.exec('DELETE FROM ticket_nonces');
+      result = { ...pair, epoch: room.epoch + 1, mode: parsed.data.mode };
+    });
+    const room = this.room();
+    for (const ws of this.ctx.getWebSockets()) {
+      const attachment = ws.deserializeAttachment() as Attachment | null;
+      if (attachment) {
+        ws.serializeAttachment({ ...attachment, epoch: room.epoch, revision: room.revision });
+        this.sendEvent(ws, 'CONNECTION_EPOCH', result);
+      }
+    }
+    return Response.json(result);
   }
   private refreshRevision(): void {
     const room = this.room();
@@ -439,7 +515,15 @@ export class SessionRoom extends DurableObject<Env> {
   }
   private sendEvent(
     ws: WebSocket,
-    type: 'JOINED' | 'PEER_PENDING' | 'PEER_APPROVED' | 'PEER_REJECTED' | 'ROOM_CLOSED' | 'ERROR',
+    type:
+      | 'PEER_READY'
+      | 'CONNECTION_EPOCH'
+      | 'JOINED'
+      | 'PEER_PENDING'
+      | 'PEER_APPROVED'
+      | 'PEER_REJECTED'
+      | 'ROOM_CLOSED'
+      | 'ERROR',
     payload: unknown,
   ): void {
     const room = this.room();

@@ -34,7 +34,7 @@ for (const path of new Set(candidates)) {
     failures.push(`${path}: possible embedded secret`);
   if (
     basename(path) === '.env.example' &&
-    /^\s*[A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|API_KEY|PRIVATE_KEY)[A-Z0-9_]*\s*=\s*[^\s#]+/m.test(
+    /^[ \t]*[A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|API_KEY|PRIVATE_KEY)[A-Z0-9_]*[ \t]*=[ \t]*[^\s#]+/m.test(
       text,
     )
   )

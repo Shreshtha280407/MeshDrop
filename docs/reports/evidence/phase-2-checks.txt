@@ -1,0 +1,425 @@
+
+> meshdrop@0.0.0 check /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> pnpm -r typecheck && pnpm typecheck && pnpm lint && pnpm check:secrets && pnpm test:unit && pnpm test:integration && pnpm test:faults && pnpm build && pnpm test:e2e
+
+Scope: 10 of 11 workspace projects
+packages/network-intelligence typecheck$ tsc --noEmit
+packages/protocol typecheck$ tsc --noEmit
+packages/recovery typecheck$ tsc --noEmit
+packages/recovery typecheck: Done
+packages/network-intelligence typecheck: Done
+packages/protocol typecheck: Done
+packages/shared-types typecheck$ tsc --noEmit
+packages/transfer-core typecheck$ tsc --noEmit
+packages/shared-types typecheck: Done
+packages/transfer-core typecheck: Done
+apps/signaling typecheck$ tsc --noEmit
+packages/peer-connection typecheck$ tsc --noEmit
+packages/platform typecheck$ tsc --noEmit
+packages/storage typecheck$ tsc --noEmit
+packages/storage typecheck: Done
+packages/platform typecheck: Done
+packages/peer-connection typecheck: Done
+apps/signaling typecheck: Done
+apps/web typecheck$ tsc --noEmit
+apps/web typecheck: Done
+
+> meshdrop@0.0.0 typecheck /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> tsc --noEmit
+
+
+> meshdrop@0.0.0 lint /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> eslint . && prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> meshdrop@0.0.0 check:secrets /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> node scripts/check-secrets.mjs
+
+Secret checks passed: environment files are ignored; no matching embedded credentials found.
+
+> meshdrop@0.0.0 test:unit /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> vitest run --project unit --reporter verbose
+
+
+ RUN  v4.0.18 /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > created + REQUEST_JOIN -> pending 1ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > created + APPROVE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > created + REJECT -> created 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > created + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > created + EXPIRE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > created + REVOKE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > pending + REQUEST_JOIN -> pending 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > pending + APPROVE -> approved 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > pending + REJECT -> created 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > pending + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > pending + EXPIRE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > pending + REVOKE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > approved + REQUEST_JOIN -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > approved + APPROVE -> approved 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > approved + REJECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > approved + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > approved + EXPIRE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > approved + REVOKE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > closed + REQUEST_JOIN -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > closed + APPROVE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > closed + REJECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > closed + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > closed + EXPIRE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > room matrix > closed + REVOKE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > idle + BEGIN_SIGNALING -> signaling 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > idle + CHECK_CONNECTIVITY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > idle + CONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > idle + DISCONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > idle + RETRY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > idle + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > signaling + BEGIN_SIGNALING -> signaling 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > signaling + CHECK_CONNECTIVITY -> checking 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > signaling + CONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > signaling + DISCONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > signaling + RETRY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > signaling + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > checking + BEGIN_SIGNALING -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > checking + CHECK_CONNECTIVITY -> checking 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > checking + CONNECT -> connected 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > checking + DISCONNECT -> reconnecting 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > checking + RETRY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > checking + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > connected + BEGIN_SIGNALING -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > connected + CHECK_CONNECTIVITY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > connected + CONNECT -> connected 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > connected + DISCONNECT -> reconnecting 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > connected + RETRY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > connected + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > reconnecting + BEGIN_SIGNALING -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > reconnecting + CHECK_CONNECTIVITY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > reconnecting + CONNECT -> connected 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > reconnecting + DISCONNECT -> reconnecting 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > reconnecting + RETRY -> signaling 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > reconnecting + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > closed + BEGIN_SIGNALING -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > closed + CHECK_CONNECTIVITY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > closed + CONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > closed + DISCONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > closed + RETRY -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > peer matrix > closed + CLOSE -> closed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + PREPARED -> negotiating 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + ACCEPT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + PAUSE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + RESUME -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + DISCONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + RECONNECTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + ALL_BLOCKS_COMMITTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + VERIFY_SUCCESS -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + FAIL -> failed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > preparing + CANCEL -> cancelled 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + PREPARED -> negotiating 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + ACCEPT -> active 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + PAUSE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + RESUME -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + DISCONNECT -> reconnecting 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + RECONNECTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + ALL_BLOCKS_COMMITTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + VERIFY_SUCCESS -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + FAIL -> failed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > negotiating + CANCEL -> cancelled 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + PREPARED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + ACCEPT -> active 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + PAUSE -> paused 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + RESUME -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + DISCONNECT -> reconnecting 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + RECONNECTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + ALL_BLOCKS_COMMITTED -> verifying 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + VERIFY_SUCCESS -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + FAIL -> failed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > active + CANCEL -> cancelled 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + PREPARED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + ACCEPT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + PAUSE -> paused 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + RESUME -> active 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + DISCONNECT -> reconnecting 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + RECONNECTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + ALL_BLOCKS_COMMITTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + VERIFY_SUCCESS -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + FAIL -> failed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > paused + CANCEL -> cancelled 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + PREPARED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + ACCEPT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + PAUSE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + RESUME -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + DISCONNECT -> reconnecting 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + RECONNECTED -> negotiating 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + ALL_BLOCKS_COMMITTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + VERIFY_SUCCESS -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + FAIL -> failed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > reconnecting + CANCEL -> cancelled 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + PREPARED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + ACCEPT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + PAUSE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + RESUME -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + DISCONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + RECONNECTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + ALL_BLOCKS_COMMITTED -> verifying 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + VERIFY_SUCCESS -> complete 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + FAIL -> failed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > verifying + CANCEL -> cancelled 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + PREPARED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + ACCEPT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + PAUSE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + RESUME -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + DISCONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + RECONNECTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + ALL_BLOCKS_COMMITTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + VERIFY_SUCCESS -> complete 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + FAIL -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > complete + CANCEL -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + PREPARED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + ACCEPT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + PAUSE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + RESUME -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + DISCONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + RECONNECTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + ALL_BLOCKS_COMMITTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + VERIFY_SUCCESS -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + FAIL -> failed 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > failed + CANCEL -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + PREPARED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + ACCEPT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + PAUSE -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + RESUME -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + DISCONNECT -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + RECONNECTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + ALL_BLOCKS_COMMITTED -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + VERIFY_SUCCESS -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + FAIL -> REJECT 0ms
+ ✓ |unit| tests/unit/states.spec.ts > transfer matrix > cancelled + CANCEL -> cancelled 0ms
+ ✓ |unit| tests/unit/states.spec.ts > requires complete receiver commitment before verification 1ms
+ ✓ |unit| tests/unit/states.spec.ts > requires verified integrity AND finalized storage at runtime 0ms
+ ✓ |unit| tests/unit/states.spec.ts > has deterministic idempotent cancellation and terminal states 0ms
+ ✓ |unit| tests/unit/states.spec.ts > rejects inherited object keys even when a runtime caller bypasses TypeScript 0ms
+ ✓ |unit| tests/unit/states.spec.ts > cannot skip negotiation, commitment, or verification on the happy path 0ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > creates non-extractable signing keys and authenticates a DTLS-bound hello 7ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > rejects a mismatched roomId binding 2ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > rejects a mismatched peerId binding 1ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > rejects a mismatched epoch binding 1ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > rejects a mismatched role binding 1ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > rejects a mismatched fingerprint binding 1ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > detects key substitution and modified capabilities 2ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > derives the same 64-bit comparison code at both peers and changes it for each epoch 2ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > requires an independent confirmation and exact comparison, never automatic verification 0ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ephemeral peer identity and independent comparison > rejects ambiguous, missing or unsupported DTLS fingerprints 1ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ICE and capability limits > queues candidates until remote SDP is ready and bounds the queue 0ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ICE and capability limits > negotiates frame bounds and honest storage/resume capabilities 1ms
+ ✓ |unit| tests/unit/pairing.spec.ts > ICE and capability limits > reports selected path categories without candidate addresses 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > round-trips the golden fixture without changing fields 5ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing version 2ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing type 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing roomId 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing peerId 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing messageId 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing epoch 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing seq 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing sentAt 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects missing payload 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects unsupported version 0 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects unsupported version 2 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects unsupported version 1 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects unsupported version null 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects invalid UUID in roomId 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects invalid UUID in peerId 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects invalid UUID in messageId 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects invalid epoch and sequence -1 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects invalid epoch and sequence 0.5 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects invalid epoch and sequence 4294967296 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects invalid epoch and sequence NaN 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects invalid epoch and sequence Infinity 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects malformed input not-json 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects malformed input null 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects malformed input [] 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects malformed input {} 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects unknown fields, unknown events and client-supplied roles 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > caps control messages by UTF-8 bytes before JSON parsing 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > never echoes sensitive malformed input in its error 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed JOINED payload 1ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed PEER_APPROVED payload 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed PEER_REJECTED payload 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed SDP_OFFER payload 1ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed SDP_ANSWER payload 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed ICE_CANDIDATE payload 1ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed RENEGOTIATE payload 1ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed ROOM_CLOSED payload 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > accepts typed ERROR payload 1ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > enforces SDP_OFFER byte caps 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > enforces SDP_ANSWER byte caps 0ms
+ ✓ |unit| tests/unit/schemas.spec.ts > protocol v1 signaling > rejects oversized ICE and mismatched payload shapes 1ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > matches independently specified golden bytes in both directions 2ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > includes the 64-byte header in the 16 KiB ceiling 1ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > respects negotiated smaller frame caps 1ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > rejects unsupported header field at byte 0 0ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > rejects unsupported header field at byte 4 0ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > rejects unsupported header field at byte 5 0ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > rejects unsupported header field at byte 6 0ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > rejects unsupported header field at byte 60 0ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > rejects truncated frames, wrong lengths and trailing bytes 0ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > rejects empty payloads, non-UUID ids and invalid uint32 fields 1ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > rejects fragments crossing logical block boundaries 0ms
+ ✓ |unit| tests/unit/frames.spec.ts > binary data framing v1 > handles nonzero view offsets and returns independent payload bytes 0ms
+ ✓ |unit| tests/unit/session-contracts.spec.ts > requires a peer capability and UUID, rejecting client-selected roles 3ms
+ ✓ |unit| tests/unit/session-contracts.spec.ts > accepts only approve/reject decisions with a candidate identifier 1ms
+ ✓ |unit| tests/unit/session-contracts.spec.ts > rejects credentials in a public session status response 1ms
+ ✓ |unit| tests/unit/session-contracts.spec.ts > rejects malformed capability shape xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 0ms
+ ✓ |unit| tests/unit/session-contracts.spec.ts > rejects malformed capability shape xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 0ms
+ ✓ |unit| tests/unit/session-contracts.spec.ts > rejects malformed capability shape aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa+ 0ms
+ ✓ |unit| tests/unit/session-contracts.spec.ts > rejects malformed capability shape token=private 0ms
+ ✓ |unit| tests/unit/demo.spec.ts > drives a synthetic session through schema-valid room messages and lifecycle states 6ms
+ ✓ |unit| tests/unit/demo.spec.ts > rejects premature approval and malformed messages in the demonstration 2ms
+
+ Test Files  6 passed (6)
+      Tests  230 passed (230)
+   Start at  20:05:15
+   Duration  640ms (transform 192ms, setup 0ms, import 591ms, tests 72ms, environment 1ms)
+
+
+> meshdrop@0.0.0 test:integration /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> vitest run --project integration
+
+
+ RUN  v4.0.18 /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+
+ ✓ |integration| tests/integration/peer-signaling.spec.ts (6 tests) 1067ms
+ ✓ |integration| tests/integration/worker.spec.ts (16 tests) 517ms
+ ✓ |integration| tests/integration/session-room.spec.ts (17 tests) 4154ms
+     ✓ restores approved membership and consumed tickets after a full runtime restart  353ms
+     ✓ replaces stale sockets and revocation closes live peers and invalidates tickets  359ms
+     ✓ runs real expiry alarms, closes sockets, and purges the tombstone  2189ms
+
+ Test Files  3 passed (3)
+      Tests  39 passed (39)
+   Start at  20:05:16
+   Duration  4.79s (transform 342ms, setup 0ms, import 1.43s, tests 5.74s, environment 0ms)
+
+
+> meshdrop@0.0.0 test:faults /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> vitest run --project faults
+
+
+ RUN  v4.0.18 /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+
+ ✓ |faults| tests/faults/lifecycle.spec.ts (8 tests) 4ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  20:05:22
+   Duration  232ms (transform 68ms, setup 0ms, import 132ms, tests 4ms, environment 0ms)
+
+
+> meshdrop@0.0.0 build /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> pnpm -r build
+
+Scope: 10 of 11 workspace projects
+packages/network-intelligence build$ tsc --noEmit
+packages/protocol build$ tsc --noEmit
+packages/recovery build$ tsc --noEmit
+packages/recovery build: Done
+packages/network-intelligence build: Done
+packages/protocol build: Done
+packages/shared-types build$ tsc --noEmit
+packages/transfer-core build$ tsc --noEmit
+packages/transfer-core build: Done
+packages/shared-types build: Done
+apps/signaling build$ wrangler deploy --dry-run --outdir dist
+packages/peer-connection build$ tsc --noEmit
+packages/platform build$ tsc --noEmit
+packages/storage build$ tsc --noEmit
+packages/platform build: Done
+packages/storage build: Done
+packages/peer-connection build: Done
+apps/signaling build:  ⛅️ wrangler 4.151.0
+apps/signaling build: ────────────────────
+apps/signaling build: Total Upload: 819.91 KiB / gzip: 130.69 KiB
+apps/signaling build: Your Worker has access to the following bindings:
+apps/signaling build: Binding                                                                     Resource
+apps/signaling build: env.SESSION_ROOMS (SessionRoom)                                             Durable Object
+apps/signaling build: env.CREATE_LIMITER (30 requests/60s)                                        Rate Limit
+apps/signaling build: env.REQUEST_LIMITER (300 requests/60s)                                      Rate Limit
+apps/signaling build: env.STUN_URLS ("stun:stun.cloudflare.com:3478")                             Environment Variable
+apps/signaling build: env.ALLOWED_ORIGINS ("http://127.0.0.1:5173,http://localhos...")            Environment Variable
+apps/signaling build: env.ROOM_TTL_SECONDS ("900")                                                Environment Variable
+apps/signaling build: env.INVITE_TTL_SECONDS ("300")                                              Environment Variable
+apps/signaling build: env.WS_TICKET_TTL_SECONDS ("30")                                            Environment Variable
+apps/signaling build: --dry-run: exiting now.
+apps/signaling build: Done
+apps/web build$ tsc --noEmit && vite build
+apps/web build: vite v7.3.1 building client environment for production...
+apps/web build: transforming...
+apps/web build: ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+apps/web build: "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+apps/web build: in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+apps/web build: ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+apps/web build: "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+apps/web build:  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+apps/web build:  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+apps/web build: in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+apps/web build: ✓ 140 modules transformed.
+apps/web build: rendering chunks...
+apps/web build: computing gzip size...
+apps/web build: dist/index.html                   0.76 kB │ gzip:   0.42 kB
+apps/web build: dist/assets/index-CXWvEGih.css    6.98 kB │ gzip:   2.27 kB
+apps/web build: dist/assets/index-DaLaw8Zd.js   365.58 kB │ gzip: 110.41 kB
+apps/web build: ✓ built in 1.20s
+apps/web build: Done
+
+> meshdrop@0.0.0 test:e2e /tmp/meshdrop-p2-clean-wh5q4my3/MeshDrop
+> playwright test
+
+[WebServer] (node:1718316) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:1719262) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:1719304) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 22 tests using 2 workers
+
+(node:1719511) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1719510) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › tests/e2e/cross-browser.spec.ts:9:3 › Chromium pairs with WebKit and exchanges signed ping/pong (3.5s)
+  ✓   2 [chromium] › tests/e2e/cross-browser.spec.ts:9:3 › Chromium pairs with Firefox and exchanges signed ping/pong (4.9s)
+  ✓   3 [chromium] › tests/e2e/peer-connect.spec.ts:6:1 › signed peer hello, independent comparison, epoch restart and fresh connection (3.6s)
+  ✓   4 [chromium] › tests/e2e/peer-connect.spec.ts:78:1 › a mismatched independently entered code closes the transport and stays unverified (2.8s)
+  ✓   5 [chromium] › tests/e2e/peer-connect.spec.ts:112:1 › an unanswered real peer connection times out and closes cleanly (1.1s)
+  ✓   6 [chromium] › tests/e2e/peer-connect.spec.ts:154:1 › replayed signed data-channel pings fail closed (2.8s)
+  ✓   7 [chromium] › tests/e2e/session-room.spec.ts:6:1 › server closes a revoked socket even when the browser does not help (3.3s)
+  ✓   8 [chromium] › tests/e2e/session-room.spec.ts:24:1 › owner approval gates real signaling and a third browser is blocked (3.4s)
+  ✓   9 [chromium] › tests/e2e/session-room.spec.ts:85:1 › receiver rejection is visible without socket admission (2.7s)
+  ✓  10 [chromium] › tests/e2e/session-room.spec.ts:108:1 › live shell fits the viewport and rejects an invalid invitation (434ms)
+(node:1722458) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1722485) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  12 [chromium] › tests/e2e/foundation.spec.ts:37:1 › shell reports observed capabilities and fits the viewport (589ms)
+(node:1722881) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  11 [chromium] › tests/e2e/foundation.spec.ts:3:1 › two isolated browser contexts drive the same validated synthetic lifecycle (1.5s)
+(node:1723062) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  14 [mobile-chromium] › tests/e2e/foundation.spec.ts:37:1 › shell reports observed capabilities and fits the viewport (803ms)
+  ✓  13 [mobile-chromium] › tests/e2e/foundation.spec.ts:3:1 › two isolated browser contexts drive the same validated synthetic lifecycle (1.5s)
+(node:1723341) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1723348) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  16 [mobile-chromium] › tests/e2e/peer-connect.spec.ts:78:1 › a mismatched independently entered code closes the transport and stays unverified (3.1s)
+  ✓  15 [mobile-chromium] › tests/e2e/peer-connect.spec.ts:6:1 › signed peer hello, independent comparison, epoch restart and fresh connection (4.1s)
+  ✓  17 [mobile-chromium] › tests/e2e/peer-connect.spec.ts:112:1 › an unanswered real peer connection times out and closes cleanly (1.1s)
+  ✓  18 [mobile-chromium] › tests/e2e/peer-connect.spec.ts:154:1 › replayed signed data-channel pings fail closed (3.0s)
+  ✓  19 [mobile-chromium] › tests/e2e/session-room.spec.ts:6:1 › server closes a revoked socket even when the browser does not help (3.5s)
+  ✓  21 [mobile-chromium] › tests/e2e/session-room.spec.ts:85:1 › receiver rejection is visible without socket admission (2.7s)
+  ✓  20 [mobile-chromium] › tests/e2e/session-room.spec.ts:24:1 › owner approval gates real signaling and a third browser is blocked (4.0s)
+  ✓  22 [mobile-chromium] › tests/e2e/session-room.spec.ts:108:1 › live shell fits the viewport and rejects an invalid invitation (601ms)
+
+  22 passed (35.6s)

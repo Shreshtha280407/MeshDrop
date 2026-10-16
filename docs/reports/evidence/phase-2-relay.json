@@ -1,0 +1,32 @@
+{
+  "kind": "forced-local-turn",
+  "browser": "156.0.8078.4",
+  "startedAt": "2026-10-16T14:42:50.614Z",
+  "scope": "Two real browser peer connections use iceTransportPolicy=relay; actual Worker/SQLite authorization and SDP/ICE forwarding; isolated coturn on loopback. This does not simulate a restrictive external NAT.",
+  "peers": [
+    {
+      "path": {
+        "kind": "relay",
+        "localType": "relay",
+        "remoteType": "relay",
+        "protocol": "udp"
+      },
+      "ready": true,
+      "pings": 1,
+      "pongs": 1
+    },
+    {
+      "path": {
+        "kind": "relay",
+        "localType": "relay",
+        "remoteType": "relay",
+        "protocol": "udp"
+      },
+      "ready": true,
+      "pings": 1,
+      "pongs": 1
+    }
+  ],
+  "pass": true,
+  "completedAt": "2026-10-16T14:42:52.412Z"
+}

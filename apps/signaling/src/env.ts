@@ -3,6 +3,10 @@ export interface Env {
   REQUEST_LIMITER: RateLimit;
   CREATE_LIMITER: RateLimit;
   ALLOWED_ORIGINS: string;
+  STUN_URLS?: string;
+  TURN_URLS?: string;
+  TURN_SHARED_SECRET?: string;
+  TURN_TTL_SECONDS?: string;
   ROOM_TTL_SECONDS?: string;
   INVITE_TTL_SECONDS?: string;
   WS_TICKET_TTL_SECONDS?: string;

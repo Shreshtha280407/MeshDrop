@@ -6,6 +6,7 @@
   "workers_dev": false,
   "send_metrics": false,
   "vars": {
+    "STUN_URLS": "stun:stun.cloudflare.com:3478",
     "ALLOWED_ORIGINS": "http://127.0.0.1:5173,http://localhost:5173",
     "ROOM_TTL_SECONDS": "900",
     "INVITE_TTL_SECONDS": "300",

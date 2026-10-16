@@ -1,5 +1,7 @@
 import {
   apiErrorSchema,
+  connectionEpochSchema,
+  iceConfigurationSchema,
   capabilitySchema,
   parseSignalingMessage,
   serializeSignalingMessage,
@@ -8,7 +10,9 @@ import {
   socketTicketSchema,
   uuidSchema,
 } from '@meshdrop/protocol';
-import type { SessionStatus } from '@meshdrop/protocol';
+import { INITIAL_PEER, PeerSession } from '@meshdrop/peer-connection';
+import type { PeerSignal, PeerView } from '@meshdrop/peer-connection';
+import type { SessionStatus, SignalingEnvelope } from '@meshdrop/protocol';
 
 interface Credentials {
   roomId: string;
@@ -22,7 +26,7 @@ export interface RoomView {
   busy: boolean;
   error: string;
   events: readonly string[];
-  receivedSignals: number;
+  peer: PeerView;
 }
 const INITIAL: RoomView = {
   status: null,
@@ -31,7 +35,7 @@ const INITIAL: RoomView = {
   busy: false,
   error: '',
   events: [],
-  receivedSignals: 0,
+  peer: INITIAL_PEER,
 };
 export function parseInvitation(value: string): { roomId: string; capability: string } {
   const url = new URL(value);
@@ -55,7 +59,7 @@ function newCapability(): string {
     .replaceAll('/', '_')
     .replaceAll('=', '');
 }
-/** P1 admission adapter. Credentials stay in memory, never in web storage or logs. */
+/** Admission and browser peer-session adapter. Credentials stay in memory, never in web storage or logs. */
 export class RoomClient {
   private view: RoomView = INITIAL;
   private readonly listeners = new Set<() => void>();
@@ -65,6 +69,9 @@ export class RoomClient {
   private polling: ReturnType<typeof setInterval> | undefined;
   private heartbeat: ReturnType<typeof setInterval> | undefined;
   private nextSeq = 0;
+  private peerSession: PeerSession | null = null;
+  private signalQueue: Promise<void> = Promise.resolve();
+  private startingEpoch = false;
   private connecting = false;
   private refreshInFlight = false;
   private generation = 0;
@@ -132,7 +139,7 @@ export class RoomClient {
         capability: room.ownerCapability,
       };
       const invitation = `${window.location.origin}/#room=${room.roomId}&invite=${room.inviteCapability}`;
-      this.update({ invitation, events: [], receivedSignals: 0 });
+      this.update({ invitation, events: [], peer: INITIAL_PEER });
       this.event('Room created. Waiting for a receiver request.');
       await this.refresh();
       this.startPolling();
@@ -161,7 +168,7 @@ export class RoomClient {
         }),
       );
       this.credentials = { roomId: status.roomId, peerId, capability: peerCapability };
-      this.update({ status, events: [], invitation: '', receivedSignals: 0 });
+      this.update({ status, events: [], invitation: '', peer: INITIAL_PEER });
       this.event(
         status.approval === 'approved'
           ? 'Admission already approved.'
@@ -214,6 +221,7 @@ export class RoomClient {
       if (generation !== this.generation) return;
       const approvedNow =
         this.view.status?.approval === 'pending' && status.approval === 'approved';
+      if ((this.view.status?.epoch ?? 0) > status.epoch) return;
       this.update({ status });
       if (approvedNow) {
         this.event('Owner approved admission.');
@@ -250,6 +258,9 @@ export class RoomClient {
         ),
       );
       this.nextSeq = issued.nextSeq;
+      const generation = this.generation;
+      this.closePeer();
+      this.signalQueue = Promise.resolve();
       const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const previous = this.socket;
       const socket = new WebSocket(
@@ -264,7 +275,10 @@ export class RoomClient {
           reject(new Error('Signaling connection timed out. Request a fresh connection.'));
         }, 8000);
         socket.onopen = () => {
-          if (socket !== this.socket) return;
+          if (socket !== this.socket || generation !== this.generation) {
+            socket.close();
+            return;
+          }
           clearTimeout(timer);
           this.update({ connection: 'connected', error: '' });
           this.event('Authorized signaling socket opened.');
@@ -282,6 +296,7 @@ export class RoomClient {
           clearTimeout(timer);
           if (socket !== this.socket) return;
           if (this.heartbeat) clearInterval(this.heartbeat);
+          this.closePeer();
           this.update({ connection: 'disconnected' });
           reject(new Error('Signaling connection closed.'));
         };
@@ -290,29 +305,24 @@ export class RoomClient {
             return;
           try {
             const envelope = parseSignalingMessage(event.data);
-            if (
-              envelope.roomId !== credentials.roomId ||
-              envelope.epoch !== this.view.status?.epoch
-            )
+            if (envelope.roomId !== credentials.roomId)
               throw new Error('Unexpected signaling scope.');
-            if (envelope.type === 'ERROR') {
-              this.update({ error: `${envelope.payload.code}: ${envelope.payload.message}` });
-              return;
-            }
             if (envelope.type === 'ROOM_CLOSED') {
               this.event('Room closed. Admission revoked.');
               this.markClosed();
               return;
             }
-            if (
-              ['SDP_OFFER', 'SDP_ANSWER', 'ICE_CANDIDATE', 'RENEGOTIATE'].includes(envelope.type)
-            ) {
-              this.event(`Received ${envelope.type} signaling probe from the approved peer.`);
-              this.update({ receivedSignals: this.view.receivedSignals + 1 });
-            } else if (envelope.type !== 'JOINED') {
-              this.event(envelope.type.replaceAll('_', ' '));
-              void this.refresh().catch(() => {});
-            }
+            this.signalQueue = this.signalQueue
+              .then(async () => {
+                if (socket === this.socket && generation === this.generation)
+                  await this.handleSignal(envelope);
+              })
+              .catch(() => {
+                if (generation === this.generation) {
+                  this.peerSession?.fail('Peer negotiation failed. Request a new connection.');
+                  this.update({ error: 'Peer negotiation failed. Request a new connection.' });
+                }
+              });
           } catch {
             this.update({ error: 'Invalid signaling response. Reconnect to continue.' });
             socket.close();
@@ -326,7 +336,56 @@ export class RoomClient {
       this.connecting = false;
     }
   }
-  sendProbe(): void {
+  private async handleSignal(envelope: SignalingEnvelope): Promise<void> {
+    const status = this.view.status;
+    if (!status) return;
+    if (envelope.epoch < status.epoch) return;
+    if (envelope.type === 'CONNECTION_EPOCH') {
+      const epoch = connectionEpochSchema.parse(envelope.payload);
+      if (epoch.epoch !== envelope.epoch || epoch.epoch <= (this.peerSession?.epoch ?? 0)) return;
+      this.update({ status: { ...status, epoch: epoch.epoch } });
+      const credentials = this.credentials!;
+      const configuration = iceConfigurationSchema.parse(
+        await this.api(
+          `/v1/sessions/${credentials.roomId}/ice-credentials`,
+          'POST',
+          credentials.capability,
+          {},
+        ),
+      );
+      if (!this.peerSession)
+        this.peerSession = new PeerSession({
+          roomId: credentials.roomId,
+          peerId: credentials.peerId,
+          role: status.role === 'owner' ? 'owner' : 'receiver',
+          sendSignal: (type, payload) => this.sendSignal(type, payload),
+          onChange: (peer) => this.update({ peer }),
+        });
+      this.event(`Starting connection epoch ${epoch.epoch}. Compare the new pairing code.`);
+      await this.peerSession.start(epoch, configuration);
+    } else if (envelope.epoch !== status.epoch) {
+      throw new Error('Unexpected signaling epoch.');
+    } else if (envelope.type === 'ERROR') {
+      this.update({ error: `${envelope.payload.code}: ${envelope.payload.message}` });
+      if (envelope.payload.code === 'PEER_UNAVAILABLE') this.closePeer();
+    } else if (envelope.type === 'PEER_READY') {
+      if (status.role === 'owner' && !this.peerSession)
+        void this.requestConnection('new-connection');
+    } else if (envelope.type === 'RENEGOTIATE') {
+      if (status.role === 'owner') void this.requestConnection(envelope.payload.reason);
+    } else if (
+      envelope.type === 'SDP_OFFER' ||
+      envelope.type === 'SDP_ANSWER' ||
+      envelope.type === 'ICE_CANDIDATE'
+    ) {
+      if (!this.peerSession) throw new Error('Connection epoch has not been admitted.');
+      await this.peerSession.receiveSignal(envelope);
+    } else if (envelope.type !== 'JOINED') {
+      this.event(envelope.type.replaceAll('_', ' '));
+      void this.refresh().catch(() => {});
+    }
+  }
+  private sendSignal(type: PeerSignal['type'], payload: PeerSignal['payload']): void {
     const credentials = this.credentials;
     const status = this.view.status;
     if (
@@ -335,21 +394,59 @@ export class RoomClient {
       this.socket?.readyState !== WebSocket.OPEN ||
       status.state !== 'approved'
     )
-      return;
+      throw new Error('Authorized signaling is unavailable.');
     this.socket.send(
       serializeSignalingMessage({
         version: 1,
-        type: status.role === 'owner' ? 'SDP_OFFER' : 'SDP_ANSWER',
+        type,
         roomId: credentials.roomId,
         peerId: credentials.peerId,
         messageId: crypto.randomUUID(),
         epoch: status.epoch,
         seq: this.nextSeq++,
         sentAt: new Date().toISOString(),
-        payload: { sdp: 'MeshDrop P1 signaling probe. No WebRTC negotiation or file content.' },
-      }),
+        payload,
+      } as SignalingEnvelope),
     );
-    this.event('Sent signaling probe; delivery is visible on the other device.');
+  }
+  async requestConnection(mode: 'ice-restart' | 'new-connection'): Promise<void> {
+    if (this.startingEpoch) return;
+    this.startingEpoch = true;
+    try {
+      const credentials = this.credentials;
+      const status = this.view.status;
+      if (!credentials || !status || status.state !== 'approved') return;
+      if (status.role === 'owner') {
+        await this.api(
+          `/v1/sessions/${credentials.roomId}/connection`,
+          'POST',
+          credentials.capability,
+          { expectedEpoch: status.epoch, mode },
+        );
+      } else this.sendSignal('RENEGOTIATE', { reason: mode });
+      this.update({ error: '' });
+    } catch (error) {
+      this.update({ error: error instanceof Error ? error.message : 'Connection request failed.' });
+    } finally {
+      this.startingEpoch = false;
+    }
+  }
+  async sendPing(): Promise<void> {
+    try {
+      await this.peerSession?.ping();
+    } catch (error) {
+      this.update({ error: error instanceof Error ? error.message : 'Ping failed.' });
+    }
+  }
+  confirmComparison(entered: string, independentConfirmation: boolean): void {
+    this.peerSession?.confirmComparison(entered, independentConfirmation);
+  }
+  rejectComparison(): void {
+    this.peerSession?.rejectComparison();
+  }
+  private closePeer(): void {
+    this.peerSession?.close();
+    this.peerSession = null;
   }
   async closeRoom(): Promise<void> {
     return this.action(async () => {
@@ -361,6 +458,7 @@ export class RoomClient {
   }
   private markClosed(): void {
     this.generation++;
+    this.closePeer();
     if (this.polling) clearInterval(this.polling);
     if (this.heartbeat) clearInterval(this.heartbeat);
     this.socket?.close();
@@ -380,6 +478,7 @@ export class RoomClient {
   dispose(): void {
     this.generation++;
     this.refreshInFlight = false;
+    this.closePeer();
     if (this.polling) clearInterval(this.polling);
     if (this.heartbeat) clearInterval(this.heartbeat);
     this.socket?.close();
