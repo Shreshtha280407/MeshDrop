@@ -1,0 +1,17 @@
+{
+  "receiptId": "7a738c15-d96d-4cf8-b453-77c6604a2296",
+  "transferId": "70dd7b1c-26b1-4740-a5c5-652846c99e0d",
+  "manifestDigest": "d6157c7f2689722099ff74074f82ec3eb20321dee847cd73324f8b66b13c9ea7",
+  "epoch": 1,
+  "totalBytes": 104857600,
+  "files": [
+    {
+      "fileId": "ae1308af-c4e7-4742-ab39-d8ad504aa4d2",
+      "path": "fixture-104857600.bin",
+      "size": 104857600,
+      "sha256": "a52f642d86f63dc9ebff89bbb8f887fdac5179eb5e76ee6df594c4092e8a8b3c"
+    }
+  ],
+  "destination": "browser-temporary",
+  "completedAt": "2026-10-16T17:15:03.286Z"
+}

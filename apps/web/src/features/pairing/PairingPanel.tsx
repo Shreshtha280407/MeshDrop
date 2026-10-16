@@ -6,7 +6,11 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
   const [independent, setIndependent] = useState(false);
   const peer = view.peer;
   return (
-    <section className="demo-panel signaling-panel" aria-labelledby="peer-title">
+    <section
+      className="demo-panel signaling-panel"
+      data-receive-queue-peak={peer.peakReceiveQueueBytes}
+      aria-labelledby="peer-title"
+    >
       <div className="panel-heading">
         <div>
           <p className="eyebrow">DEVICE CONNECTION</p>
@@ -18,7 +22,7 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
       </div>
       <p className="demo-note">
         Both devices must stay open. After approval, the encrypted connection starts automatically.
-        File transfer arrives in the next phase.
+        Confirm the code on both devices to enable file offers.
       </p>
       <div className="state-grid">
         <div className="state-card">
@@ -87,6 +91,9 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
           </details>
         </div>
       )}
+      <p className="muted" data-testid="remote-verification">
+        Other device comparison: {peer.remoteVerified ? 'confirmed' : 'waiting'}
+      </p>
       <div className="actions">
         <button
           disabled={!peer.ready}

@@ -14,7 +14,7 @@ describe('P1 Worker routing and HTTP boundary', () => {
   });
   it('reports the control plane without claiming file transfer', async () => {
     const response = await worker.dispatchFetch(`${API}/health`);
-    expect(await response.json()).toMatchObject({ phase: 'P2', sessionsAvailable: true });
+    expect(await response.json()).toMatchObject({ phase: 'P3', sessionsAvailable: true });
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(response.headers.get('X-Request-Id')).toMatch(/^[a-f0-9-]{36}$/);
   });

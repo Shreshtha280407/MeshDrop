@@ -2,6 +2,8 @@
 
 P2 implements six connectivity tickets from the supplied phase plan. Signaling remains the P1 authorized Worker/SQLite room plane; user-file transfer belongs to P3. Wire version remains 1, with additive server lifecycle variants.
 
+This is the P2 baseline. [P3](transfer-p3.md) extends it with signed remote pairing confirmation, usable-OPFS checks, file controls and type-2 binary frames. Its temporary storage mode supersedes the memory-only P2 capability described below; persistent recovery remains unavailable.
+
 ## Connection epochs and signaling
 
 Both approved peers must have current signaling sockets. Admission broadcasts `PEER_READY { ownerPeerId, receiverPeerId }`. The owner calls `POST /v1/sessions/:id/connection` with its Bearer capability and strict `{ expectedEpoch, mode }`, where mode is `new-connection` or `ice-restart`. SQLite compares and advances the current uint32 epoch atomically; the initial epoch must use a new connection. A pending peer, receiver, expired room, stale expected epoch or missing participant cannot advance it. A receiver requests reconnection by forwarding `RENEGOTIATE`; the owner performs the authorized compare-and-swap.

@@ -1,0 +1,1228 @@
+{
+  "phase": "P3",
+  "startedAt": "2026-10-16T17:14:45.574Z",
+  "pass": true,
+  "cases": [
+    {
+      "bytes": 104857600,
+      "expectedSha256": "a52f642d86f63dc9ebff89bbb8f887fdac5179eb5e76ee6df594c4092e8a8b3c",
+      "baselineJsBytes": 25088317,
+      "peakJsBytes": 161746599,
+      "peakWorkerBytes": 111279952,
+      "workerSamples": 49,
+      "progress": [
+        {
+          "elapsedMs": 20,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 526,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 1030,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 1535,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 2045,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 2569,
+          "committedBytes": 4194304
+        },
+        {
+          "elapsedMs": 3075,
+          "committedBytes": 9437184
+        },
+        {
+          "elapsedMs": 3588,
+          "committedBytes": 15728640
+        },
+        {
+          "elapsedMs": 4118,
+          "committedBytes": 22020096
+        },
+        {
+          "elapsedMs": 4622,
+          "committedBytes": 26214400
+        },
+        {
+          "elapsedMs": 5132,
+          "committedBytes": 32505856
+        },
+        {
+          "elapsedMs": 5636,
+          "committedBytes": 37748736
+        },
+        {
+          "elapsedMs": 6141,
+          "committedBytes": 44040192
+        },
+        {
+          "elapsedMs": 6647,
+          "committedBytes": 49283072
+        },
+        {
+          "elapsedMs": 7153,
+          "committedBytes": 55574528
+        },
+        {
+          "elapsedMs": 7688,
+          "committedBytes": 60817408
+        },
+        {
+          "elapsedMs": 8193,
+          "committedBytes": 66060288
+        },
+        {
+          "elapsedMs": 8699,
+          "committedBytes": 72351744
+        },
+        {
+          "elapsedMs": 9203,
+          "committedBytes": 77594624
+        },
+        {
+          "elapsedMs": 9712,
+          "committedBytes": 82837504
+        },
+        {
+          "elapsedMs": 10248,
+          "committedBytes": 87031808
+        },
+        {
+          "elapsedMs": 10757,
+          "committedBytes": 91226112
+        },
+        {
+          "elapsedMs": 11276,
+          "committedBytes": 97517568
+        },
+        {
+          "elapsedMs": 11793,
+          "committedBytes": 101711872
+        },
+        {
+          "elapsedMs": 12298,
+          "committedBytes": 104857600
+        },
+        {
+          "elapsedMs": 12801,
+          "committedBytes": 104857600
+        },
+        {
+          "elapsedMs": 13305,
+          "committedBytes": 104857600
+        }
+      ],
+      "elapsedMs": 13805,
+      "downloadedSha256": "a52f642d86f63dc9ebff89bbb8f887fdac5179eb5e76ee6df594c4092e8a8b3c",
+      "senderPeakBufferedBytes": 524144,
+      "senderPeakBlockBytes": 1048576,
+      "receiverPeakBlockBytes": 1048576,
+      "receiverPeakQueueBytes": 16384,
+      "jsGrowthBytes": 136658282,
+      "intermediateProgressObserved": true,
+      "pass": true
+    },
+    {
+      "bytes": 1073741824,
+      "expectedSha256": "bafa6507e9866ce146f467b7143686d3ffb3022ae1396881fb0dff0d24493bca",
+      "baselineJsBytes": 47577215,
+      "peakJsBytes": 231539177,
+      "peakWorkerBytes": 132721426,
+      "workerSamples": 490,
+      "progress": [
+        {
+          "elapsedMs": 10,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 523,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 1030,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 1547,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 2051,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 2556,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 3060,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 3565,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 4069,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 4582,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 5087,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 5591,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 6096,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 6603,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 7108,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 7612,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 8118,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 8624,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 9128,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 9633,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 10137,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 10641,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 11147,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 11651,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 12157,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 12662,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 13166,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 13672,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 14177,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 14682,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 15187,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 15691,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 16196,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 16700,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 17203,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 17706,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 18209,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 18716,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 19220,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 19732,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 20240,
+          "committedBytes": 0
+        },
+        {
+          "elapsedMs": 20747,
+          "committedBytes": 1048576
+        },
+        {
+          "elapsedMs": 21251,
+          "committedBytes": 6291456
+        },
+        {
+          "elapsedMs": 21764,
+          "committedBytes": 11534336
+        },
+        {
+          "elapsedMs": 22274,
+          "committedBytes": 15728640
+        },
+        {
+          "elapsedMs": 22805,
+          "committedBytes": 22020096
+        },
+        {
+          "elapsedMs": 23321,
+          "committedBytes": 27262976
+        },
+        {
+          "elapsedMs": 23830,
+          "committedBytes": 31457280
+        },
+        {
+          "elapsedMs": 24335,
+          "committedBytes": 36700160
+        },
+        {
+          "elapsedMs": 24849,
+          "committedBytes": 41943040
+        },
+        {
+          "elapsedMs": 25354,
+          "committedBytes": 48234496
+        },
+        {
+          "elapsedMs": 25878,
+          "committedBytes": 53477376
+        },
+        {
+          "elapsedMs": 26402,
+          "committedBytes": 58720256
+        },
+        {
+          "elapsedMs": 26940,
+          "committedBytes": 63963136
+        },
+        {
+          "elapsedMs": 27445,
+          "committedBytes": 68157440
+        },
+        {
+          "elapsedMs": 27949,
+          "committedBytes": 74448896
+        },
+        {
+          "elapsedMs": 28453,
+          "committedBytes": 79691776
+        },
+        {
+          "elapsedMs": 28957,
+          "committedBytes": 84934656
+        },
+        {
+          "elapsedMs": 29464,
+          "committedBytes": 90177536
+        },
+        {
+          "elapsedMs": 29969,
+          "committedBytes": 96468992
+        },
+        {
+          "elapsedMs": 30491,
+          "committedBytes": 101711872
+        },
+        {
+          "elapsedMs": 31005,
+          "committedBytes": 109051904
+        },
+        {
+          "elapsedMs": 31519,
+          "committedBytes": 114294784
+        },
+        {
+          "elapsedMs": 32032,
+          "committedBytes": 119537664
+        },
+        {
+          "elapsedMs": 32542,
+          "committedBytes": 124780544
+        },
+        {
+          "elapsedMs": 33048,
+          "committedBytes": 130023424
+        },
+        {
+          "elapsedMs": 33552,
+          "committedBytes": 135266304
+        },
+        {
+          "elapsedMs": 34056,
+          "committedBytes": 141557760
+        },
+        {
+          "elapsedMs": 34567,
+          "committedBytes": 146800640
+        },
+        {
+          "elapsedMs": 35072,
+          "committedBytes": 152043520
+        },
+        {
+          "elapsedMs": 35578,
+          "committedBytes": 157286400
+        },
+        {
+          "elapsedMs": 36082,
+          "committedBytes": 162529280
+        },
+        {
+          "elapsedMs": 36603,
+          "committedBytes": 169869312
+        },
+        {
+          "elapsedMs": 37116,
+          "committedBytes": 177209344
+        },
+        {
+          "elapsedMs": 37620,
+          "committedBytes": 182452224
+        },
+        {
+          "elapsedMs": 38129,
+          "committedBytes": 188743680
+        },
+        {
+          "elapsedMs": 38634,
+          "committedBytes": 193986560
+        },
+        {
+          "elapsedMs": 39139,
+          "committedBytes": 199229440
+        },
+        {
+          "elapsedMs": 39646,
+          "committedBytes": 205520896
+        },
+        {
+          "elapsedMs": 40152,
+          "committedBytes": 210763776
+        },
+        {
+          "elapsedMs": 40656,
+          "committedBytes": 216006656
+        },
+        {
+          "elapsedMs": 41160,
+          "committedBytes": 221249536
+        },
+        {
+          "elapsedMs": 41666,
+          "committedBytes": 226492416
+        },
+        {
+          "elapsedMs": 42175,
+          "committedBytes": 231735296
+        },
+        {
+          "elapsedMs": 42693,
+          "committedBytes": 238026752
+        },
+        {
+          "elapsedMs": 43203,
+          "committedBytes": 242221056
+        },
+        {
+          "elapsedMs": 43715,
+          "committedBytes": 247463936
+        },
+        {
+          "elapsedMs": 44221,
+          "committedBytes": 253755392
+        },
+        {
+          "elapsedMs": 44740,
+          "committedBytes": 260046848
+        },
+        {
+          "elapsedMs": 45246,
+          "committedBytes": 265289728
+        },
+        {
+          "elapsedMs": 45750,
+          "committedBytes": 271581184
+        },
+        {
+          "elapsedMs": 46253,
+          "committedBytes": 276824064
+        },
+        {
+          "elapsedMs": 46761,
+          "committedBytes": 283115520
+        },
+        {
+          "elapsedMs": 47270,
+          "committedBytes": 288358400
+        },
+        {
+          "elapsedMs": 47782,
+          "committedBytes": 293601280
+        },
+        {
+          "elapsedMs": 48288,
+          "committedBytes": 298844160
+        },
+        {
+          "elapsedMs": 48804,
+          "committedBytes": 304087040
+        },
+        {
+          "elapsedMs": 49311,
+          "committedBytes": 308281344
+        },
+        {
+          "elapsedMs": 49816,
+          "committedBytes": 313524224
+        },
+        {
+          "elapsedMs": 50324,
+          "committedBytes": 319815680
+        },
+        {
+          "elapsedMs": 50831,
+          "committedBytes": 326107136
+        },
+        {
+          "elapsedMs": 51339,
+          "committedBytes": 331350016
+        },
+        {
+          "elapsedMs": 51845,
+          "committedBytes": 337641472
+        },
+        {
+          "elapsedMs": 52361,
+          "committedBytes": 342884352
+        },
+        {
+          "elapsedMs": 52866,
+          "committedBytes": 349175808
+        },
+        {
+          "elapsedMs": 53370,
+          "committedBytes": 353370112
+        },
+        {
+          "elapsedMs": 53875,
+          "committedBytes": 359661568
+        },
+        {
+          "elapsedMs": 54386,
+          "committedBytes": 367001600
+        },
+        {
+          "elapsedMs": 54892,
+          "committedBytes": 373293056
+        },
+        {
+          "elapsedMs": 55399,
+          "committedBytes": 378535936
+        },
+        {
+          "elapsedMs": 55919,
+          "committedBytes": 384827392
+        },
+        {
+          "elapsedMs": 56425,
+          "committedBytes": 390070272
+        },
+        {
+          "elapsedMs": 56939,
+          "committedBytes": 396361728
+        },
+        {
+          "elapsedMs": 57458,
+          "committedBytes": 402653184
+        },
+        {
+          "elapsedMs": 57962,
+          "committedBytes": 407896064
+        },
+        {
+          "elapsedMs": 58476,
+          "committedBytes": 414187520
+        },
+        {
+          "elapsedMs": 58980,
+          "committedBytes": 420478976
+        },
+        {
+          "elapsedMs": 59486,
+          "committedBytes": 426770432
+        },
+        {
+          "elapsedMs": 59990,
+          "committedBytes": 433061888
+        },
+        {
+          "elapsedMs": 60504,
+          "committedBytes": 439353344
+        },
+        {
+          "elapsedMs": 61017,
+          "committedBytes": 444596224
+        },
+        {
+          "elapsedMs": 61529,
+          "committedBytes": 450887680
+        },
+        {
+          "elapsedMs": 62036,
+          "committedBytes": 456130560
+        },
+        {
+          "elapsedMs": 62542,
+          "committedBytes": 461373440
+        },
+        {
+          "elapsedMs": 63046,
+          "committedBytes": 465567744
+        },
+        {
+          "elapsedMs": 63556,
+          "committedBytes": 471859200
+        },
+        {
+          "elapsedMs": 64065,
+          "committedBytes": 477102080
+        },
+        {
+          "elapsedMs": 64579,
+          "committedBytes": 483393536
+        },
+        {
+          "elapsedMs": 65087,
+          "committedBytes": 488636416
+        },
+        {
+          "elapsedMs": 65593,
+          "committedBytes": 494927872
+        },
+        {
+          "elapsedMs": 66112,
+          "committedBytes": 501219328
+        },
+        {
+          "elapsedMs": 66636,
+          "committedBytes": 506462208
+        },
+        {
+          "elapsedMs": 67146,
+          "committedBytes": 512753664
+        },
+        {
+          "elapsedMs": 67660,
+          "committedBytes": 517996544
+        },
+        {
+          "elapsedMs": 68168,
+          "committedBytes": 524288000
+        },
+        {
+          "elapsedMs": 68672,
+          "committedBytes": 530579456
+        },
+        {
+          "elapsedMs": 69176,
+          "committedBytes": 535822336
+        },
+        {
+          "elapsedMs": 69680,
+          "committedBytes": 542113792
+        },
+        {
+          "elapsedMs": 70189,
+          "committedBytes": 547356672
+        },
+        {
+          "elapsedMs": 70710,
+          "committedBytes": 553648128
+        },
+        {
+          "elapsedMs": 71223,
+          "committedBytes": 558891008
+        },
+        {
+          "elapsedMs": 71732,
+          "committedBytes": 564133888
+        },
+        {
+          "elapsedMs": 72245,
+          "committedBytes": 569376768
+        },
+        {
+          "elapsedMs": 72749,
+          "committedBytes": 574619648
+        },
+        {
+          "elapsedMs": 73256,
+          "committedBytes": 580911104
+        },
+        {
+          "elapsedMs": 73761,
+          "committedBytes": 586153984
+        },
+        {
+          "elapsedMs": 74266,
+          "committedBytes": 591396864
+        },
+        {
+          "elapsedMs": 74775,
+          "committedBytes": 597688320
+        },
+        {
+          "elapsedMs": 75283,
+          "committedBytes": 601882624
+        },
+        {
+          "elapsedMs": 75796,
+          "committedBytes": 603979776
+        },
+        {
+          "elapsedMs": 76304,
+          "committedBytes": 610271232
+        },
+        {
+          "elapsedMs": 76819,
+          "committedBytes": 616562688
+        },
+        {
+          "elapsedMs": 77326,
+          "committedBytes": 621805568
+        },
+        {
+          "elapsedMs": 77831,
+          "committedBytes": 628097024
+        },
+        {
+          "elapsedMs": 78335,
+          "committedBytes": 633339904
+        },
+        {
+          "elapsedMs": 78844,
+          "committedBytes": 638582784
+        },
+        {
+          "elapsedMs": 79347,
+          "committedBytes": 644874240
+        },
+        {
+          "elapsedMs": 79859,
+          "committedBytes": 651165696
+        },
+        {
+          "elapsedMs": 80369,
+          "committedBytes": 655360000
+        },
+        {
+          "elapsedMs": 80877,
+          "committedBytes": 658505728
+        },
+        {
+          "elapsedMs": 81398,
+          "committedBytes": 664797184
+        },
+        {
+          "elapsedMs": 81910,
+          "committedBytes": 670040064
+        },
+        {
+          "elapsedMs": 82425,
+          "committedBytes": 675282944
+        },
+        {
+          "elapsedMs": 82933,
+          "committedBytes": 680525824
+        },
+        {
+          "elapsedMs": 83448,
+          "committedBytes": 685768704
+        },
+        {
+          "elapsedMs": 83961,
+          "committedBytes": 691011584
+        },
+        {
+          "elapsedMs": 84504,
+          "committedBytes": 696254464
+        },
+        {
+          "elapsedMs": 85017,
+          "committedBytes": 701497344
+        },
+        {
+          "elapsedMs": 85527,
+          "committedBytes": 707788800
+        },
+        {
+          "elapsedMs": 86031,
+          "committedBytes": 714080256
+        },
+        {
+          "elapsedMs": 86536,
+          "committedBytes": 719323136
+        },
+        {
+          "elapsedMs": 87041,
+          "committedBytes": 725614592
+        },
+        {
+          "elapsedMs": 87554,
+          "committedBytes": 730857472
+        },
+        {
+          "elapsedMs": 88063,
+          "committedBytes": 736100352
+        },
+        {
+          "elapsedMs": 88568,
+          "committedBytes": 742391808
+        },
+        {
+          "elapsedMs": 89073,
+          "committedBytes": 747634688
+        },
+        {
+          "elapsedMs": 89578,
+          "committedBytes": 752877568
+        },
+        {
+          "elapsedMs": 90083,
+          "committedBytes": 758120448
+        },
+        {
+          "elapsedMs": 90610,
+          "committedBytes": 763363328
+        },
+        {
+          "elapsedMs": 91124,
+          "committedBytes": 769654784
+        },
+        {
+          "elapsedMs": 91638,
+          "committedBytes": 775946240
+        },
+        {
+          "elapsedMs": 92147,
+          "committedBytes": 782237696
+        },
+        {
+          "elapsedMs": 92654,
+          "committedBytes": 788529152
+        },
+        {
+          "elapsedMs": 93164,
+          "committedBytes": 793772032
+        },
+        {
+          "elapsedMs": 93669,
+          "committedBytes": 800063488
+        },
+        {
+          "elapsedMs": 94173,
+          "committedBytes": 806354944
+        },
+        {
+          "elapsedMs": 94678,
+          "committedBytes": 812646400
+        },
+        {
+          "elapsedMs": 95187,
+          "committedBytes": 814743552
+        },
+        {
+          "elapsedMs": 95695,
+          "committedBytes": 815792128
+        },
+        {
+          "elapsedMs": 96199,
+          "committedBytes": 822083584
+        },
+        {
+          "elapsedMs": 96714,
+          "committedBytes": 828375040
+        },
+        {
+          "elapsedMs": 97223,
+          "committedBytes": 833617920
+        },
+        {
+          "elapsedMs": 97732,
+          "committedBytes": 838860800
+        },
+        {
+          "elapsedMs": 98240,
+          "committedBytes": 845152256
+        },
+        {
+          "elapsedMs": 98745,
+          "committedBytes": 850395136
+        },
+        {
+          "elapsedMs": 99263,
+          "committedBytes": 856686592
+        },
+        {
+          "elapsedMs": 99776,
+          "committedBytes": 861929472
+        },
+        {
+          "elapsedMs": 100283,
+          "committedBytes": 868220928
+        },
+        {
+          "elapsedMs": 100789,
+          "committedBytes": 873463808
+        },
+        {
+          "elapsedMs": 101301,
+          "committedBytes": 879755264
+        },
+        {
+          "elapsedMs": 101823,
+          "committedBytes": 886046720
+        },
+        {
+          "elapsedMs": 102333,
+          "committedBytes": 890241024
+        },
+        {
+          "elapsedMs": 102851,
+          "committedBytes": 896532480
+        },
+        {
+          "elapsedMs": 103356,
+          "committedBytes": 902823936
+        },
+        {
+          "elapsedMs": 103860,
+          "committedBytes": 908066816
+        },
+        {
+          "elapsedMs": 104364,
+          "committedBytes": 914358272
+        },
+        {
+          "elapsedMs": 104870,
+          "committedBytes": 919601152
+        },
+        {
+          "elapsedMs": 105382,
+          "committedBytes": 926941184
+        },
+        {
+          "elapsedMs": 105892,
+          "committedBytes": 929038336
+        },
+        {
+          "elapsedMs": 106408,
+          "committedBytes": 933232640
+        },
+        {
+          "elapsedMs": 106921,
+          "committedBytes": 938475520
+        },
+        {
+          "elapsedMs": 107429,
+          "committedBytes": 944766976
+        },
+        {
+          "elapsedMs": 107935,
+          "committedBytes": 951058432
+        },
+        {
+          "elapsedMs": 108441,
+          "committedBytes": 957349888
+        },
+        {
+          "elapsedMs": 108946,
+          "committedBytes": 962592768
+        },
+        {
+          "elapsedMs": 109449,
+          "committedBytes": 968884224
+        },
+        {
+          "elapsedMs": 109963,
+          "committedBytes": 975175680
+        },
+        {
+          "elapsedMs": 110475,
+          "committedBytes": 979369984
+        },
+        {
+          "elapsedMs": 110980,
+          "committedBytes": 984612864
+        },
+        {
+          "elapsedMs": 111490,
+          "committedBytes": 988807168
+        },
+        {
+          "elapsedMs": 112014,
+          "committedBytes": 995098624
+        },
+        {
+          "elapsedMs": 112522,
+          "committedBytes": 1000341504
+        },
+        {
+          "elapsedMs": 113024,
+          "committedBytes": 1005584384
+        },
+        {
+          "elapsedMs": 113531,
+          "committedBytes": 1011875840
+        },
+        {
+          "elapsedMs": 114045,
+          "committedBytes": 1017118720
+        },
+        {
+          "elapsedMs": 114549,
+          "committedBytes": 1024458752
+        },
+        {
+          "elapsedMs": 115059,
+          "committedBytes": 1027604480
+        },
+        {
+          "elapsedMs": 115573,
+          "committedBytes": 1030750208
+        },
+        {
+          "elapsedMs": 116079,
+          "committedBytes": 1038090240
+        },
+        {
+          "elapsedMs": 116583,
+          "committedBytes": 1044381696
+        },
+        {
+          "elapsedMs": 117092,
+          "committedBytes": 1049624576
+        },
+        {
+          "elapsedMs": 117601,
+          "committedBytes": 1056964608
+        },
+        {
+          "elapsedMs": 118111,
+          "committedBytes": 1063256064
+        },
+        {
+          "elapsedMs": 118617,
+          "committedBytes": 1069547520
+        },
+        {
+          "elapsedMs": 119121,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 119627,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 120132,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 120635,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 121140,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 121644,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 122150,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 122655,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 123158,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 123661,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 124166,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 124671,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 125176,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 125681,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 126185,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 126691,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 127198,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 127702,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 128206,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 128712,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 129216,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 129721,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 130226,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 130731,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 131235,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 131739,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 132244,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 132749,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 133254,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 133760,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 134266,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 134770,
+          "committedBytes": 1073741824
+        },
+        {
+          "elapsedMs": 135276,
+          "committedBytes": 1073741824
+        }
+      ],
+      "elapsedMs": 135776,
+      "downloadedSha256": "bafa6507e9866ce146f467b7143686d3ffb3022ae1396881fb0dff0d24493bca",
+      "senderPeakBufferedBytes": 524260,
+      "senderPeakBlockBytes": 1048576,
+      "receiverPeakBlockBytes": 1048576,
+      "receiverPeakQueueBytes": 16384,
+      "jsGrowthBytes": 183961962,
+      "intermediateProgressObserved": true,
+      "pass": true
+    }
+  ],
+  "testBrowserFlag": "--disable-features=WebRtcHideLocalIpsWithMdns (two isolated persistent local Chromium profiles; application browser defaults are unchanged)",
+  "memoryScope": "Unforced-GC CDP Runtime.getHeapUsage sampled every 500ms for both page isolates and their dedicated workers, including ArrayBuffer/external-string backing storage. This measures JS-owned memory, not total browser RSS, OS file cache or native WebRTC buffers.",
+  "directory": "/home/Shreshtha/documents/MeshDrop/.meshdrop-artifacts/phase-3-streaming/run-NwWBZs",
+  "browser": "156.0.8078.4",
+  "unexpectedApiRequest": false,
+  "apiRequests": 231,
+  "completedAt": "2026-10-16T17:17:32.181Z"
+}

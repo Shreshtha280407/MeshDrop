@@ -12,6 +12,7 @@
     "dev": "pnpm --parallel --filter './apps/*' dev",
     "dev:web": "pnpm --filter @meshdrop/web dev",
     "dev:signaling": "pnpm --filter @meshdrop/signaling dev",
+    "bench:p3": "tsx scripts/local-dev/verify-streaming.mjs",
     "demo:p0": "tsx scripts/local-dev/demo.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check .",

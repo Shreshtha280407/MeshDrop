@@ -10,6 +10,7 @@
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
+    "@meshdrop/transfer-core": "workspace:*",
     "@meshdrop/peer-connection": "workspace:*",
     "@meshdrop/protocol": "workspace:*",
     "@meshdrop/shared-types": "workspace:*",

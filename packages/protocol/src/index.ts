@@ -4,3 +4,4 @@ export * from './schemas';
 export * from './frames';
 export * from './signaling';
 export * from './peer';
+export * from './file-messages';

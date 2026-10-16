@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { TransferPanel } from './features/transfer/TransferPanel';
 import { PairingPanel } from './features/pairing/PairingPanel';
 import { RoomClient } from './features/pairing/RoomClient';
 import { detectDeviceCapabilities } from '@meshdrop/platform';
@@ -31,7 +32,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </a>
         <span className="phase-label">
           <i />
-          Peer connectivity / Phase 2
+          Verified transfers / Phase 3
         </span>
       </header>
       <main>
@@ -64,7 +65,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
           <div className="device">
             <span>↙</span>Other device<small>Approved receiver</small>
           </div>
-          <p>Connect and verify now. File transfer follows in Phase 3.</p>
+          <p>Verify your peer. Send files directly between devices.</p>
         </aside>
         <section className="demo-panel room-panel" aria-labelledby="room-title">
           <div className="panel-heading">
@@ -256,6 +257,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
           )}
         </section>
         {status && <PairingPanel key={view.peer.epoch} client={client} view={view} />}
+        {status && <TransferPanel client={client} view={view} />}
         <section className="details-grid">
           <div>
             <p className="eyebrow">ON THIS BROWSER</p>
@@ -295,9 +297,9 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               storage contains credential verifiers and temporary room state.
             </p>
             <div className="next-phase">
-              <span>UP NEXT · PHASE 3</span>
-              <strong>Chunked file transfer and integrity</strong>
-              <p>Bounded file frames, SHA-256 validation, and receiver-confirmed progress.</p>
+              <span>UP NEXT · PHASE 4</span>
+              <strong>Crash-safe local checkpoints</strong>
+              <p>Persistent manifests, verified checkpoints, and recovery after reloading.</p>
             </div>
           </div>
         </section>

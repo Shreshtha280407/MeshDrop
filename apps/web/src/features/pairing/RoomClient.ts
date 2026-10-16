@@ -10,6 +10,9 @@ import {
   socketTicketSchema,
   uuidSchema,
 } from '@meshdrop/protocol';
+import { INITIAL_TRANSFER, TransferMachine } from '@meshdrop/transfer-core';
+import type { TransferView } from '@meshdrop/transfer-core';
+import type { FileControl } from '@meshdrop/protocol';
 import { INITIAL_PEER, PeerSession } from '@meshdrop/peer-connection';
 import type { PeerSignal, PeerView } from '@meshdrop/peer-connection';
 import type { SessionStatus, SignalingEnvelope } from '@meshdrop/protocol';
@@ -27,6 +30,7 @@ export interface RoomView {
   error: string;
   events: readonly string[];
   peer: PeerView;
+  transfer: TransferView;
 }
 const INITIAL: RoomView = {
   status: null,
@@ -36,6 +40,7 @@ const INITIAL: RoomView = {
   error: '',
   events: [],
   peer: INITIAL_PEER,
+  transfer: INITIAL_TRANSFER,
 };
 export function parseInvitation(value: string): { roomId: string; capability: string } {
   const url = new URL(value);
@@ -70,6 +75,8 @@ export class RoomClient {
   private heartbeat: ReturnType<typeof setInterval> | undefined;
   private nextSeq = 0;
   private peerSession: PeerSession | null = null;
+  private transfer: TransferMachine | null = null;
+  private readonly downloadUrls = new Map<string, string>();
   private signalQueue: Promise<void> = Promise.resolve();
   private startingEpoch = false;
   private connecting = false;
@@ -359,7 +366,12 @@ export class RoomClient {
           peerId: credentials.peerId,
           role: status.role === 'owner' ? 'owner' : 'receiver',
           sendSignal: (type, payload) => this.sendSignal(type, payload),
-          onChange: (peer) => this.update({ peer }),
+          onChange: (peer) => this.peerChanged(peer),
+          onFileControl: (message) => this.receiveFileControl(message),
+          onFileFrame: async (bytes) => {
+            if (!this.transfer) throw new Error('No accepted transfer.');
+            await this.transfer.receiveFrame(bytes);
+          },
         });
       this.event(`Starting connection epoch ${epoch.epoch}. Compare the new pairing code.`);
       await this.peerSession.start(epoch, configuration);
@@ -444,7 +456,116 @@ export class RoomClient {
   rejectComparison(): void {
     this.peerSession?.rejectComparison();
   }
+  private peerChanged(peer: PeerView): void {
+    if (this.transfer && (!peer.ready || this.transfer.epoch !== peer.epoch))
+      this.transfer.disconnect();
+    this.update({ peer });
+    this.ensureTransfer();
+  }
+  private ensureTransfer(): void {
+    const peer = this.peerSession;
+    if (
+      this.transfer ||
+      !peer?.canTransfer ||
+      !this.view.status ||
+      !peer.snapshot.capabilities?.storageModes.includes('opfs')
+    )
+      return;
+    this.transfer = new TransferMachine({
+      role: this.view.status.role === 'owner' ? 'owner' : 'receiver',
+      epoch: peer.epoch,
+      frameBytes: peer.snapshot.capabilities.preferredFrameBytes,
+      transport: {
+        get bufferedAmount() {
+          return peer.bufferedAmount;
+        },
+        sendControl: (message) => peer.sendFileControl(message),
+        sendFrame: (bytes) => peer.sendFileFrame(bytes),
+        waitForDrain: (signal) => peer.waitForDrain(signal),
+      },
+      onChange: (transfer) => this.update({ transfer }),
+    });
+  }
+  private async receiveFileControl(message: FileControl): Promise<void> {
+    this.ensureTransfer();
+    if (!this.transfer) throw new Error('This browser cannot accept file transfers.');
+    if (
+      message.type === 'TRANSFER_OFFER' &&
+      this.transfer.snapshot.state &&
+      this.transfer.snapshot.manifest?.transferId !== message.transferId
+    ) {
+      await this.peerSession?.sendFileControl({
+        type: 'TRANSFER_REJECT',
+        transferId: message.transferId,
+        payload: { reason: 'unsupported' },
+      });
+      return;
+    }
+    await this.transfer.receiveControl(message);
+  }
+  async offerFiles(files: readonly File[]): Promise<void> {
+    return this.action(async () => {
+      this.ensureTransfer();
+      if (!this.peerSession?.canTransfer || !this.transfer)
+        throw new Error(
+          'Both devices must confirm the pairing code and support temporary browser storage.',
+        );
+      await this.transfer.offer(files);
+    });
+  }
+  async acceptFiles(): Promise<void> {
+    await this.transfer?.accept();
+  }
+  async rejectFiles(): Promise<void> {
+    await this.transfer?.reject();
+  }
+  async pauseFiles(paused: boolean): Promise<void> {
+    await this.transfer?.setPaused(paused);
+  }
+  async cancelFiles(): Promise<void> {
+    await this.transfer?.cancel();
+  }
+  async clearTransfer(): Promise<void> {
+    await this.transfer?.dispose();
+    this.transfer = null;
+    for (const url of this.downloadUrls.values()) URL.revokeObjectURL(url);
+    this.downloadUrls.clear();
+    this.update({ transfer: INITIAL_TRANSFER });
+    this.ensureTransfer();
+  }
+  saveFile(fileId: string): void {
+    const file = this.transfer?.download(fileId);
+    const entry = this.view.transfer.manifest?.files.find((entry) => entry.fileId === fileId);
+    if (!file || !entry) return;
+    let url = this.downloadUrls.get(fileId);
+    if (!url) {
+      url = URL.createObjectURL(file);
+      this.downloadUrls.set(fileId, url);
+    }
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = entry.path.split('/').at(-1)!;
+    anchor.rel = 'noopener';
+    anchor.click();
+  }
+  saveReceipt(): void {
+    const receipt = this.view.transfer.receipt;
+    if (!receipt || this.view.transfer.state !== 'complete') return;
+    const key = 'receipt';
+    let url = this.downloadUrls.get(key);
+    if (!url) {
+      url = URL.createObjectURL(
+        new Blob([JSON.stringify(receipt, null, 2)], { type: 'application/json' }),
+      );
+      this.downloadUrls.set(key, url);
+    }
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `meshdrop-receipt-${receipt.receiptId}.json`;
+    anchor.click();
+  }
   private closePeer(): void {
+    this.transfer?.disconnect();
     this.peerSession?.close();
     this.peerSession = null;
   }
@@ -476,6 +597,10 @@ export class RoomClient {
     this.update({ ...INITIAL });
   }
   dispose(): void {
+    void this.transfer?.dispose();
+    this.transfer = null;
+    for (const url of this.downloadUrls.values()) URL.revokeObjectURL(url);
+    this.downloadUrls.clear();
     this.generation++;
     this.refreshInFlight = false;
     this.closePeer();

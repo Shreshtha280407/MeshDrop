@@ -11,6 +11,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@meshdrop/protocol": "workspace:*"
+    "@meshdrop/protocol": "workspace:*",
+    "@noble/hashes": "2.4.0"
   }
 }

@@ -1,0 +1,24 @@
+Scope: all 11 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +228
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 228, reused 228, downloaded 0, added 228, done
+
+devDependencies:
++ @eslint/js 10.0.1
++ @meshdrop/protocol 0.0.0 <- packages/protocol
++ @playwright/test 1.64.1
++ @types/node 24.10.1
++ @types/ws 8.18.1
++ esbuild 0.27.3
++ eslint 10.12.0
++ miniflare 5.20261012.0-beta
++ prettier 3.8.1
++ tsx 4.21.0
++ typescript 5.9.3
++ typescript-eslint 8.71.2
++ vitest 4.0.18
++ ws 8.21.0
+
+Done in 4.8s using pnpm v10.34.7

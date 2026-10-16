@@ -1,3 +1,5 @@
-# Benchmark contract (P9)
+# Benchmark contracts
 
-Future benchmarks record size, browser/device, direct/relay path, final SHA-256, committed throughput, peak memory, retransmission and network conditions. P0 claims no benchmark results.
+P3's correctness/memory gate runs with `pnpm bench:p3` while the local development server is running. It verifies exact 100 MiB and 1 GiB downloads, intermediate committed progress, bounded owned queues and page/worker JavaScript memory. See the [streaming runbook](../../docs/runbooks/streaming-verification.md) for artifact paths, reproduction and measurement limits, and the [P3 report](../../docs/reports/phase-3.md) for recorded results.
+
+P9's broader benchmarks will record browser/device, direct/relay path, committed throughput, retransmission and network conditions. The P3 local run does not certify that broader matrix or public-network performance. P0 claims no benchmark results.

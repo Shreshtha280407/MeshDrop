@@ -7,6 +7,7 @@ export default tseslint.config(
       '**/.agents/**',
       '**/.codex/**',
       '**/.aws/**',
+      '**/.meshdrop-artifacts/**',
       '**/dist/**',
       '**/node_modules/**',
       '**/.wrangler/**',

@@ -5,10 +5,14 @@ import {
   peerHelloSchema,
   signedHelloSchema,
   signedPingSchema,
+  signedFileControlSchema,
+  fileControlSchema,
   transitionPeer,
 } from '@meshdrop/protocol';
 import type {
   ConnectionEpoch,
+  FileControl,
+  FileControlInput,
   IceConfiguration,
   PeerEvent,
   PeerHello,
@@ -38,6 +42,8 @@ export interface PeerView {
   state: PeerState;
   epoch: number;
   ready: boolean;
+  remoteVerified: boolean;
+  peakReceiveQueueBytes: number;
   verification: 'unverified' | 'verified' | 'mismatch';
   code: string;
   fingerprint: string;
@@ -52,6 +58,8 @@ export const INITIAL_PEER: PeerView = {
   state: 'idle',
   epoch: 0,
   ready: false,
+  remoteVerified: false,
+  peakReceiveQueueBytes: 0,
   verification: 'unverified',
   code: '',
   fingerprint: '',
@@ -70,6 +78,8 @@ export interface PeerSessionOptions {
   onChange: (view: PeerView) => void;
   connectionTimeoutMs?: number;
   iceTransportPolicy?: RTCIceTransportPolicy;
+  onFileControl?: (message: FileControl) => Promise<void>;
+  onFileFrame?: (bytes: Uint8Array) => Promise<void>;
 }
 
 /** Browser transport only: no UI, server credentials, file writes or recovery ledger. */
@@ -92,6 +102,8 @@ export class PeerSession {
   private messageQueue: Promise<void> = Promise.resolve();
   private outgoingQueue: Promise<void> = Promise.resolve();
   private sequence = 0;
+  private queuedReceiveBytes = 0;
+  private queuedReceiveMessages = 0;
   private remoteSequence = -1;
   private readonly pendingPings = new Set<string>();
   constructor(private readonly options: PeerSessionOptions) {}
@@ -303,6 +315,22 @@ export class PeerSession {
     };
     channel.onmessage = (event: MessageEvent<unknown>) => {
       const generation = this.generation;
+      const size =
+        typeof event.data === 'string'
+          ? new TextEncoder().encode(event.data).length
+          : event.data instanceof ArrayBuffer
+            ? event.data.byteLength
+            : 0;
+      this.queuedReceiveBytes += size;
+      this.queuedReceiveMessages++;
+      if (this.queuedReceiveBytes > 2 * 1024 * 1024 || this.queuedReceiveMessages > 4096) {
+        this.queuedReceiveBytes -= size;
+        this.queuedReceiveMessages--;
+        this.fail('Peer receive queue exceeded its bounded window.');
+        return;
+      }
+      if (this.queuedReceiveBytes > this.view.peakReceiveQueueBytes)
+        this.update({ peakReceiveQueueBytes: this.queuedReceiveBytes });
       this.messageQueue = this.messageQueue
         .then(async () => {
           if (channel === this.channel && this.current(generation))
@@ -311,6 +339,10 @@ export class PeerSession {
         .catch(() => {
           if (this.current(generation))
             this.fail('Peer message failed identity, capability, or replay checks.');
+        })
+        .finally(() => {
+          this.queuedReceiveBytes -= size;
+          this.queuedReceiveMessages--;
         });
     };
     channel.onclose = () => {
@@ -358,7 +390,10 @@ export class PeerSession {
         preferredFrameBytes: maxMessageBytes,
         maxMessageBytes,
         supportedHashes: ['SHA-256'],
-        storageModes: ['memory'],
+        storageModes:
+          typeof navigator !== 'undefined' && typeof navigator.storage?.getDirectory === 'function'
+            ? ['opfs', 'memory']
+            : ['memory'],
         resumeMode: 'unavailable',
       },
     });
@@ -369,6 +404,16 @@ export class PeerSession {
     await this.finishHandshake(generation);
   }
   private async receiveData(raw: unknown, generation: number): Promise<void> {
+    if (raw instanceof ArrayBuffer) {
+      if (
+        !this.canTransfer ||
+        !this.options.onFileFrame ||
+        raw.byteLength > (this.view.capabilities?.preferredFrameBytes ?? 0)
+      )
+        throw new Error('Unaccepted binary data.');
+      await this.options.onFileFrame(new Uint8Array(raw));
+      return;
+    }
     if (
       typeof raw !== 'string' ||
       raw.length > MAX_PEER_CONTROL_BYTES ||
@@ -392,6 +437,27 @@ export class PeerSession {
       await this.finishHandshake(generation);
       return;
     }
+    const fileMessage = signedFileControlSchema.safeParse(parsed);
+    if (fileMessage.success) {
+      const { control, signature } = fileMessage.data;
+      if (control.epoch < this.epoch) return;
+      if (
+        !this.canTransfer ||
+        !this.remoteHello ||
+        !this.options.onFileControl ||
+        control.roomId !== this.options.roomId ||
+        control.peerId !== this.remotePeerId ||
+        control.epoch !== this.epoch ||
+        control.transcript !== this.view.fingerprint ||
+        control.seq <= this.remoteSequence ||
+        !(await verify(control, signature, this.remoteHello.publicKey))
+      )
+        throw new Error('Invalid file control.');
+      if (!this.current(generation)) return;
+      this.remoteSequence = control.seq;
+      await this.options.onFileControl(control);
+      return;
+    }
     const { ping, signature } = signedPingSchema.parse(parsed);
     if (ping.epoch < this.epoch) return;
     if (
@@ -407,7 +473,9 @@ export class PeerSession {
       throw new Error('Invalid signed ping.');
     if (!this.current(generation)) return;
     this.remoteSequence = ping.seq;
-    if (ping.type === 'PING') {
+    if (ping.type === 'PAIRING_CONFIRMED') {
+      this.update({ remoteVerified: true });
+    } else if (ping.type === 'PING') {
       this.update({ pingsReceived: this.view.pingsReceived + 1 });
       await this.enqueuePing('PONG', ping.messageId);
     } else {
@@ -454,6 +522,9 @@ export class PeerSession {
       return;
     }
     this.update({ verification: 'verified', error: '' });
+    void this.enqueuePing('PAIRING_CONFIRMED', crypto.randomUUID()).catch(() =>
+      this.fail('Peer comparison confirmation could not be delivered.'),
+    );
   }
   rejectComparison(): void {
     this.fail('Peer identity comparison was rejected. Connection closed.', true);
@@ -461,7 +532,10 @@ export class PeerSession {
   async ping(): Promise<void> {
     await this.enqueuePing('PING', crypto.randomUUID());
   }
-  private enqueuePing(type: 'PING' | 'PONG', messageId: string): Promise<void> {
+  private enqueuePing(
+    type: 'PING' | 'PONG' | 'PAIRING_CONFIRMED',
+    messageId: string,
+  ): Promise<void> {
     const generation = this.generation;
     const task = this.outgoingQueue.then(async () => {
       if (this.current(generation)) await this.sendPing(type, messageId);
@@ -469,10 +543,16 @@ export class PeerSession {
     this.outgoingQueue = task.catch(() => {});
     return task;
   }
-  private async sendPing(type: 'PING' | 'PONG', messageId: string): Promise<void> {
+  private async sendPing(
+    type: 'PING' | 'PONG' | 'PAIRING_CONFIRMED',
+    messageId: string,
+  ): Promise<void> {
     if (!this.view.ready || !this.identity || this.channel?.readyState !== 'open')
       throw new Error('Peer handshake is not ready.');
-    if (this.pendingPings.size >= 16 || this.channel.bufferedAmount > MAX_PEER_CONTROL_BYTES * 4)
+    if (
+      (type === 'PING' && this.pendingPings.size >= 16) ||
+      this.channel.bufferedAmount > MAX_PEER_CONTROL_BYTES * 4
+    )
       throw new Error('Peer control queue is full.');
     const generation = this.generation;
     const ping: PeerPing = {
@@ -489,6 +569,84 @@ export class PeerSession {
     if (!this.current(generation) || !this.view.ready) return;
     if (type === 'PING') this.pendingPings.add(messageId);
     this.channel!.send(JSON.stringify({ ping, signature }));
+  }
+  get canTransfer(): boolean {
+    return this.view.ready && this.view.verification === 'verified' && this.view.remoteVerified;
+  }
+  get bufferedAmount(): number {
+    return this.channel?.bufferedAmount ?? 0;
+  }
+  async sendFileControl(input: FileControlInput): Promise<void> {
+    const generation = this.generation;
+    const task = this.outgoingQueue.then(async () => {
+      if (
+        !this.current(generation) ||
+        !this.canTransfer ||
+        !this.identity ||
+        this.channel?.readyState !== 'open'
+      )
+        throw new Error('Both peer comparisons must be confirmed.');
+      const control = fileControlSchema.parse({
+        ...input,
+        version: 1,
+        roomId: this.options.roomId,
+        peerId: this.options.peerId,
+        epoch: this.epoch,
+        transcript: this.view.fingerprint,
+        messageId: crypto.randomUUID(),
+        seq: this.sequence++,
+      });
+      const signature = await sign(control, this.identity.privateKey);
+      if (!this.current(generation)) throw new Error('Connection epoch changed.');
+      const message = JSON.stringify({ control, signature });
+      if (
+        new TextEncoder().encode(message).length >
+        Math.min(MAX_PEER_CONTROL_BYTES, this.view.capabilities?.maxMessageBytes ?? 0)
+      )
+        throw new Error('Transfer control message exceeds negotiated bounds.');
+      this.channel!.send(message);
+    });
+    this.outgoingQueue = task.catch(() => {});
+    await task;
+  }
+  sendFileFrame(bytes: Uint8Array<ArrayBuffer>): void {
+    if (
+      !this.canTransfer ||
+      this.channel?.readyState !== 'open' ||
+      bytes.length > (this.view.capabilities?.preferredFrameBytes ?? 0) ||
+      this.channel.bufferedAmount + bytes.length > 512 * 1024
+    )
+      throw new Error('File transport is unavailable or its send queue is full.');
+    this.channel.send(bytes);
+  }
+  async waitForDrain(signal: AbortSignal): Promise<void> {
+    const channel = this.channel;
+    const generation = this.generation;
+    if (!channel || !this.canTransfer) throw new Error('File transport is unavailable.');
+    signal.throwIfAborted();
+    channel.bufferedAmountLowThreshold = 128 * 1024;
+    if (channel.bufferedAmount <= channel.bufferedAmountLowThreshold) return;
+    await new Promise<void>((resolve, reject) => {
+      const finish = (error?: Error) => {
+        clearTimeout(timer);
+        channel.removeEventListener('bufferedamountlow', low);
+        channel.removeEventListener('close', closed);
+        signal.removeEventListener('abort', aborted);
+        if (error) reject(error);
+        else resolve();
+      };
+      const low = () => {
+        if (channel.bufferedAmount <= channel.bufferedAmountLowThreshold) finish();
+      };
+      const closed = () => finish(new Error('File channel closed.'));
+      const aborted = () => finish(new Error('Transfer stopped.'));
+      const timer = setTimeout(() => finish(new Error('File send buffer stalled.')), 30000);
+      channel.addEventListener('bufferedamountlow', low);
+      channel.addEventListener('close', closed);
+      signal.addEventListener('abort', aborted, { once: true });
+      low();
+    });
+    if (!this.current(generation)) throw new Error('Connection epoch changed.');
   }
   fail(message: string, mismatch = false): void {
     this.close();
@@ -518,6 +676,7 @@ export class PeerSession {
     this.update({
       ready: false,
       verification: 'unverified',
+      remoteVerified: false,
       code: '',
       fingerprint: '',
       capabilities: null,

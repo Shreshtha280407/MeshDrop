@@ -71,7 +71,7 @@ export const signedHelloSchema = z.strictObject({
 });
 export const peerPingSchema = z.strictObject({
   ...context,
-  type: z.enum(['PING', 'PONG']),
+  type: z.enum(['PING', 'PONG', 'PAIRING_CONFIRMED']),
   transcript: z.string().regex(/^[a-f0-9]{64}$/),
   messageId: uuidSchema,
   seq: z.number().int().min(0).max(MAX_UINT32),
