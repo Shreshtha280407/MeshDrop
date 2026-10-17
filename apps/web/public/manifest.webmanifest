@@ -2,8 +2,20 @@
   "name": "MeshDrop",
   "short_name": "MeshDrop",
   "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "description": "Private foreground file sharing with verified local checkpoints.",
   "display": "standalone",
   "background_color": "#f5f6f1",
   "theme_color": "#123d37",
-  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }

@@ -1,0 +1,23 @@
+{
+  "kind": "physical-android-phase-7",
+  "startedAt": "2026-10-17T22:06:43.324Z",
+  "phoneBrowser": "155.0.8059.79",
+  "desktopBrowser": "156.0.8078.4",
+  "scope": "USB forwards local signaling only. Real WebRTC carries files. Synthetic sources selected programmatically; no personal files or tabs inspected. Automated comparison is a UI check, not a human identity attestation.",
+  "checks": [
+    {
+      "direction": "android-app-switch-and-reload",
+      "bytes": 33554432,
+      "pausedCommittedBytes": 2097152,
+      "appSwitchObserved": true,
+      "explicitResume": true,
+      "reloadRevalidatedExportPrepared": true,
+      "sha256": "6f7ec37c97f0e74e40a11591c691072f77cb4ee85b3e69376683411edd6d05ab"
+    }
+  ],
+  "capabilities": "ON THIS DEVICE\n\nKeep both devices open.\nForeground transfers\n\nScreen lock and app switching can suspend this page. MeshDrop pauses when it can; committed checkpoints are rechecked after recovery. Installing the app does not enable closed-browser delivery.\n\nSecure WebRTC\nAvailable\nVerified browser file storage\navailable\nCheckpoint database\navailable\nExclusive file access\nAvailable\nEstimated browser space\n10,240 MiB\nPersistent storage\nNot granted; files may be evicted\nChoose-location save\nAvailable\nFile selection\nAvailable\nCamera\nAvailable API; permission prompt\nApp mode\nbrowser\n\nA successful small storage probe and quota estimate do not certify a maximum file size. Offers from 300 MiB show an extra warning. Without a quota estimate, this app permits at most 64 MiB per new offer. Save/export may need additional device space.\n\nRecheck device capabilities",
+  "layoutFits": true,
+  "pass": false,
+  "error": "expect(locator).toBeDisabled() failed\n\nLocator: getByRole('button', { name: 'Accept files', exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:",
+  "completedAt": "2026-10-17T22:07:48.486Z"
+}

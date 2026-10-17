@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { requestPersistence, startFileDownload, StorageClient } from '@meshdrop/storage';
+import { requestPersistence, StorageClient } from '@meshdrop/storage';
+import { FileExportControls } from '../mobile/FileExportControls';
 import type { RoomClient, RoomView } from '../pairing/RoomClient';
 import type { RecoveryListing } from '@meshdrop/storage';
 
@@ -10,7 +11,7 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
     view.peer.ready && view.peer.verification === 'verified' && view.peer.remoteVerified;
 
   const client = useRef<StorageClient | null>(null);
-  const releases = useRef<(() => void)[]>([]);
+  const [prepared, setPrepared] = useState<Record<string, File>>({});
   const [listing, setListing] = useState<RecoveryListing | null>(null);
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState('');
@@ -37,8 +38,6 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
       current = false;
       storage.dispose();
       client.current = null;
-      for (const release of releases.current) release();
-      releases.current = [];
     };
   }, []);
   function selectedFiles(id: string): Map<string, File> {
@@ -189,12 +188,24 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
                             checkpoint.record.transferId,
                             meta.fileId,
                           );
-                          releases.current.push(startFileDownload(output, meta.path));
+                          setPrepared((previous) => ({
+                            ...previous,
+                            [`${checkpoint.record.transferId}:${meta.fileId}`]: output,
+                          }));
+                          setMessage(
+                            'Verified file prepared. Tap Save, Share or Choose save location below to open the system flow.',
+                          );
                         });
                       }}
                     >
                       Export saved {meta.path}
                     </button>
+                  )}
+                  {prepared[`${checkpoint.record.transferId}:${meta.fileId}`] && (
+                    <FileExportControls
+                      file={prepared[`${checkpoint.record.transferId}:${meta.fileId}`]!}
+                      path={meta.path}
+                    />
                   )}
                 </li>
               );
@@ -206,6 +217,13 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
             onClick={() => {
               void action(async (storage) => {
                 await storage.purge(checkpoint.record.transferId);
+                setPrepared((previous) =>
+                  Object.fromEntries(
+                    Object.entries(previous).filter(
+                      ([key]) => !key.startsWith(`${checkpoint.record.transferId}:`),
+                    ),
+                  ),
+                );
                 setListing(await storage.list());
               });
             }}

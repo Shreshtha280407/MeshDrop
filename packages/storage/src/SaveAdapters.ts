@@ -7,6 +7,9 @@ export function startFileDownload(file: File, path: string): () => void {
   anchor.href = url;
   anchor.download = path.split('/').at(-1)!;
   anchor.rel = 'noopener';
+  anchor.hidden = true;
+  document.body.append(anchor);
   anchor.click();
+  anchor.remove();
   return () => URL.revokeObjectURL(url);
 }

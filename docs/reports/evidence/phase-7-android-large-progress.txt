@@ -1,0 +1,19 @@
+Launching desktop test browser
+Connecting to authorized Android Chrome
+Created isolated test tabs
+Pairing test devices
+Accepted 320 MiB after explicit large-file acknowledgement
+{"progress":{"state":"active","committedBytes":25165824,"visibility":"visible"},"elapsedMs":20448}
+{"progress":{"state":"active","committedBytes":52428800,"visibility":"visible"},"elapsedMs":40440}
+{"progress":{"state":"active","committedBytes":78643200,"visibility":"visible"},"elapsedMs":60490}
+{"progress":{"state":"active","committedBytes":105906176,"visibility":"visible"},"elapsedMs":80471}
+{"progress":{"state":"active","committedBytes":134217728,"visibility":"visible"},"elapsedMs":100443}
+{"progress":{"state":"active","committedBytes":161480704,"visibility":"visible"},"elapsedMs":120487}
+{"progress":{"state":"active","committedBytes":189792256,"visibility":"visible"},"elapsedMs":140471}
+{"progress":{"state":"active","committedBytes":220200960,"visibility":"visible"},"elapsedMs":160447}
+{"progress":{"state":"active","committedBytes":246415360,"visibility":"visible"},"elapsedMs":180486}
+{"progress":{"state":"active","committedBytes":276824064,"visibility":"visible"},"elapsedMs":200495}
+{"progress":{"state":"active","committedBytes":308281344,"visibility":"visible"},"elapsedMs":220499}
+{"progress":{"state":"active","committedBytes":328204288,"visibility":"visible"},"elapsedMs":240502}
+{"progress":{"state":"verifying","committedBytes":335544320,"visibility":"visible"},"elapsedMs":260686}
+{"direction":"laptop-to-android-large","bytes":335544320,"completeMs":272563,"acknowledgementRequired":true,"export":"real Android Chrome download, ADB pulled exact synthetic file","sha256":"d5c42f24fc06ebbcd7a9870eb30327f1cb417a640faebb591fe6062263a44e10"}

@@ -6,3 +6,4 @@ test-results
 coverage
 .wrangler
 .meshdrop-artifacts
+apps/web/public/vendor

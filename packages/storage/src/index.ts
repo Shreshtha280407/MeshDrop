@@ -16,5 +16,8 @@ export { OpfsReceiverStore, purgeStoredTransfer, RECEIVER_DIRECTORY } from './Op
 export { LedgerReconciler, compactRanges } from './LedgerReconciler';
 export { estimateCapacity, requestPersistence } from './QuotaManager';
 export { startFileDownload } from './SaveAdapters';
+export { namedExportFile, canShareFile, shareVerifiedFile } from './IosExportAdapter';
+export type { ExportOutcome } from './IosExportAdapter';
+export { saveVerifiedFileWithPicker } from './AndroidSaveAdapter';
 export { StorageClient } from './StorageClient';
 export { verifyReselectedSource, digestManifest, hashLocalFile, hexDigest } from './integrity';

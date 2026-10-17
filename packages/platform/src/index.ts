@@ -1,4 +1,7 @@
 import type { DeviceCapabilities } from '@meshdrop/shared-types';
+export * from './CapabilityProbe';
+export * from './PlatformPolicy';
+export * from './Lifecycle';
 
 /** API presence only. This does not assert permission, quota, or durability. */
 export function detectDeviceCapabilities(): DeviceCapabilities {

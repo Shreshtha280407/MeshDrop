@@ -683,3 +683,204 @@ select {
   margin-top: 0.4rem;
   line-height: 1.5;
 }
+
+/* P7: touch targets, readable mobile timelines and system color preference. */
+:root {
+  color-scheme: light dark;
+}
+button,
+select,
+input:not([type='checkbox']):not([type='range']) {
+  min-height: 44px;
+  font-size: 16px;
+}
+button,
+select,
+input {
+  max-width: 100%;
+}
+button {
+  overflow-wrap: anywhere;
+}
+.checkbox-label {
+  min-height: 44px;
+  cursor: pointer;
+}
+.mobile-panel,
+.pwa-panel,
+.mobile-notice {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.capability-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 0.8rem 1.4rem;
+}
+.capability-list div {
+  min-width: 0;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #dce2d9;
+}
+.capability-list dt {
+  font-size: 0.85rem;
+  color: #52695e;
+}
+.capability-list dd {
+  margin: 0.4rem 0 0;
+  overflow-wrap: anywhere;
+}
+.file-export-controls {
+  width: 100%;
+}
+.camera-invitation video {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 10px;
+  margin: 1rem 0;
+}
+.camera-invitation button {
+  margin: 0.4rem 0.5rem 0.4rem 0;
+}
+.qr-image {
+  width: min(100%, 304px);
+  background: white;
+  padding: 12px;
+  border-radius: 10px;
+}
+.qr-image svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.timeline-plot {
+  overflow-x: auto;
+  max-width: 100%;
+  border-radius: 6px;
+}
+.timeline-plot:focus-visible {
+  outline: 3px solid #9bbf55;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .metrics-chart {
+    padding: 0.8rem;
+  }
+  .timeline-plot svg {
+    min-width: 640px;
+  }
+  .timeline-plot text {
+    font-size: 18px;
+  }
+  .file-list li,
+  .invitation-box {
+    min-width: 0;
+  }
+  .file-export-controls .actions {
+    align-items: stretch;
+  }
+  .file-export-controls button {
+    width: 100%;
+    text-align: left;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    background: #101b18;
+    color: #e0eee6;
+  }
+  header,
+  footer {
+    border-color: #41574b;
+  }
+  .demo-panel {
+    background: #182923;
+    border-color: #41574b;
+  }
+  .state-card,
+  .pairing-box,
+  .event-log,
+  input,
+  select,
+  .device {
+    background: #10221a;
+    color: #e0eee6;
+    border-color: #4e6558;
+  }
+  .muted,
+  .lede,
+  .demo-note,
+  .eyebrow,
+  .phase-label,
+  .state-card span,
+  .principles,
+  .metric-card > span,
+  .metric-card > small,
+  .capability-list dt,
+  .connection-line small,
+  .device small,
+  .connection-map p,
+  .details-grid p,
+  footer,
+  .next-phase span,
+  .next-phase p {
+    color: #b9cebf;
+  }
+  .pill,
+  .status-note,
+  .invitation-box,
+  .approval-box,
+  .success-note,
+  .next-panel,
+  .next-phase,
+  .connection-map,
+  .code-block {
+    background: #23392c;
+    color: #e0eee6;
+    border-color: #819b60;
+  }
+  button {
+    background: #b4d99b;
+    color: #13251a;
+  }
+  button:hover {
+    background: #c9e7b5;
+  }
+  button.secondary {
+    background: #294637;
+    color: #e0eee6;
+    border-color: #718c70;
+  }
+  button:disabled:hover {
+    background: #294637;
+  }
+  .metrics-chart {
+    background: #10221a;
+  }
+  .metrics-chart text {
+    fill: #ccdfd2;
+  }
+  .metric-data-line {
+    stroke: #b4d99b;
+  }
+  .metric-card,
+  .capability-list div,
+  .file-list li,
+  .saved-transfer {
+    border-color: #41574b;
+  }
+  .error {
+    color: #ffb4b4;
+  }
+  .pairing-code {
+    background: #10221a;
+    color: #e4f3dc;
+    border-color: #718c70;
+  }
+  code {
+    color: #d7e9dc;
+  }
+  .qr-image {
+    background: white;
+  }
+}

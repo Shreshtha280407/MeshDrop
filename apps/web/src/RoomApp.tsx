@@ -5,6 +5,11 @@ import { SavedTransfersPanel } from './features/transfer/SavedTransfersPanel';
 import { PairingPanel } from './features/pairing/PairingPanel';
 import { RoomClient } from './features/pairing/RoomClient';
 import { detectDeviceCapabilities } from '@meshdrop/platform';
+import { observeLifecycle, probeCapabilities } from '@meshdrop/platform';
+import type { CapabilityResult } from '@meshdrop/platform';
+import { MobilePanel } from './features/mobile/MobilePanel';
+import { PwaPanel } from './features/mobile/PwaPanel';
+import { CameraInvitation, PrivateQr } from './features/mobile/QrInvitation';
 
 export default function RoomApp({ initialInvitation }: { initialInvitation: string }) {
   const client = useMemo(() => new RoomClient(), []);
@@ -16,6 +21,28 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
   const [invite, setInvite] = useState(initialInvitation);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState('');
+  const [platform, setPlatform] = useState<CapabilityResult | null>(null);
+  const [platformError, setPlatformError] = useState('');
+  const [probeVersion, setProbeVersion] = useState(0);
+  useEffect(() => {
+    let current = true;
+    setPlatform(null);
+    setPlatformError('');
+    void probeCapabilities()
+      .then((value) => {
+        if (current) setPlatform(value);
+      })
+      .catch(() => {
+        if (current)
+          setPlatformError(
+            'Device checks could not finish. Recheck capabilities or use another regular browser.',
+          );
+      });
+    return () => {
+      current = false;
+    };
+  }, [probeVersion]);
+  useEffect(() => observeLifecycle((event) => client.handleLifecycle(event)), [client]);
   useEffect(() => () => client.dispose(), [client]);
   const status = view.status;
   const isOwner = status?.role === 'owner';
@@ -38,10 +65,15 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </a>
         <span className="phase-label">
           <i />
-          Transfer insights / Phase 6
+          Mobile & PWA / Phase 7
         </span>
       </header>
       <main>
+        {view.lifecycleMessage && (
+          <p className="status-note mobile-notice" role="status">
+            {view.lifecycleMessage}
+          </p>
+        )}
         <section className="intro">
           <p className="eyebrow">PRIVATE SHARING STARTS WITH PERMISSION.</p>
           <h1>
@@ -118,6 +150,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
                   onChange={(event) => setInvite(event.target.value)}
                   required
                 />
+                <CameraInvitation onInvitation={setInvite} />
                 <button disabled={view.busy || !invite.trim()} type="submit">
                   Request to join
                 </button>
@@ -167,6 +200,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
                     Share privately. One receiver may request admission before the invitation
                     expires.
                   </p>
+                  <PrivateQr invitation={view.invitation} />
                   {copyError && (
                     <p role="status" className="muted">
                       {copyError}
@@ -263,7 +297,14 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
           )}
         </section>
         {status && <PairingPanel key={view.peer.epoch} client={client} view={view} />}
-        {status && <TransferPanel client={client} view={view} />}
+        {status && <TransferPanel client={client} view={view} capabilities={platform} />}
+        <MobilePanel
+          capabilities={platform}
+          error={platformError}
+          view={view}
+          refresh={() => setProbeVersion((version) => version + 1)}
+        />
+        <PwaPanel roomOpen={Boolean(status && status.state !== 'closed')} />
         <NetworkPanel client={client} view={diagnosticsView} />
         <SavedTransfersPanel room={client} view={view} />
         <section className="details-grid">
@@ -305,11 +346,10 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               storage contains credential verifiers and temporary room state.
             </p>
             <div className="next-phase">
-              <span>UP NEXT · PHASE 7</span>
-              <strong>Android, iPhone and PWA hardening</strong>
+              <span>UP NEXT · PHASE 8</span>
+              <strong>Security, abuse and adversarial QA</strong>
               <p>
-                Strengthen foreground recovery, lifecycle behavior and installation across mobile
-                browsers.
+                Validate malformed inputs, authorization boundaries and reliability under faults.
               </p>
             </div>
           </div>

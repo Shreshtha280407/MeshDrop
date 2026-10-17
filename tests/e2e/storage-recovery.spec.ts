@@ -28,8 +28,9 @@ test('reloaded receiver exports a rehashed saved file and owner can reselect the
     await expect(receiver.getByTestId('saved-checkpoint')).toContainText(
       'Completed receipt restored',
     );
-    const downloading = receiver.waitForEvent('download');
     await receiver.getByRole('button', { name: `Export saved ${name}`, exact: true }).click();
+    const downloading = receiver.waitForEvent('download');
+    await receiver.getByRole('button', { name: `Save ${name}`, exact: true }).click();
     const output = testInfo.outputPath('reopened.bin');
     await (await downloading).saveAs(output);
     expect(

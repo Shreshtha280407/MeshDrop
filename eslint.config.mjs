@@ -10,6 +10,7 @@ export default tseslint.config(
       '**/.meshdrop-artifacts/**',
       '**/dist/**',
       '**/node_modules/**',
+      'apps/web/public/vendor/**',
       '**/.wrangler/**',
       'playwright-report/**',
       'test-results/**',

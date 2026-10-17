@@ -50,7 +50,7 @@ it('preflight rejects insufficient space and reports eviction/persistence limita
   expect(result.estimatedFreeBytes).toBe(2 * 1024 ** 2);
   expect(result.warnings.join(' ')).toContain('evicted');
 });
-it('unknown quota is a warning rather than an invented capacity guarantee', async () => {
+it('unknown quota stays unknown and limits new offers without inventing free capacity', async () => {
   vi.stubGlobal('indexedDB', {});
   vi.stubGlobal('navigator', {
     locks: {},
@@ -61,9 +61,13 @@ it('unknown quota is a warning rather than an invented capacity guarantee', asyn
       persist: async () => false,
     },
   });
+  const small = await estimateCapacity(64 * 1024 ** 2);
+  expect(small.available).toBe(true);
+  expect(small.estimatedFreeBytes).toBeNull();
   const result = await estimateCapacity(300 * 1024 ** 2);
-  expect(result.available).toBe(true);
+  expect(result.available).toBe(false);
   expect(result.estimatedFreeBytes).toBeNull();
-  expect(result.warnings).toHaveLength(3);
+  expect(result.warnings).toHaveLength(4);
+  expect(result.warnings.join(' ')).toContain('usable quota estimate');
   expect(await requestPersistence()).toBe(false);
 });

@@ -144,53 +144,66 @@ function Timeline({ frames, report }: { frames: MetricFrame[]; report: LocalRepo
         {LABELS[name]} ({unit}); time is seconds since this local report began. Missing values and
         sampling gaps are left blank.
       </p>
-      <svg
-        viewBox="0 0 800 230"
-        role="img"
-        aria-label={`${LABELS[name]} timeline with pause, connection and recovery annotations`}
-        data-testid="metrics-chart"
+      <div
+        className="timeline-plot"
+        role="region"
+        aria-label="Transfer timeline; scroll horizontally on small screens"
+        tabIndex={0}
       >
-        <title>Locally measured transfer timeline</title>
-        <path d="M52 25V185H752" fill="none" stroke="#a5b9ad" />
-        <text x="4" y="30">
-          {max.toFixed(2)}
-        </text>
-        <text x="27" y="188">
-          0
-        </text>
-        <text x="52" y="215">
-          {(first / 1000).toFixed(1)} s
-        </text>
-        <text x="690" y="215">
-          {(last / 1000).toFixed(1)} s
-        </text>
-        {events.map((event) => (
-          <g key={event.eventId} data-event-code={event.code}>
-            <title>
-              {event.code} at {(event.observedAt / 1000).toFixed(2)} s: {event.userMessage}
-            </title>
-            <line
-              x1={x(event.observedAt)}
-              x2={x(event.observedAt)}
-              y1="30"
-              y2="185"
-              stroke={event.severity === 'warning' ? '#a56f26' : '#91a998'}
-              strokeDasharray="3 5"
-            />
-            <circle cx={x(event.observedAt)} cy="25" r="3" fill="#a56f26" />
-          </g>
-        ))}
-        <path d={segments.join(' ')} fill="none" stroke="#164d42" strokeWidth="2.5" />
-        {selected && (
-          <line
-            x1={x(selected.timestampMonotonic)}
-            x2={x(selected.timestampMonotonic)}
-            y1="25"
-            y2="185"
-            stroke="#4a7566"
+        <svg
+          viewBox="0 0 800 230"
+          role="img"
+          aria-label={`${LABELS[name]} timeline with pause, connection and recovery annotations`}
+          data-testid="metrics-chart"
+        >
+          <title>Locally measured transfer timeline</title>
+          <path d="M52 25V185H752" fill="none" stroke="#a5b9ad" />
+          <text x="4" y="30">
+            {max.toFixed(2)}
+          </text>
+          <text x="27" y="188">
+            0
+          </text>
+          <text x="52" y="215">
+            {(first / 1000).toFixed(1)} s
+          </text>
+          <text x="690" y="215">
+            {(last / 1000).toFixed(1)} s
+          </text>
+          {events.map((event) => (
+            <g key={event.eventId} data-event-code={event.code}>
+              <title>
+                {event.code} at {(event.observedAt / 1000).toFixed(2)} s: {event.userMessage}
+              </title>
+              <line
+                x1={x(event.observedAt)}
+                x2={x(event.observedAt)}
+                y1="30"
+                y2="185"
+                stroke={event.severity === 'warning' ? '#a56f26' : '#91a998'}
+                strokeDasharray="3 5"
+              />
+              <circle cx={x(event.observedAt)} cy="25" r="3" fill="#a56f26" />
+            </g>
+          ))}
+          <path
+            className="metric-data-line"
+            d={segments.join(' ')}
+            fill="none"
+            stroke="#164d42"
+            strokeWidth="2.5"
           />
-        )}
-      </svg>
+          {selected && (
+            <line
+              x1={x(selected.timestampMonotonic)}
+              x2={x(selected.timestampMonotonic)}
+              y1="25"
+              y2="185"
+              stroke="#4a7566"
+            />
+          )}
+        </svg>
+      </div>
       {frames.length > 0 && (
         <>
           <label htmlFor={`sample-${report.reportId}`}>

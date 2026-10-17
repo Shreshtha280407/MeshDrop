@@ -15,6 +15,8 @@ import type { TransferView } from '@meshdrop/transfer-core';
 import { DiagnosticsSession, MetricsStore, emptyProbe } from '@meshdrop/network-intelligence';
 import type { DiagnosticsView } from '@meshdrop/network-intelligence';
 import { RetryPolicy } from '@meshdrop/recovery';
+import { probeCapabilities, receivePolicy } from '@meshdrop/platform';
+import type { LifecycleEvent } from '@meshdrop/platform';
 import type { TransferManifest } from '@meshdrop/protocol';
 import type { FileControl } from '@meshdrop/protocol';
 import { INITIAL_PEER, PeerSession } from '@meshdrop/peer-connection';
@@ -40,6 +42,7 @@ export interface RoomView {
   recoveryStatus: string;
   diagnostics: DiagnosticsView | null;
   diagnosticsError: string;
+  lifecycleMessage: string;
 }
 const INITIAL: RoomView = {
   status: null,
@@ -54,6 +57,7 @@ const INITIAL: RoomView = {
   recoveryStatus: '',
   diagnostics: null,
   diagnosticsError: '',
+  lifecycleMessage: '',
 };
 export function parseInvitation(value: string): { roomId: string; capability: string } {
   const url = new URL(value);
@@ -166,13 +170,58 @@ export class RoomClient {
   private retry = new RetryPolicy();
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private retrySuppressed = false;
+  private foreground = true;
+  private suspended = false;
+  handleLifecycle(event: LifecycleEvent): void {
+    if (event === 'hidden') {
+      this.foreground = false;
+      this.clearRetry();
+      if (this.view.transfer.state === 'active')
+        void this.transfer?.setPaused(true).catch(() => this.transfer?.disconnect());
+      this.update({
+        lifecycleMessage:
+          'This page moved out of the foreground. Delivery is paused where possible; in-flight blocks may settle. Return to both devices and choose Resume transfer.',
+      });
+    } else if (event === 'pagehide' || event === 'freeze' || event === 'offline') {
+      this.suspended = true;
+      this.clearRetry();
+      this.closePeer();
+      this.socket?.close();
+      this.update({
+        lifecycleMessage:
+          'The page was suspended or lost connectivity. Committed checkpoints remain subject to retention and browser eviction. Reconnect, compare a fresh code, then resume saved data.',
+      });
+    } else {
+      this.foreground = document.visibilityState !== 'hidden';
+      if (navigator.onLine !== false && this.foreground) {
+        this.suspended = false;
+        if (this.view.status?.state === 'approved') {
+          void this.refresh().catch(() => {});
+          if (!this.view.peer.ready || this.socket?.readyState !== WebSocket.OPEN)
+            this.scheduleRecovery();
+        }
+      }
+      if (this.view.lifecycleMessage)
+        this.update({
+          lifecycleMessage:
+            'Back in the foreground. Check both devices. A pause requires Resume transfer; a broken connection requires a fresh pairing code and authenticated resume.',
+        });
+    }
+  }
   private sourceFiles: readonly File[] = [];
   private clearRetry(): void {
     if (this.retryTimer) clearTimeout(this.retryTimer);
     this.retryTimer = undefined;
   }
   private scheduleRecovery(): void {
-    if (this.retryTimer || this.retrySuppressed || this.view.status?.state !== 'approved') return;
+    if (
+      this.retryTimer ||
+      this.retrySuppressed ||
+      this.suspended ||
+      !this.foreground ||
+      this.view.status?.state !== 'approved'
+    )
+      return;
     if (this.view.status.role !== 'owner' && this.socket?.readyState === WebSocket.OPEN) {
       this.update({
         recoveryStatus: 'Waiting for the room owner to reconnect. Saved data is retained.',
@@ -245,6 +294,10 @@ export class RoomClient {
     token?: string,
     body?: unknown,
   ): Promise<unknown> {
+    if (navigator.onLine === false)
+      throw new Error(
+        'You are offline. Pairing and file delivery require connectivity; retained local files can still be checked and exported.',
+      );
     const generation = this.generation;
     const response = await fetch(path, {
       method,
@@ -655,6 +708,11 @@ export class RoomClient {
       },
       onChange: (transfer) => {
         const previous = this.view.transfer;
+        if (transfer.state === 'active' && !this.foreground && !transfer.localPaused)
+          queueMicrotask(() => {
+            if (!this.foreground)
+              void this.transfer?.setPaused(true).catch(() => this.transfer?.disconnect());
+          });
         this.observeDiagnostics(transfer, peer.epoch);
         this.update({
           transfer,
@@ -766,8 +824,24 @@ export class RoomClient {
     if (this.view.status?.role === 'owner') await this.resumeSource(manifest, this.sourceFiles);
     else await this.resumeReceiver(manifest);
   }
-  async acceptFiles(): Promise<void> {
-    await this.transfer?.accept();
+  async acceptFiles(acknowledgedLimits = false): Promise<void> {
+    return this.action(async () => {
+      const transfer = this.transfer;
+      if (!transfer?.snapshot.manifest) return;
+      const policy = receivePolicy(
+        await probeCapabilities(),
+        transfer.snapshot.manifest.totalBytes,
+      );
+      if (!policy.allowed || (policy.requiresAcknowledgement && !acknowledgedLimits)) {
+        this.update({
+          error: policy.allowed
+            ? 'Confirm the storage and export limits before accepting.'
+            : policy.warnings.join(' '),
+        });
+        return;
+      }
+      if (transfer === this.transfer) await transfer.accept();
+    });
   }
   setRetention(retention: RetentionPolicy): void {
     this.transfer?.setRetention(retention);
@@ -818,6 +892,9 @@ export class RoomClient {
     anchor.download = entry.path.split('/').at(-1)!;
     anchor.rel = 'noopener';
     anchor.click();
+  }
+  verifiedFile(fileId: string): File | undefined {
+    return this.transfer?.download(fileId);
   }
   saveReceipt(): void {
     const receipt = this.view.transfer.receipt;

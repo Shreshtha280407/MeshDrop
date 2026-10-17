@@ -1,0 +1,30 @@
+{
+  "kind": "physical-android-phase-7",
+  "startedAt": "2026-10-17T20:04:56.206Z",
+  "phoneBrowser": "155.0.8059.79",
+  "desktopBrowser": "156.0.8078.4",
+  "scope": "USB forwards local signaling only. Real WebRTC carries files. Synthetic sources selected programmatically; no personal files or tabs inspected. Automated comparison is a UI check, not a human identity attestation.",
+  "checks": [
+    {
+      "direction": "laptop-to-android",
+      "bytes": 8388608,
+      "completeMs": 34761,
+      "path": "direct",
+      "export": "real Android Chrome download, ADB pulled exact synthetic file",
+      "sha256": "a82389c100e7139972d596d025b5dabf0be38165d61bd93bf609018eda7b38fa"
+    },
+    {
+      "direction": "android-to-laptop",
+      "bytes": 8388608,
+      "completeMs": 41028,
+      "path": "direct",
+      "export": "real desktop browser download",
+      "sha256": "a82389c100e7139972d596d025b5dabf0be38165d61bd93bf609018eda7b38fa"
+    }
+  ],
+  "capabilities": "ON THIS DEVICE\n\nKeep both devices open.\nForeground transfers\n\nScreen lock and app switching can suspend this page. MeshDrop pauses when it can; committed checkpoints are rechecked after recovery. Installing the app does not enable closed-browser delivery.\n\nSecure WebRTC\nAvailable\nVerified browser file storage\navailable\nCheckpoint database\navailable\nExclusive file access\nAvailable\nEstimated browser space\n10,240 MiB\nPersistent storage\nNot granted; files may be evicted\nChoose-location save\nAvailable\nFile selection\nAvailable\nCamera\nAvailable API; permission prompt\nApp mode\nbrowser\n\nA successful small storage probe and quota estimate do not certify a maximum file size. Offers from 300 MiB show an extra warning. Without a quota estimate, this app permits at most 64 MiB per new offer. Save/export may need additional device space.\n\nRecheck device capabilities",
+  "layoutFits": true,
+  "pass": false,
+  "error": "expect(locator).toContainText(expected) failed\n\nLocator: getByTestId('saved-transfers')\nExpected substring: \"meshdrop-p7-1792267497804-recovery.bin\"\nReceived string:    \"LOCAL TO THIS BROWSERSaved transfersVerified on reopenSurviving blocks are reread and rehashed before appearing here. Partial checkpoints are local evidence. To resume, renew room admission, compare the new pairing code, prepare the original source on the owner, then choose Resume saved on the receiver. Browser eviction or clearing site data can remove them.Check saved transfersRequest persistent storageChecking local storage and rehashing saved blocks…\"\nTimeout: 5000ms\n\nCall log:",
+  "completedAt": "2026-10-17T20:08:03.150Z"
+}

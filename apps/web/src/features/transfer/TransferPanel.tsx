@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { estimateCapacity } from '@meshdrop/storage';
 import type { CapacityResult, RetentionPolicy } from '@meshdrop/storage';
+import { receivePolicy } from '@meshdrop/platform';
+import type { CapabilityResult } from '@meshdrop/platform';
+import { FileExportControls } from '../mobile/FileExportControls';
 import type { RoomClient, RoomView } from '../pairing/RoomClient';
 const bytes = (value: number) =>
   value < 1024
@@ -10,7 +13,15 @@ const bytes = (value: number) =>
       : value < 1024 ** 3
         ? `${(value / 1024 ** 2).toFixed(1)} MiB`
         : `${(value / 1024 ** 3).toFixed(2)} GiB`;
-export function TransferPanel({ client, view }: { client: RoomClient; view: RoomView }) {
+export function TransferPanel({
+  client,
+  view,
+  capabilities,
+}: {
+  client: RoomClient;
+  view: RoomView;
+  capabilities: CapabilityResult | null;
+}) {
   const [files, setFiles] = useState<File[]>([]);
   const transfer = view.transfer;
   const isOwner = view.status?.role === 'owner';
@@ -21,9 +32,22 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
     transfer.state === 'complete' || transfer.state === 'cancelled' || transfer.state === 'failed';
   const total = transfer.manifest?.totalBytes ?? 0;
   const [capacity, setCapacity] = useState<CapacityResult | null>(null);
+  const [acknowledgedLimits, setAcknowledgedLimits] = useState(false);
+  const policy =
+    capabilities && capacity
+      ? receivePolicy(
+          {
+            ...capabilities,
+            estimatedFreeBytes: capacity.estimatedFreeBytes,
+            persistentStorage: capacity.persistent,
+          },
+          total,
+        )
+      : null;
   useEffect(() => {
     let current = true;
     setCapacity(null);
+    setAcknowledgedLimits(false);
     if (!isOwner && transfer.state === 'negotiating')
       void estimateCapacity(total)
         .then((result) => {
@@ -136,10 +160,8 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
                     {file.sha256}
                   </code>
                 )}
-                {!isOwner && transfer.state === 'complete' && (
-                  <button className="secondary" onClick={() => client.saveFile(file.fileId)}>
-                    Save {file.path}
-                  </button>
+                {!isOwner && transfer.state === 'complete' && client.verifiedFile(file.fileId) && (
+                  <FileExportControls file={client.verifiedFile(file.fileId)!} path={file.path} />
                 )}
               </li>
             ))}
@@ -186,11 +208,38 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
               {capacity.warnings.join(' ')}
             </p>
           )}
+          <p className="status-note" data-testid="receive-strategy">
+            {!policy
+              ? 'Checking usable storage…'
+              : `Receive strategy: ${policy.strategy === 'opfs-checkpoint' ? 'verified browser files with local checkpoints' : 'unavailable'}. Export: ${policy.exportStrategy === 'picker-or-download' ? 'choose a save location or download' : 'browser download or system share / Save to Files'}.`}
+          </p>
+          {policy && (
+            <ul className="muted" data-testid="platform-limits">
+              {policy.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          )}
+          {policy?.requiresAcknowledgement && (
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={acknowledgedLimits}
+                onChange={(event) => setAcknowledgedLimits(event.target.checked)}
+              />
+              I understand the storage and export limits and will keep both devices open
+            </label>
+          )}
           <div className="actions">
             <button
-              disabled={!capacity?.available}
+              disabled={
+                !capacity?.available ||
+                !policy?.allowed ||
+                view.busy ||
+                (policy.requiresAcknowledgement && !acknowledgedLimits)
+              }
               onClick={() => {
-                void client.acceptFiles();
+                void client.acceptFiles(acknowledgedLimits);
               }}
             >
               Accept files
