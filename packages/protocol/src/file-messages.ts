@@ -1,38 +1,14 @@
 import { z } from 'zod';
 import { MAX_UINT32, VERIFICATION_BLOCK_BYTES } from './constants';
 import { uuidSchema } from './schemas';
+import { distinctFilePaths, safeRelativePath } from './file-path';
+export { safeRelativePath } from './file-path';
 
 export const MAX_TRANSFER_FILES = 16;
 export const MAX_TRANSFER_BYTES = 64 * 1024 ** 3;
 export const TRANSFER_FRAME_HEADER_BYTES = 72;
 export const MIN_TRANSFER_FRAME_BYTES = 1024;
 export const sha256Schema = z.string().regex(/^[a-f0-9]{64}$/);
-export function safeRelativePath(value: string): boolean {
-  if (
-    !value ||
-    value !== value.normalize('NFC') ||
-    new TextEncoder().encode(value).length > 240 ||
-    /[\\\u202a-\u202e\u2066-\u2069:<>"|?*]/u.test(value) ||
-    Array.from(value).some((char) => {
-      const point = char.codePointAt(0)!;
-      return point < 32 || (point >= 127 && point <= 159);
-    })
-  )
-    return false;
-  const parts = value.split('/');
-  return (
-    parts.length <= 8 &&
-    parts.every(
-      (part) =>
-        part.length > 0 &&
-        part === part.trim() &&
-        part !== '.' &&
-        part !== '..' &&
-        !/[. ]$/.test(part) &&
-        !/^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(part),
-    )
-  );
-}
 export const relativePathSchema = z.string().refine(safeRelativePath, 'Unsafe relative path.');
 export const manifestFileSchema = z.strictObject({
   fileId: uuidSchema,
@@ -53,7 +29,7 @@ export const manifestSchema = z
     if (
       manifest.files.reduce((sum, file) => sum + file.size, 0) !== manifest.totalBytes ||
       new Set(manifest.files.map((file) => file.fileId)).size !== manifest.files.length ||
-      new Set(manifest.files.map((file) => file.path.toLowerCase())).size !== manifest.files.length
+      !distinctFilePaths(manifest.files.map((file) => file.path))
     )
       ctx.addIssue({ code: 'custom', message: 'Manifest totals or file identities conflict.' });
   });

@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { ROOM_BUDGETS } from '../security/policy';
 import {
   CLIENT_SIGNAL_TYPES,
   connectionRequestSchema,
@@ -87,7 +88,13 @@ type Initialization = {
 export class SessionRoom extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    ctx.storage.sql.exec(`
+    if (this.hasSchema()) this.createSchema();
+    // The runtime retains sockets and attachments through hibernation. No role
+    // cache is restored: handlers always re-read authorization from SQLite.
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
+  }
+  private createSchema(): void {
+    this.ctx.storage.sql.exec(`
       CREATE TABLE IF NOT EXISTS room_meta (
         room_id TEXT PRIMARY KEY, owner_peer_id TEXT NOT NULL, state TEXT NOT NULL,
         revision INTEGER NOT NULL, epoch INTEGER NOT NULL, expires_at INTEGER NOT NULL,
@@ -109,11 +116,46 @@ export class SessionRoom extends DurableObject<Env> {
         consumed_at INTEGER
       );
     `);
-    // The runtime retains sockets and attachments through hibernation. No role
-    // cache is restored: handlers always re-read authorization from SQLite.
-    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
+    this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS security_windows (
+      name TEXT PRIMARY KEY, started_at INTEGER NOT NULL, count INTEGER NOT NULL
+    )`);
+  }
+  private hasSchema(): boolean {
+    return (
+      this.ctx.storage.sql
+        .exec("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'room_meta'")
+        .toArray().length > 0
+    );
+  }
+  private budget(name: keyof typeof ROOM_BUDGETS): void {
+    // Four fixed keys only; SQLite survives actor eviction and IP rotation.
+    this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS security_windows (
+      name TEXT PRIMARY KEY, started_at INTEGER NOT NULL, count INTEGER NOT NULL
+    )`);
+    const now = Date.now();
+    const row = this.ctx.storage.sql
+      .exec<{
+        started_at: number;
+        count: number;
+      }>('SELECT started_at, count FROM security_windows WHERE name = ?', name)
+      .toArray()[0];
+    const reset = !row || now - row.started_at >= 60000;
+    if (!reset && row.count >= ROOM_BUDGETS[name])
+      throw new HttpError(
+        429,
+        'RATE_LIMITED',
+        'Room activity limit reached. Try again later.',
+        true,
+      );
+    this.ctx.storage.sql.exec(
+      'INSERT OR REPLACE INTO security_windows VALUES (?, ?, ?)',
+      name,
+      reset ? now : row.started_at,
+      reset ? 1 : row.count + 1,
+    );
   }
   private room(): RoomRow {
+    if (!this.hasSchema()) throw new HttpError(404, 'NOT_FOUND', 'Room unavailable.');
     const row = this.ctx.storage.sql.exec<RoomRow>('SELECT * FROM room_meta LIMIT 1').toArray()[0];
     if (!row) throw new HttpError(404, 'NOT_FOUND', 'Room unavailable.');
     return row;
@@ -154,6 +196,8 @@ export class SessionRoom extends DurableObject<Env> {
       const action = new URL(request.url).pathname.slice(1);
       if (action === 'initialize' && request.method === 'POST')
         return await this.initialize(request);
+      this.room();
+      this.budget('http');
       if (action === 'join' && request.method === 'POST') return await this.join(request);
       if (action === 'ws' && request.method === 'GET') return await this.upgrade(request);
       const peer = await this.authenticate(request);
@@ -200,6 +244,7 @@ export class SessionRoom extends DurableObject<Env> {
       data.inviteExpiresAt > data.expiresAt
     )
       throw new HttpError(400, 'INVALID_MESSAGE', 'Invalid room initialization.');
+    this.createSchema();
     this.ctx.storage.transactionSync(() => {
       if (this.ctx.storage.sql.exec('SELECT 1 FROM room_meta LIMIT 1').toArray().length)
         throw new HttpError(409, 'CONFLICT', 'Room already initialized.');
@@ -352,6 +397,7 @@ export class SessionRoom extends DurableObject<Env> {
   private async issueTicket(request: Request, peerId: string): Promise<Response> {
     if (!ticketRequestSchema.safeParse(await readJson(request)).success)
       throw new HttpError(400, 'INVALID_MESSAGE', 'Invalid ticket request.');
+    this.budget('ticket');
     const ticket = randomCapability();
     const roomId = this.room().room_id;
     const ticketHash = await verifier('ticket', roomId, ticket);
@@ -367,6 +413,15 @@ export class SessionRoom extends DurableObject<Env> {
       Date.now() + duration(this.env.WS_TICKET_TTL_SECONDS, 30, 60),
     );
     this.ctx.storage.transactionSync(() => {
+      this.ctx.storage.sql.exec(
+        'DELETE FROM ticket_nonces WHERE expires_at < ?',
+        Date.now() - 60000,
+      );
+      if (
+        this.ctx.storage.sql.exec('SELECT verifier FROM ticket_nonces LIMIT 64').toArray().length >=
+        64
+      )
+        throw new HttpError(429, 'RATE_LIMITED', 'Admission ticket limit reached.', true);
       this.ctx.storage.sql.exec(
         'DELETE FROM ticket_nonces WHERE peer_id = ? AND consumed_at IS NULL',
         peerId,
@@ -384,6 +439,7 @@ export class SessionRoom extends DurableObject<Env> {
     return Response.json({ ticket, expiresAt, epoch: room.epoch, nextSeq: peer.last_seq + 1 });
   }
   private async upgrade(request: Request): Promise<Response> {
+    this.budget('upgrade');
     const ticket = socketCredential(request);
     const roomId = this.room().room_id;
     const ticketHash = await verifier('ticket', roomId, ticket);
@@ -492,6 +548,7 @@ export class SessionRoom extends DurableObject<Env> {
         );
       if (room.epoch === 0 && parsed.data.mode !== 'new-connection')
         throw new HttpError(409, 'CONFLICT', 'The first connection must be new.');
+      this.budget('epoch');
       this.ctx.storage.sql.exec('UPDATE room_meta SET epoch = epoch + 1, revision = revision + 1');
       this.ctx.storage.sql.exec('DELETE FROM ticket_nonces');
       result = { ...pair, epoch: room.epoch + 1, mode: parsed.data.mode };
@@ -625,6 +682,11 @@ export class SessionRoom extends DurableObject<Env> {
         throw new HttpError(409, 'STALE_EPOCH', 'Message belongs to a stale epoch.');
       if (!(CLIENT_SIGNAL_TYPES as readonly string[]).includes(envelope.type))
         throw new HttpError(403, 'FORBIDDEN', 'Server event cannot be sent by a peer.');
+      if (
+        (envelope.type === 'SDP_OFFER' && peer.role !== 'owner') ||
+        (envelope.type === 'SDP_ANSWER' && peer.role !== 'receiver')
+      )
+        throw new HttpError(403, 'FORBIDDEN', 'Message type does not match the peer role.');
       const recentIds = JSON.parse(peer.recent_ids) as string[];
       if (envelope.seq <= peer.last_seq || recentIds.includes(envelope.messageId))
         throw new HttpError(409, 'REPLAY', 'Duplicate or out-of-order signaling event.');
@@ -688,12 +750,19 @@ export class SessionRoom extends DurableObject<Env> {
     this.closeSocket(ws, 1011, 'Connection failed.');
   }
   override async alarm(): Promise<void> {
+    if (!this.hasSchema()) return;
     const room = this.ctx.storage.sql.exec<RoomRow>('SELECT * FROM room_meta LIMIT 1').toArray()[0];
     if (!room) return;
     if (room.state === 'closed') {
       if (room.purge_at !== null && room.purge_at <= Date.now()) {
         this.ctx.storage.transactionSync(() => {
-          for (const table of ['ticket_nonces', 'invites', 'peers', 'room_meta'])
+          for (const table of [
+            'ticket_nonces',
+            'invites',
+            'peers',
+            'room_meta',
+            'security_windows',
+          ])
             this.ctx.storage.sql.exec(`DELETE FROM ${table}`);
         });
       } else if (room.purge_at !== null) await this.ctx.storage.setAlarm(room.purge_at);

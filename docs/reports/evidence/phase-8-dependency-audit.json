@@ -1,0 +1,61 @@
+{
+  "phase": "P8",
+  "date": "2026-10-18",
+  "baselineCommit": "ca296f3",
+  "scope": "Registry advisory scan of lockfile dependency graphs; not a certification or penetration test",
+  "initialVulnerabilities": {
+    "info": 0,
+    "low": 1,
+    "moderate": 4,
+    "high": 3,
+    "critical": 1
+  },
+  "fixedToolVersions": {
+    "vite": "7.3.7",
+    "vitest": "4.1.11",
+    "esbuild": "0.28.1"
+  },
+  "targetedOverride": {
+    "esbuild@<0.28.1": "0.28.1"
+  },
+  "qrPackages": {
+    "@zxing/browser": "0.2.1",
+    "@zxing/library": "0.23.0"
+  },
+  "fullGraph": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 348,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 348
+  },
+  "productionGraph": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 20,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 20
+  },
+  "initialAdvisoryReferences": [
+    "https://github.com/advisories/GHSA-4w7w-66w2-5vf9",
+    "https://github.com/advisories/GHSA-5xrq-8626-4rwp",
+    "https://github.com/advisories/GHSA-82fw-gwwq-j7x9",
+    "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+    "https://github.com/advisories/GHSA-g7r4-m6w7-qqqr",
+    "https://github.com/advisories/GHSA-p9ff-h696-f583",
+    "https://github.com/advisories/GHSA-v2wj-q39q-566r",
+    "https://github.com/advisories/GHSA-v6wh-96g9-6wx3"
+  ]
+}

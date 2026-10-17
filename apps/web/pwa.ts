@@ -14,7 +14,6 @@ export function offlineShell(): Plugin {
         'icon-512.png',
         'icon-maskable-512.png',
         'apple-touch-icon.png',
-        'vendor/zxing-browser-0.2.1.min.js',
       ];
       const assets = [
         '/',

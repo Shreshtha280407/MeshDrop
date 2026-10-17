@@ -1,0 +1,15 @@
+MeshDrop P8 complete regression — 2026-10-18
+Baseline: ca296f3; local changes only, no staging/commit/push/deployment.
+Command: PLAYWRIGHT_BROWSERS_PATH=<installed local cache> LD_LIBRARY_PATH=<local WebKit libraries> WRANGLER_SEND_METRICS=false pnpm check
+Result: PASS (complete command exit 0; no retries).
+Strict package/root types, ESLint, Prettier, environment/secret checks: PASS.
+314 unit + 42 security + 47 Worker integration + 18 fault + 104 browser/storage + 5 production PWA/privacy = 530 unique tests passed.
+Production frontend build and Worker dry-run build: PASS. No deployment.
+42 security tests generated .meshdrop-artifacts/phase-8/security.json; five files, zero failures.
+P8 browser demos ran in desktop/mobile Chromium; existing cross-browser tests also used Firefox and Linux WebKit.
+Exact pnpm audit:release command: No known vulnerabilities found. Separate production graph: zero known advisories.
+Existing-checkout pnpm install --frozen-lockfile --offline: PASS, already up to date; not a fresh reinstall claim.
+Nonfatal upstream Rollup annotation and NO_COLOR/FORCE_COLOR warnings remain.
+Earlier browser-cache setup and QR-detector regression failures were resolved; this summary describes the final complete run.
+Evidence intentionally omits raw binding values, live invitation strings, SDP/ICE, addresses, private paths and request payloads.
+P7 physical iPhone acceptance remains pending. P9 public deployment/relay/provider operations are outside this phase.

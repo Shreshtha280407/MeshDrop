@@ -7,6 +7,16 @@ export default defineConfig({
     hookTimeout: 30000,
     maxWorkers: 2,
     projects: [
+      {
+        test: {
+          name: 'security',
+          include: [
+            'tests/security/**/*.spec.ts',
+            'packages/protocol/tests/fuzz/**/*.spec.ts',
+            'packages/recovery/tests/property/**/*.spec.ts',
+          ],
+        },
+      },
       { test: { name: 'unit', include: ['tests/unit/**/*.spec.ts'] } },
       {
         test: {

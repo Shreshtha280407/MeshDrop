@@ -1,3 +1,4 @@
+import { exportNames } from '../../security/safeFilePath';
 import { useEffect, useRef, useState } from 'react';
 import { requestPersistence, StorageClient } from '@meshdrop/storage';
 import { FileExportControls } from '../mobile/FileExportControls';
@@ -205,6 +206,7 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
                     <FileExportControls
                       file={prepared[`${checkpoint.record.transferId}:${meta.fileId}`]!}
                       path={meta.path}
+                      outputName={exportNames(checkpoint.manifest.files).get(meta.fileId)!}
                     />
                   )}
                 </li>

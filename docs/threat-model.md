@@ -1,8 +1,10 @@
-# MeshDrop threat model — P0 through P6
+# MeshDrop threat model — P0 through P8
 
-Review date: 2026-10-17. Scope: contract/boundary review against both supplied plans, not an independent penetration test. Future controls remain unimplemented until their named phase passes.
+Review date: 2026-10-18. Scope: contract/boundary review against both supplied plans, not an independent penetration test. Future controls remain unimplemented until their named phase passes.
 
 Assets: capabilities, peer identity, room isolation, file bytes, checkpoint integrity, local capacity, diagnostics and addresses. Attackers include unauthenticated callers, leaked-invite holders, malicious approved peers, compromised signaling and stale/replayed clients. Local corruption and eviction are also threats to correctness.
+
+The table preserves the initial P0 roadmap. Later paragraphs and the linked Phase 8 security review describe the implemented controls and current evidence.
 
 | Threat / boundary                | Required control                                                             | P0 evidence / later gate                            |
 | -------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------- |
@@ -35,3 +37,9 @@ Local metadata/digests are trusted only within the uncompromised origin/profile 
 P5 checks local saved bytes against their ledger and then source block SHA-256 under authenticated controls. A forged local digest can pass local rehash but cannot become reused progress when it differs from the source. Old epochs/sequence replays are rejected before dispatch; attempt/page/phase checks prevent distinct signed handshake replays from changing the accepted ledger. Full-file verification and a fresh-epoch receipt remain mandatory, including fully reused and empty files. Reconnect retries are bounded, and expiry requires renewed authorization. The returning human identity depends on the independent comparison; it is not a persisted device key or remote hardware attestation. See the [resume contract](protocol/resume-p5.md).
 
 P6 persists only allowlisted timing, byte-count and category evidence in a separate bounded local IndexedDB. Strict schemas reject unknown metadata, raw errors and mismatched metric labels. Selected-pair extraction drops candidates/IPs/ports; JSON/CSV exports are opt-in and never uploaded. Count, byte and expiry pruning plus explicit deletion limit retention; logical caps exclude database overhead. A diagnostics quota/API failure does not decide file integrity. Reports still contain linkable UUIDs, sizes and timings, and origin/profile compromise remains outside the redaction boundary. Sampling cannot establish ISP throttling or Wi-Fi congestion. See the [diagnostics contract](protocol/diagnostics-p6.md).
+
+P7 adds usable storage probes, quota/consent policy, foreground pause/recovery, local QR handling, gesture-preserving native export and an exact public-shell-only offline cache. It makes no background-delivery or universal iPhone export promise. Physical iPhone acceptance remains pending; Android and Linux browser evidence does not replace it.
+
+P8 reviews these boundaries and adds persistent room budgets, lazy schema creation for real rooms, upgraded-room cleanup, server-enforced SDP roles, bounded request/chunk/deadline and client queues, portable Unicode/path/output conflict validation, conservative export MIME, strict production headers and release auditing. Deterministic fuzz/property cases, real third-browser denial, malformed WebRTC frame demos, client flood denial, production CSP/referrer tests and independent collision-export bytes provide local evidence. See the [security review](security-review.md), [privacy model](privacy-model.md) and [Phase 8 report](reports/phase-8.md).
+
+History replacement cleans the application-visible URL and current navigation entry but does not guarantee erasure of Chromium userTypedURL metadata or external browser/sync/clipboard copies. No application payload/console logging or analytics is introduced. Hosting/runtime retention, volumetric abuse, global room/spending caps, public TLS/header behavior and production TURN remain P9 operational acceptance work. A compromised origin/profile and malicious exported files remain explicit limits. Hashes are integrity evidence; they do not independently authorize returning peers.

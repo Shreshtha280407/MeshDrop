@@ -1,4 +1,5 @@
 import {
+  MAX_CONTROL_MESSAGE_BYTES,
   apiErrorSchema,
   connectionEpochSchema,
   iceConfigurationSchema,
@@ -60,6 +61,7 @@ const INITIAL: RoomView = {
   lifecycleMessage: '',
 };
 export function parseInvitation(value: string): { roomId: string; capability: string } {
+  if (value.length > 2048) throw new Error('Invitation exceeds input limits.');
   const url = new URL(value);
   const hash = new URLSearchParams(url.hash.slice(1));
   if (
@@ -162,6 +164,8 @@ export class RoomClient {
     await new MetricsStore().delete(reportId);
   }
   private readonly downloadUrls = new Map<string, string>();
+  private queuedSignals = 0;
+  private queuedSignalBytes = 0;
   private signalQueue: Promise<void> = Promise.resolve();
   private startingEpoch = false;
   private connecting = false;
@@ -512,6 +516,11 @@ export class RoomClient {
           if (socket !== this.socket || event.data === 'pong' || typeof event.data !== 'string')
             return;
           try {
+            if (event.data.length > MAX_CONTROL_MESSAGE_BYTES)
+              throw new Error('Signaling message exceeds byte limit.');
+            const bytes = new TextEncoder().encode(event.data).length;
+            if (this.queuedSignals >= 64 || this.queuedSignalBytes + bytes > 256 * 1024)
+              throw new Error('Signaling receive queue exceeded its limit.');
             const envelope = parseSignalingMessage(event.data);
             if (envelope.roomId !== credentials.roomId)
               throw new Error('Unexpected signaling scope.');
@@ -520,6 +529,8 @@ export class RoomClient {
               this.markClosed();
               return;
             }
+            this.queuedSignals++;
+            this.queuedSignalBytes += bytes;
             this.signalQueue = this.signalQueue
               .then(async () => {
                 if (socket === this.socket && generation === this.generation)
@@ -530,6 +541,10 @@ export class RoomClient {
                   this.peerSession?.fail('Peer negotiation failed. Request a new connection.');
                   this.update({ error: 'Peer negotiation failed. Request a new connection.' });
                 }
+              })
+              .finally(() => {
+                this.queuedSignals--;
+                this.queuedSignalBytes -= bytes;
               });
           } catch {
             this.update({ error: 'Invalid signaling response. Reconnect to continue.' });

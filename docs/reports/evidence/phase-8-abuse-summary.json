@@ -1,0 +1,57 @@
+{
+  "phase": "P8",
+  "date": "2026-10-18",
+  "baselineCommit": "ca296f3",
+  "command": "pnpm check (local browser and WebKit library path settings supplied)",
+  "result": "passed",
+  "retriesUsed": 0,
+  "tests": {
+    "unit": 314,
+    "security": 42,
+    "integration": 47,
+    "faults": 18,
+    "browserStorage": 104,
+    "productionPwaPrivacy": 5,
+    "totalUnique": 530
+  },
+  "generatedSecurityReport": {
+    "passed": 42,
+    "failed": 0,
+    "files": 5
+  },
+  "generatedCases": {
+    "boundedByteJsonIterations": 5000,
+    "frameRoundTrips": 1000,
+    "rangeSets": 2000
+  },
+  "deterministicSeeds": {
+    "protocol": "0xc0ffee",
+    "ranges": "0x8badf00d",
+    "scaledQr": [8, 13]
+  },
+  "browserGate": [
+    "third-browser denied with 409",
+    "malformed version: zero committed bytes/no export",
+    "excess fragment count: zero committed bytes/no export",
+    "out-of-order fragment: zero committed bytes/no export",
+    "signaling flood closes bounded queue",
+    "distinct-basename exports preserve independent bytes"
+  ],
+  "productionGate": [
+    "CSP blocks inline script and foreign fetch",
+    "local QR encode/camera decode under production CSP",
+    "visible history entries scrubbed; browser-internal userTypedURL limit documented",
+    "navigation canary sees no Referer",
+    "offline rehashed export and explicit PWA updates"
+  ],
+  "dependencyAudit": {
+    "fullGraphKnownVulnerabilities": 0,
+    "productionGraphKnownVulnerabilities": 0
+  },
+  "priorGateStillOpen": "P7 physical iPhone transfer/export and other documented physical-device coverage",
+  "limitations": [
+    "Local automated testing, not independent penetration testing",
+    "No public TLS/relay/provider-log or volumetric-abuse verification",
+    "Browser profile/origin compromise and internal history metadata remain outside app erasure guarantees"
+  ]
+}

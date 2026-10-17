@@ -1,3 +1,4 @@
+import type { BinaryBitmap, Result } from '@zxing/library';
 import { useEffect, useRef, useState } from 'react';
 import { parseInvitation } from '../pairing/RoomClient';
 interface ScanControls {
@@ -19,34 +20,30 @@ interface QrLibrary {
     ): Promise<ScanControls>;
   };
 }
-declare global {
-  interface Window {
-    ZXingBrowser?: QrLibrary;
-  }
-}
 let loading: Promise<QrLibrary> | null = null;
 export function loadQrLibrary(): Promise<QrLibrary> {
-  if (window.ZXingBrowser) return Promise.resolve(window.ZXingBrowser);
-  if (!loading)
-    loading = new Promise<QrLibrary>((resolve, reject) => {
-      const script = document.createElement('script');
-      const fail = () => {
-        clearTimeout(timer);
-        script.remove();
-        loading = null;
-        reject(new Error('Local QR tools could not load. Paste the invitation link instead.'));
-      };
-      const timer = setTimeout(fail, 10000);
-      script.src = '/vendor/zxing-browser-0.2.1.min.js';
-      script.integrity = 'sha384-HRtzk9lZgkbSgvUyQrnfC/GxiXZgwaNyD7hC9wcXlsBpDhkS80ISl73juef2FRuf';
-      script.crossOrigin = 'anonymous';
-      script.onload = () => {
-        clearTimeout(timer);
-        if (window.ZXingBrowser) resolve(window.ZXingBrowser);
-        else fail();
-      };
-      script.onerror = fail;
-      document.head.append(script);
+  // A pinned, lockfile-audited lazy chunk, served only by this origin.
+  loading ??= Promise.all([import('@zxing/browser'), import('@zxing/library')])
+    .then(([browser, { DecodeHintType }]) => ({
+      BrowserQRCodeSvgWriter: browser.BrowserQRCodeSvgWriter,
+      BrowserQRCodeReader: class extends browser.BrowserQRCodeReader {
+        constructor() {
+          super(new Map([[DecodeHintType.TRY_HARDER, true]]));
+        }
+        override decodeBitmap(bitmap: BinaryBitmap): Result {
+          try {
+            return super.decodeBitmap(bitmap);
+          } catch {
+            // One bounded fallback for front-facing codes with a quiet border.
+            // Perspective detection remains the first attempt for camera images.
+            return this.reader.decode(bitmap, new Map([[DecodeHintType.PURE_BARCODE, true]]));
+          }
+        }
+      },
+    }))
+    .catch(() => {
+      loading = null;
+      throw new Error('Local QR tools could not load. Paste the invitation link instead.');
     });
   return loading;
 }

@@ -65,7 +65,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </a>
         <span className="phase-label">
           <i />
-          Mobile & PWA / Phase 7
+          Security & abuse controls / Phase 8
         </span>
       </header>
       <main>
@@ -142,6 +142,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
                 <p className="muted">Paste the complete link from the room owner.</p>
                 <input
                   id="join-invitation"
+                  maxLength={2048}
                   type="password"
                   autoComplete="off"
                   spellCheck={false}
@@ -346,11 +347,9 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               storage contains credential verifiers and temporary room state.
             </p>
             <div className="next-phase">
-              <span>UP NEXT · PHASE 8</span>
-              <strong>Security, abuse and adversarial QA</strong>
-              <p>
-                Validate malformed inputs, authorization boundaries and reliability under faults.
-              </p>
+              <span>UP NEXT · PHASE 9</span>
+              <strong>Deployment and operational readiness</strong>
+              <p>Prepare hosting, relay configuration and production operations.</p>
             </div>
           </div>
         </section>

@@ -2,7 +2,7 @@
 
 Account-free browser-to-browser file transfer. Cloudflare coordinates short-lived rooms; devices own file transport, verification, storage, recovery, and diagnostics.
 
-**Current work: Phase 7 — mobile and PWA hardening; physical iPhone exit gate pending.** Transfer verified files over WebRTC, retain local checkpoints and authenticate missing-block recovery. Usable storage probes and quota policy explain receive limits before consent. Verified files offer browser download and supported native save/share flows. Local QR scanning, foreground pause/recovery, mobile dark theme and a production offline shell support phone use. The [Phase 7 report](docs/reports/phase-7.md), [device matrix](tests/devices/browser-matrix.md) and [mobile runbook](docs/runbooks/mobile-pwa.md) distinguish actual hardware results from browser emulation. P6 measured insights/history remain available; the P0 workbench remains at `/foundation`.
+**Current work: Phase 8 — security, abuse and adversarial QA.** Persistent room budgets, bounded protocol queues, portable file/export handling, production browser headers and deterministic abuse tests harden the existing verified WebRTC workflows. See the [Phase 8 report](docs/reports/phase-8.md), [security review](docs/security-review.md), [privacy model](docs/privacy-model.md) and [abuse runbook](docs/runbooks/security-abuse.md). The [Phase 7 physical iPhone gate remains pending](docs/reports/phase-7.md); proceeding with P8 does not close it. Verified local storage/recovery, mobile export/QR/PWA and measured local diagnostics remain available; the P0 workbench is at `/foundation`.
 
 ## Tech stack and architecture
 
@@ -25,6 +25,8 @@ pnpm -r typecheck
 pnpm lint
 pnpm check:secrets                 # environment ignore coverage and embedded-key checks
 pnpm test:unit
+pnpm test:security                 # deterministic fuzz, range properties and abuse input/queue checks
+pnpm audit:release                 # all resolved dependencies; network access required
 pnpm test:integration               # actual local workerd, no cloud account
 pnpm test:faults                    # lifecycle faults; socket faults run in integration tests
 pnpm build                         # web assets + Worker dry run; no deployment
@@ -35,7 +37,8 @@ pnpm bench:p4                      # receive >=300 MiB, close browser, reopen/re
 pnpm bench:p5                      # 1 GiB, interrupt near 70%, migrate isolated Linux subnet and resume
 pnpm bench:p6                      # measured pause/recovery, exact reuse, export + local history gate
 pnpm bench:p7                      # focused mobile checks plus real production PWA/offline tests
-pnpm test:pwa                      # production shell, offline verified export and explicit updates
+pnpm test:pwa                      # production shell, CSP/privacy, offline export and explicit updates
+pnpm bench:p8                      # generated abuse report, Worker suite and real browser denial demos
 ```
 
 `pnpm check` runs all automated gates. Physical-device acceptance is recorded separately. On Linux CI, install browsers with `pnpm exec playwright install --with-deps chromium firefox webkit`. `pnpm test:e2e:headed` opens the two-browser harness when a graphical environment is available. Integration tests and Wrangler need permission to start a local runtime and bind loopback sockets.
@@ -52,11 +55,11 @@ Public configuration: `ALLOWED_ORIGINS` (exact comma-separated origins), `ROOM_T
 
 Optional tool settings: `CI=true`, `WRANGLER_SEND_METRICS=false`, and `PLAYWRIGHT_BROWSERS_PATH`. `.env`, `.env.*`, `.dev.vars` and `.dev.vars.*` are ignored at every depth; only placeholder `.env.example` files may be tracked.
 
-`MESHDROP_SIGNAL_ORIGIN` optionally changes the Vite server/preview's backend proxy target for local tests; it is server-side configuration, not a frontend secret. Production PWA tests use 4173/8788 with separate local Worker persistence. The Android test runner accepts `MESHDROP_ANDROID_SERIAL`, `MESHDROP_EVIDENCE_DIR` and opt-in scenario flags described in the mobile runbook. No P7 provider key is required.
+`MESHDROP_SIGNAL_ORIGIN` optionally changes the Vite server/preview's backend proxy target for local tests; it is server-side configuration, not a frontend secret. Production PWA tests use 4173/8788 with separate local Worker persistence. The Android test runner accepts `MESHDROP_ANDROID_SERIAL`, `MESHDROP_EVIDENCE_DIR` and opt-in scenario flags described in the mobile runbook. No new provider key is required for P7/P8.
 
 ## Deployment
 
-There is no public deployment. `pnpm build` creates local frontend assets and a Worker dry-run bundle with a SQLite migration and rate-limiter bindings. Production deployment is part of P9. No code is pushed automatically.
+There is no public deployment. `pnpm build` creates local frontend assets and a Worker dry-run bundle with a SQLite migration and rate-limiter bindings. Production deployment is part of P9. The frontend build emits `_headers`; public host, Worker/API and WebSocket header behavior still need deployment verification. No code is pushed automatically.
 
 ## Workspace
 
@@ -73,7 +76,7 @@ There is no public deployment. `pnpm build` creates local frontend assets and a 
 | `packages/network-intelligence` | Measured stats, rolling rates, local history and report exports     |
 | `packages/platform`             | Usable browser capability probes, quota policy and lifecycle events |
 
-Later-phase packages expose interfaces, not pretend implementations. File engines remain independent of React lifecycle and server persistence. ESLint prevents protocol/shared types from importing React, Node, or Cloudflare APIs.
+Unimplemented later-phase features remain outside the delivered scope. File engines remain independent of React lifecycle and server persistence. ESLint prevents protocol/shared types from importing React, Node, or Cloudflare APIs.
 
 Read the [protocol specification](docs/protocol/v1.md), [state machines](docs/protocol/states.md), [ADRs](docs/adr/001-control-data-planes.md), [threat model](docs/threat-model.md), [runbook](docs/runbooks/local-development.md), [Phase 0 report](docs/reports/phase-0.md), [Phase 1 report](docs/reports/phase-1.md), [peer protocol](docs/protocol/peer-p2.md), [Phase 2 report](docs/reports/phase-2.md), [file protocol](docs/protocol/transfer-p3.md), [Phase 3 report](docs/reports/phase-3.md), [storage contract](docs/protocol/storage-p4.md) [Phase 4 report](docs/reports/phase-4.md), [resume protocol](docs/protocol/resume-p5.md) [Phase 5 report](docs/reports/phase-5.md), [diagnostics contract](docs/protocol/diagnostics-p6.md), [Phase 6 report](docs/reports/phase-6.md) and [mobile contract](docs/protocol/mobile-p7.md).
 

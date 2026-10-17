@@ -1,0 +1,5 @@
+
+> meshdrop@0.0.0 audit:release /home/Shreshtha/documents/MeshDrop
+> pnpm audit --audit-level low
+
+No known vulnerabilities found

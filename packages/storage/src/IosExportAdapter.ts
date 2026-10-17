@@ -16,8 +16,9 @@ export function namedExportFile(file: File, path: string): File {
     zip: 'application/zip',
     json: 'application/json',
   };
+  const extension = name.split('.').at(-1)!.toLowerCase();
   return new File([file], name, {
-    type: file.type || types[name.split('.').at(-1)!.toLowerCase()] || 'application/octet-stream',
+    type: Object.hasOwn(types, extension) ? types[extension]! : 'application/octet-stream',
   });
 }
 export function canShareFile(file: File, path: string): boolean {

@@ -24,7 +24,7 @@ export default {
         return secureResponse(
           Response.json({
             service: 'meshdrop-signaling',
-            phase: 'P7',
+            phase: 'P8',
             status: 'ready',
             sessionsAvailable: true,
           }),

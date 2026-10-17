@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { basename } from 'node:path';
 
 const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' })
@@ -23,6 +23,7 @@ for (const path of new Set(candidates)) {
     failures.push(`${path}: environment file is not ignored`);
     continue;
   }
+  if (!existsSync(path)) continue; // Deleted tracked sources are absent until the user stages them.
   if (!statSync(path).isFile() || !/\.(?:[cm]?[jt]sx?|jsonc?|ya?ml|md|txt|example)$/.test(path))
     continue;
   const text = readFileSync(path, 'utf8');

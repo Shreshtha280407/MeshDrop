@@ -6,7 +6,15 @@ import {
   startFileDownload,
 } from '@meshdrop/storage';
 import type { ExportOutcome } from '@meshdrop/storage';
-export function FileExportControls({ file, path }: { file: File; path: string }) {
+export function FileExportControls({
+  file,
+  path,
+  outputName = path,
+}: {
+  file: File;
+  path: string;
+  outputName?: string;
+}) {
   const releases = useRef<(() => void)[]>([]);
   const [result, setResult] = useState<ExportOutcome | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,13 +37,14 @@ export function FileExportControls({ file, path }: { file: File; path: string })
   }
   return (
     <div className="file-export-controls">
+      {outputName !== path.split('/').at(-1) && <p className="muted">Export name: {outputName}</p>}
       <div className="actions">
         <button
           className="secondary"
           disabled={busy}
           onClick={() => {
             try {
-              releases.current.push(startFileDownload(file, path));
+              releases.current.push(startFileDownload(file, outputName));
               setResult({
                 status: 'started',
                 message:
@@ -56,16 +65,16 @@ export function FileExportControls({ file, path }: { file: File; path: string })
           <button
             className="secondary"
             disabled={busy}
-            onClick={() => action(() => saveVerifiedFileWithPicker(file, path))}
+            onClick={() => action(() => saveVerifiedFileWithPicker(file, outputName))}
           >
             Choose save location for {path}
           </button>
         )}
-        {canShareFile(file, path) && (
+        {canShareFile(file, outputName) && (
           <button
             className="secondary"
             disabled={busy}
-            onClick={() => action(() => shareVerifiedFile(file, path))}
+            onClick={() => action(() => shareVerifiedFile(file, outputName))}
           >
             Share or save to Files: {path}
           </button>

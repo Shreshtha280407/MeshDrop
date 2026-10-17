@@ -3,6 +3,8 @@ import { verifier } from './auth/capabilities';
 import type { Env } from './env';
 
 export const MAX_HTTP_BODY_BYTES = 8192;
+export const MAX_HTTP_BODY_CHUNKS = 256;
+export const HTTP_BODY_TIMEOUT_MS = 5000;
 export const MAX_PEER_MESSAGES_PER_WINDOW = 60;
 export const MESSAGE_WINDOW_MS = 10000;
 export const MAX_SOCKET_VIOLATIONS = 3;
@@ -36,15 +38,29 @@ export async function readJson(request: Request): Promise<unknown> {
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > MAX_HTTP_BODY_BYTES) {
-      await reader.cancel();
-      throw new HttpError(413, 'MESSAGE_TOO_LARGE', 'Request body exceeds byte limit.');
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(
+      () => reject(new HttpError(408, 'INVALID_MESSAGE', 'Request body timed out.')),
+      HTTP_BODY_TIMEOUT_MS,
+    );
+  });
+  try {
+    for (;;) {
+      const { done, value } = await Promise.race([reader.read(), deadline]);
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_HTTP_BODY_BYTES || chunks.length >= MAX_HTTP_BODY_CHUNKS)
+        throw new HttpError(413, 'MESSAGE_TOO_LARGE', 'Request body exceeds input limits.');
+      chunks.push(value);
     }
-    chunks.push(value);
+  } catch (error) {
+    // Do not await an untrusted source's cancellation promise.
+    void reader.cancel().catch(() => {});
+    throw error;
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+    reader.releaseLock();
   }
   const bytes = new Uint8Array(size);
   let offset = 0;

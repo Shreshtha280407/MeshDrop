@@ -102,6 +102,7 @@ export class PeerSession {
   private generation = 0;
   private sendingHello = false;
   private messageQueue: Promise<void> = Promise.resolve();
+  private queuedOutgoing = 0;
   private outgoingQueue: Promise<void> = Promise.resolve();
   private sequence = 0;
   private queuedReceiveBytes = 0;
@@ -192,7 +193,8 @@ export class PeerSession {
         if (candidate.usernameFragment && localUfrag && candidate.usernameFragment !== localUfrag)
           return;
         if (this.localDescriptionSent) this.emitCandidate(candidate);
-        else this.pendingLocalIce.push(candidate);
+        else if (this.pendingLocalIce.length < 128) this.pendingLocalIce.push(candidate);
+        else this.fail('Local candidate queue exceeded its limit.');
       };
       pc.ondatachannel = (event) => {
         if (pc !== this.pc) return;
@@ -559,10 +561,20 @@ export class PeerSession {
     type: 'PING' | 'PONG' | 'PAIRING_CONFIRMED',
     messageId: string,
   ): Promise<void> {
+    return this.enqueueControl(async () => this.sendPing(type, messageId));
+  }
+  private enqueueControl(work: () => Promise<void>): Promise<void> {
+    if (this.queuedOutgoing >= 64) return Promise.reject(new Error('Peer control queue is full.'));
+    this.queuedOutgoing++;
     const generation = this.generation;
-    const task = this.outgoingQueue.then(async () => {
-      if (this.current(generation)) await this.sendPing(type, messageId);
-    });
+    const task = this.outgoingQueue
+      .then(async () => {
+        if (!this.current(generation)) throw new Error('Connection epoch changed.');
+        await work();
+      })
+      .finally(() => {
+        this.queuedOutgoing--;
+      });
     this.outgoingQueue = task.catch(() => {});
     return task;
   }
@@ -641,7 +653,7 @@ export class PeerSession {
   }
   async sendFileControl(input: FileControlInput): Promise<void> {
     const generation = this.generation;
-    const task = this.outgoingQueue.then(async () => {
+    await this.enqueueControl(async () => {
       if (
         !this.current(generation) ||
         !this.canTransfer ||
@@ -667,10 +679,10 @@ export class PeerSession {
         Math.min(MAX_PEER_CONTROL_BYTES, this.view.capabilities?.maxMessageBytes ?? 0)
       )
         throw new Error('Transfer control message exceeds negotiated bounds.');
+      if (this.channel!.bufferedAmount + new TextEncoder().encode(message).length > 512 * 1024)
+        throw new Error('Peer control buffer is full.');
       this.channel!.send(message);
     });
-    this.outgoingQueue = task.catch(() => {});
-    await task;
   }
   sendFileFrame(bytes: Uint8Array<ArrayBuffer>): void {
     if (

@@ -3,6 +3,10 @@ export type BlockRange = readonly [number, number];
 export function normalizeRanges(input: readonly BlockRange[], totalBlocks: number): BlockRange[] {
   if (!Number.isInteger(totalBlocks) || totalBlocks < 0 || totalBlocks > 65536)
     throw new Error('Invalid block count.');
+  if (!Array.isArray(input) || input.length > totalBlocks)
+    throw new Error('Range count exceeds file block count.');
+  if (input.some((range) => !Array.isArray(range) || range.length !== 2))
+    throw new Error('Invalid range tuple.');
   const sorted = input.map(([a, b]) => [a, b] as const).sort((a, b) => a[0] - b[0]);
   const result: [number, number][] = [];
   for (const [a, b] of sorted) {

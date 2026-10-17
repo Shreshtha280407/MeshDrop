@@ -25,6 +25,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm check:secrets
+      - run: pnpm audit:release
+      - run: pnpm test:security
       - run: pnpm test:unit
       - run: pnpm test:integration
       - run: pnpm test:faults
@@ -32,11 +34,5 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
       - run: pnpm test:pwa
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-evidence
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 7
+      # Raw failure reports can contain short-lived invitation values.
+      # Share only reviewed, sanitized evidence from docs/reports/evidence.

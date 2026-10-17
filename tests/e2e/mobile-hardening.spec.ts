@@ -172,6 +172,37 @@ test('local QR decoding fills a private invitation and stops all camera tracks',
   try {
     await owner.goto('/');
     await receiver.goto('/');
+    // Public deterministic fixtures exercise detector failures at fractional scaling.
+    // They carry no authority for a real room and never leave this browser.
+    const decoded = await receiver.evaluate(async (modulePath) => {
+      const { loadQrLibrary } = await import(modulePath);
+      const library = await loadQrLibrary();
+      let successes = 0;
+      for (const seed of [8, 13]) {
+        let state = seed;
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        const capability = Array.from({ length: 43 }, () => {
+          state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+          return alphabet[state >>> 26];
+        }).join('');
+        const value = `${location.origin}/#room=123e4567-e89b-42d3-a456-426614174000&invite=${capability}`;
+        const svg = new library.BrowserQRCodeSvgWriter().write(value, 280, 280);
+        svg.setAttribute('viewBox', '0 0 280 280');
+        const image = new Image();
+        image.src = `data:image/svg+xml;base64,${btoa(new XMLSerializer().serializeToString(svg))}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 360;
+        const drawing = canvas.getContext('2d')!;
+        drawing.fillStyle = 'white';
+        drawing.fillRect(0, 0, 360, 360);
+        drawing.drawImage(image, 20, 20, 320, 320);
+        if (new library.BrowserQRCodeReader().decodeFromCanvas(canvas).getText() === value)
+          successes++;
+      }
+      return successes;
+    }, '/src/features/mobile/QrInvitation.tsx');
+    expect(decoded).toBe(2);
     await owner.getByRole('button', { name: 'Create invitation', exact: true }).click();
     const invitation = await owner
       .getByLabel('Private invitation link', { exact: true })
@@ -206,10 +237,14 @@ test('local QR decoding fills a private invitation and stops all camera tracks',
     await receiver
       .getByRole('button', { name: 'Scan invitation with camera', exact: true })
       .click();
-    await expect(receiver.getByLabel('Join with an invitation', { exact: true })).toHaveValue(
-      invitation,
-      { timeout: 15000 },
-    );
+    await expect
+      .poll(
+        async () =>
+          (await receiver.getByLabel('Join with an invitation', { exact: true }).inputValue()) ===
+          invitation,
+        { timeout: 15000, message: 'The local scanner should fill the exact invitation.' },
+      )
+      .toBe(true);
     expect(
       await receiver.evaluate(() =>
         window.p7CameraTracks.every((track) => track.readyState === 'ended'),

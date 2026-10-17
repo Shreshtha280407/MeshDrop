@@ -23,13 +23,16 @@
     "test:e2e:headed": "playwright test --headed --project chromium",
     "test:faults": "vitest run --project faults",
     "build": "pnpm -r build",
-    "check": "pnpm -r typecheck && pnpm typecheck && pnpm lint && pnpm check:secrets && pnpm test:unit && pnpm test:integration && pnpm test:faults && pnpm build && pnpm test:e2e && pnpm test:pwa",
+    "check": "pnpm -r typecheck && pnpm typecheck && pnpm lint && pnpm check:secrets && pnpm test:unit && pnpm test:security && pnpm test:integration && pnpm test:faults && pnpm build && pnpm test:e2e && pnpm test:pwa",
     "check:secrets": "node scripts/check-secrets.mjs",
     "bench:p4": "tsx scripts/local-dev/verify-storage.mjs",
     "bench:p5": "bash scripts/local-dev/run-resume-network.sh",
     "bench:p6": "playwright test tests/e2e/network-intelligence.spec.ts --project chromium --workers 1 --retries 0",
     "test:pwa": "playwright test --config playwright.pwa.config.ts",
-    "bench:p7": "playwright test tests/e2e/mobile-hardening.spec.ts --project chromium --workers 1 --retries 0 && pnpm test:pwa"
+    "bench:p7": "playwright test tests/e2e/mobile-hardening.spec.ts --project chromium --workers 1 --retries 0 && pnpm test:pwa",
+    "test:security": "vitest run --project security --reporter default --reporter json --outputFile .meshdrop-artifacts/phase-8/security.json",
+    "bench:p8": "pnpm test:security && pnpm test:integration && playwright test tests/e2e/security-abuse.spec.ts --project chromium --workers 1 --retries 0 && pnpm test:pwa",
+    "audit:release": "pnpm audit --audit-level low"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -37,14 +40,19 @@
     "@playwright/test": "1.64.1",
     "@types/node": "24.10.1",
     "@types/ws": "8.18.1",
-    "esbuild": "0.27.3",
+    "esbuild": "0.28.1",
     "eslint": "10.12.0",
     "miniflare": "5.20261012.0-beta",
     "prettier": "3.8.1",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.2",
-    "vitest": "4.0.18",
+    "vitest": "4.1.11",
     "ws": "8.21.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild@<0.28.1": "0.28.1"
+    }
   }
 }

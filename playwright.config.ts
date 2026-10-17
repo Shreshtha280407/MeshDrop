@@ -10,8 +10,10 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:5173',
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    // Invitations and admission headers must not enter retained test traces.
+    trace: 'off',
+    video: 'off',
+    screenshot: 'off',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

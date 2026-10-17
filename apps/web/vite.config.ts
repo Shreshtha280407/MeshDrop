@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { offlineShell } from './pwa';
+import { securityHeaders } from './security-headers';
 
 export default defineConfig({
-  plugins: [react(), offlineShell()],
+  plugins: [react(), offlineShell(), securityHeaders()],
   optimizeDeps: {
     include: [
       '@meshdrop/transfer-core > @noble/hashes/sha2.js',

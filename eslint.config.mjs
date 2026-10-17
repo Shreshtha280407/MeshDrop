@@ -34,6 +34,11 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
+    },
+  },
+  {
+    files: ['packages/**/*.{ts,tsx,mjs}'],
+    rules: {
       'no-restricted-imports': [
         'error',
         {

@@ -1,3 +1,4 @@
+import { exportNames } from '../../security/safeFilePath';
 import { useEffect, useState } from 'react';
 import { estimateCapacity } from '@meshdrop/storage';
 import type { CapacityResult, RetentionPolicy } from '@meshdrop/storage';
@@ -30,6 +31,7 @@ export function TransferPanel({
   const supported = view.peer.capabilities?.storageModes.includes('opfs');
   const done =
     transfer.state === 'complete' || transfer.state === 'cancelled' || transfer.state === 'failed';
+  const names = exportNames(transfer.manifest?.files ?? []);
   const total = transfer.manifest?.totalBytes ?? 0;
   const [capacity, setCapacity] = useState<CapacityResult | null>(null);
   const [acknowledgedLimits, setAcknowledgedLimits] = useState(false);
@@ -161,7 +163,11 @@ export function TransferPanel({
                   </code>
                 )}
                 {!isOwner && transfer.state === 'complete' && client.verifiedFile(file.fileId) && (
-                  <FileExportControls file={client.verifiedFile(file.fileId)!} path={file.path} />
+                  <FileExportControls
+                    file={client.verifiedFile(file.fileId)!}
+                    path={file.path}
+                    outputName={names.get(file.fileId)!}
+                  />
                 )}
               </li>
             ))}
