@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { NetworkPanel } from './features/network-intelligence/NetworkPanel';
 import { TransferPanel } from './features/transfer/TransferPanel';
 import { SavedTransfersPanel } from './features/transfer/SavedTransfersPanel';
 import { PairingPanel } from './features/pairing/PairingPanel';
@@ -8,6 +9,10 @@ import { detectDeviceCapabilities } from '@meshdrop/platform';
 export default function RoomApp({ initialInvitation }: { initialInvitation: string }) {
   const client = useMemo(() => new RoomClient(), []);
   const view = useSyncExternalStore(client.subscribe, client.getSnapshot);
+  const diagnosticsView = useMemo(
+    () => ({ diagnostics: view.diagnostics, diagnosticsError: view.diagnosticsError }),
+    [view.diagnostics, view.diagnosticsError],
+  );
   const [invite, setInvite] = useState(initialInvitation);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState('');
@@ -33,7 +38,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </a>
         <span className="phase-label">
           <i />
-          Verified resume / Phase 5
+          Transfer insights / Phase 6
         </span>
       </header>
       <main>
@@ -259,6 +264,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </section>
         {status && <PairingPanel key={view.peer.epoch} client={client} view={view} />}
         {status && <TransferPanel client={client} view={view} />}
+        <NetworkPanel client={client} view={diagnosticsView} />
         <SavedTransfersPanel room={client} view={view} />
         <section className="details-grid">
           <div>
@@ -299,11 +305,11 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               storage contains credential verifiers and temporary room state.
             </p>
             <div className="next-phase">
-              <span>UP NEXT · PHASE 6</span>
-              <strong>Network intelligence and diagnostics</strong>
+              <span>UP NEXT · PHASE 7</span>
+              <strong>Android, iPhone and PWA hardening</strong>
               <p>
-                Explain observed connection paths and transfer performance with clearly labeled
-                measurements.
+                Strengthen foreground recovery, lifecycle behavior and installation across mobile
+                browsers.
               </p>
             </div>
           </div>

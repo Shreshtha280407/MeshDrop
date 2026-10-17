@@ -1,0 +1,1176 @@
+{
+  "schemaVersion": 1,
+  "reportId": "19e3d88a-0673-42d4-b665-6171799dc7a6",
+  "transferId": "ca91f7eb-8b6d-4ea4-9489-f610da5713fb",
+  "role": "owner",
+  "startedAt": "2026-10-17T15:18:22.157Z",
+  "updatedAt": "2026-10-17T15:18:26.157Z",
+  "expiresAt": "2026-10-24T15:18:26.157Z",
+  "durationMs": 4000.900000002235,
+  "status": "recording",
+  "summary": {
+    "newlyConfirmedBytes": 8388608,
+    "reusedBytes": 0,
+    "attemptPayloadBytes": 8388608,
+    "confirmedBytes": 8388608,
+    "recoveryDurationMs": null
+  },
+  "samples": [
+    {
+      "timestampMonotonic": 0.8000000007450581,
+      "intervalDurationMs": 0,
+      "epoch": 1,
+      "state": "preparing",
+      "samples": [
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "ack-interval",
+          "value": null,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "ack-rolling",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "ack-average",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "application-rtt",
+          "value": null,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "ice-rtt",
+          "value": null,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "send-buffer",
+          "value": null,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "confirmed-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "attempt-payload",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "connection-path",
+          "value": null,
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 0.8000000007450581,
+          "metricName": "candidate-state",
+          "value": null,
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": "insufficient-samples"
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 38.600000001490116,
+      "intervalDurationMs": 37.80000000074506,
+      "epoch": 1,
+      "state": "preparing",
+      "samples": [
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "ack-interval",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "ack-rolling",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "ack-average",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "application-rtt",
+          "value": null,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "ice-rtt",
+          "value": 0,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "send-buffer",
+          "value": 382,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "confirmed-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "attempt-payload",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 38.600000001490116,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 55.400000002235174,
+      "intervalDurationMs": 16.800000000745058,
+      "epoch": 1,
+      "state": "negotiating",
+      "samples": [
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "ack-interval",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "ack-rolling",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "ack-average",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "application-rtt",
+          "value": null,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "ice-rtt",
+          "value": 0,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "send-buffer",
+          "value": 382,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "confirmed-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "attempt-payload",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 55.400000002235174,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 457,
+      "intervalDurationMs": 401.5999999977648,
+      "epoch": 1,
+      "state": "active",
+      "samples": [
+        {
+          "timestampMonotonic": 457,
+          "metricName": "ack-interval",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "ack-rolling",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "ack-average",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "application-rtt",
+          "value": null,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "ice-rtt",
+          "value": 0,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "send-buffer",
+          "value": 382,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "confirmed-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "attempt-payload",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 457,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 1000.9000000022352,
+      "intervalDurationMs": 543.9000000022352,
+      "epoch": 1,
+      "state": "active",
+      "samples": [
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "ack-interval",
+          "value": 5783651.406484781,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "ack-rolling",
+          "value": 3142899.390541488,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "ack-average",
+          "value": 3142899.390541488,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "application-rtt",
+          "value": 49.69999999925494,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "ice-rtt",
+          "value": 0,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "send-buffer",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "confirmed-bytes",
+          "value": 3145728,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "attempt-payload",
+          "value": 3145728,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1000.9000000022352,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 1526.9000000022352,
+      "intervalDurationMs": 526,
+      "epoch": 1,
+      "state": "active",
+      "samples": [
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "ack-interval",
+          "value": 9967452.47148289,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "ack-rolling",
+          "value": 5493881.721126283,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "ack-average",
+          "value": 5493881.721126283,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "application-rtt",
+          "value": 49.69999999925494,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "ice-rtt",
+          "value": 0,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "send-buffer",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "confirmed-bytes",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "attempt-payload",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1526.9000000022352,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 1527.9000000022352,
+      "intervalDurationMs": 1,
+      "epoch": 1,
+      "state": "paused",
+      "samples": [
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "ack-interval",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "ack-rolling",
+          "value": 5490286.013474526,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "ack-average",
+          "value": 5490286.013474526,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "application-rtt",
+          "value": 49.69999999925494,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "ice-rtt",
+          "value": 0,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "send-buffer",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "confirmed-bytes",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "attempt-payload",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 1527.9000000022352,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 2002.1000000014901,
+      "intervalDurationMs": 474.19999999925494,
+      "epoch": 1,
+      "state": "paused",
+      "samples": [
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "ack-interval",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "ack-rolling",
+          "value": 4189904.600166703,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "ack-average",
+          "value": 4189904.600166703,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "application-rtt",
+          "value": 49.69999999925494,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "ice-rtt",
+          "value": 1,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "send-buffer",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "confirmed-bytes",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "attempt-payload",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 2002.1000000014901,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 3001.2000000029802,
+      "intervalDurationMs": 999.1000000014901,
+      "epoch": 1,
+      "state": "paused",
+      "samples": [
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "ack-interval",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "ack-rolling",
+          "value": 2795084.632810766,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "ack-average",
+          "value": 2795084.632810766,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "application-rtt",
+          "value": 49.69999999925494,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "ice-rtt",
+          "value": 1,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "send-buffer",
+          "value": 383,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "confirmed-bytes",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "attempt-payload",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 3001.2000000029802,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    },
+    {
+      "timestampMonotonic": 4000.900000002235,
+      "intervalDurationMs": 999.6999999992549,
+      "epoch": 1,
+      "state": "paused",
+      "samples": [
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "ack-interval",
+          "value": 0,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "ack-rolling",
+          "value": 2096680.2469432661,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "ack-average",
+          "value": 2096680.2469432661,
+          "unit": "B/s",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "application-rtt",
+          "value": 17.199999999254942,
+          "unit": "ms",
+          "provenance": "signed-control-round-trip",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "ice-rtt",
+          "value": 1,
+          "unit": "ms",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "send-buffer",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "data-channel-buffer",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "storage-commit",
+          "value": null,
+          "unit": "ms",
+          "provenance": "receiver-worker-commit",
+          "availabilityReason": "not-applicable"
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "confirmed-bytes",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "receiver-confirmations",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "reused-bytes",
+          "value": 0,
+          "unit": "bytes",
+          "provenance": "authenticated-resume",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "attempt-payload",
+          "value": 8388608,
+          "unit": "bytes",
+          "provenance": "application-payload-counter",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "recovery-duration",
+          "value": null,
+          "unit": "ms",
+          "provenance": "monotonic-clock",
+          "availabilityReason": "insufficient-samples"
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "connection-path",
+          "value": "direct",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        },
+        {
+          "timestampMonotonic": 4000.900000002235,
+          "metricName": "candidate-state",
+          "value": "succeeded",
+          "unit": "state",
+          "provenance": "selected-candidate-pair",
+          "availabilityReason": null
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "eventId": "def2df5f-f012-4fed-a549-c42daf74417c",
+      "transferId": "ca91f7eb-8b6d-4ea4-9489-f610da5713fb",
+      "code": "started",
+      "severity": "info",
+      "observedAt": 0.20000000298023224,
+      "measuredEvidence": {},
+      "userMessage": "Transfer measurements started. Reports stay in this browser."
+    },
+    {
+      "eventId": "ce22280e-e6b1-457a-828b-9f18c28155e1",
+      "transferId": "ca91f7eb-8b6d-4ea4-9489-f610da5713fb",
+      "code": "accepted",
+      "severity": "info",
+      "observedAt": 457,
+      "measuredEvidence": {
+        "epoch": 1
+      },
+      "userMessage": "The receiver accepted the transfer."
+    },
+    {
+      "eventId": "7ef1b146-7291-443f-9dce-dc27a49c1823",
+      "transferId": "ca91f7eb-8b6d-4ea4-9489-f610da5713fb",
+      "code": "paused",
+      "severity": "info",
+      "observedAt": 1526.9000000022352,
+      "measuredEvidence": {
+        "epoch": 1,
+        "committedBytes": 8388608
+      },
+      "userMessage": "The transfer is paused. A throughput dip is expected while paused."
+    }
+  ],
+  "droppedFrames": 0,
+  "droppedEvents": 0
+}

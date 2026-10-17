@@ -10,5 +10,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit"
   },
-  "dependencies": {}
+  "dependencies": {
+    "zod": "4.6.7"
+  }
 }

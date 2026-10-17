@@ -8,6 +8,7 @@ export default defineConfig({
       '@meshdrop/transfer-core > @noble/hashes/sha2.js',
       '@meshdrop/storage > @noble/hashes/sha2.js',
       '@meshdrop/storage > zod',
+      '@meshdrop/network-intelligence > zod',
     ],
   },
   worker: { format: 'es' },

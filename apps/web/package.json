@@ -18,7 +18,8 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "@meshdrop/storage": "workspace:*",
-    "@meshdrop/recovery": "workspace:*"
+    "@meshdrop/recovery": "workspace:*",
+    "@meshdrop/network-intelligence": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "19.2.14",

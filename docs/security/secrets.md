@@ -15,3 +15,5 @@ Invitations use URL fragments and are removed from browser history immediately o
 For eventual production, use encrypted Worker secret bindings supplied from the appropriate secret-management environment rather than publishing local `.env` files. This phase performs no deployment. Local environment-file behavior follows the [Cloudflare secrets documentation](https://developers.cloudflare.com/workers/configuration/secrets/).
 
 P5 adds only non-secret local resume bindings (room UUID, epoch, attempt UUID, checkpoint digest and reused byte count). All renewed admission capabilities, fresh socket tickets and ephemeral signing keys remain in memory. Reload/expiry requires a newly approved room and independent code comparison. No provider secret or frontend environment key was added.
+
+P6 adds no static key or provider configuration. Its local report schema excludes credentials, file metadata/digests and raw WebRTC candidate fields. Reports are exported only by user action; reviewed evidence uses synthetic transfers. Existing ignored server `.env` handling remains in force.

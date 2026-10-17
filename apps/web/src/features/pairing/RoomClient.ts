@@ -12,6 +12,8 @@ import {
 } from '@meshdrop/protocol';
 import { INITIAL_TRANSFER, TransferMachine } from '@meshdrop/transfer-core';
 import type { TransferView } from '@meshdrop/transfer-core';
+import { DiagnosticsSession, MetricsStore, emptyProbe } from '@meshdrop/network-intelligence';
+import type { DiagnosticsView } from '@meshdrop/network-intelligence';
 import { RetryPolicy } from '@meshdrop/recovery';
 import type { TransferManifest } from '@meshdrop/protocol';
 import type { FileControl } from '@meshdrop/protocol';
@@ -36,6 +38,8 @@ export interface RoomView {
   transfer: TransferView;
   retention: RetentionPolicy;
   recoveryStatus: string;
+  diagnostics: DiagnosticsView | null;
+  diagnosticsError: string;
 }
 const INITIAL: RoomView = {
   status: null,
@@ -48,6 +52,8 @@ const INITIAL: RoomView = {
   transfer: INITIAL_TRANSFER,
   retention: '24-hours',
   recoveryStatus: '',
+  diagnostics: null,
+  diagnosticsError: '',
 };
 export function parseInvitation(value: string): { roomId: string; capability: string } {
   const url = new URL(value);
@@ -83,6 +89,74 @@ export class RoomClient {
   private nextSeq = 0;
   private peerSession: PeerSession | null = null;
   private transfer: TransferMachine | null = null;
+  private diagnostics: DiagnosticsSession | null = null;
+  private readonly retiringReports = new Map<string, Promise<void>>();
+  private retireDiagnostics(): void {
+    const session = this.diagnostics;
+    if (!session) return;
+    session.stop();
+    const id = session.getSnapshot().report.reportId;
+    const flush = session.flush();
+    this.retiringReports.set(id, flush);
+    void flush.finally(() => {
+      if (this.retiringReports.get(id) === flush) this.retiringReports.delete(id);
+    });
+  }
+  private ignoredDiagnosticsTransfer = '';
+  private observeDiagnostics(transfer: TransferView, epoch: number): void {
+    const id = transfer.manifest?.transferId;
+    if (!id || !transfer.state || id === this.ignoredDiagnosticsTransfer) return;
+    try {
+      if (this.diagnostics?.getSnapshot().report.transferId !== id || this.diagnostics.isStopped) {
+        this.retireDiagnostics();
+        const session = new DiagnosticsSession({
+          transferId: id,
+          role: this.view.status?.role === 'owner' ? 'owner' : 'receiver',
+          epoch,
+          probe: () =>
+            this.peerSession?.diagnostics() ?? Promise.resolve(emptyProbe('not-connected')),
+        });
+        this.diagnostics = session;
+        this.update({ diagnosticsError: '' });
+        session.subscribe(() => {
+          if (this.diagnostics === session) this.update({ diagnostics: session.getSnapshot() });
+        });
+      }
+      this.diagnostics.observe({
+        transferId: id,
+        epoch,
+        state: transfer.state,
+        committedBytes: transfer.committedBytes,
+        reusedBytes: transfer.reusedBytes,
+        attemptPayloadBytes: transfer.attemptBytes,
+        paused: transfer.localPaused || transfer.remotePaused,
+        storageFull: transfer.storageFull,
+        recoveryAccepted: transfer.recovery.startsWith('Resume accepted'),
+      });
+      if (this.diagnostics.isStopped) throw new Error('Diagnostics stopped.');
+    } catch {
+      this.diagnostics?.abandon();
+      this.diagnostics = null;
+      this.ignoredDiagnosticsTransfer = id;
+      this.update({
+        diagnostics: null,
+        diagnosticsError:
+          'Measurements are unavailable. File verification continues independently.',
+      });
+    }
+  }
+  async deleteDiagnostics(reportId: string): Promise<void> {
+    const session = this.diagnostics;
+    if (session?.getSnapshot().report.reportId === reportId) {
+      session.stop();
+      await session.flush();
+      this.diagnostics = null;
+      this.ignoredDiagnosticsTransfer = session.getSnapshot().report.transferId;
+      this.update({ diagnostics: null });
+    }
+    await this.retiringReports.get(reportId);
+    await new MetricsStore().delete(reportId);
+  }
   private readonly downloadUrls = new Map<string, string>();
   private signalQueue: Promise<void> = Promise.resolve();
   private startingEpoch = false;
@@ -541,6 +615,7 @@ export class RoomClient {
     if (this.transfer && (!peer.ready || this.transfer.epoch !== peer.epoch))
       this.transfer.disconnect();
     this.update({ peer });
+    if (peer.ready) this.diagnostics?.connectionRestored(peer.epoch);
     if (peer.ready) {
       this.clearRetry();
       this.retry.reset();
@@ -580,6 +655,7 @@ export class RoomClient {
       },
       onChange: (transfer) => {
         const previous = this.view.transfer;
+        this.observeDiagnostics(transfer, peer.epoch);
         this.update({
           transfer,
           ...(transfer.recovery.startsWith('Resume accepted')
@@ -604,6 +680,7 @@ export class RoomClient {
           );
       },
       retention: this.view.retention,
+      onStorageCommit: (duration) => this.diagnostics?.storageCommitted(duration),
     });
   }
   private async receiveFileControl(message: FileControl): Promise<void> {
@@ -720,6 +797,7 @@ export class RoomClient {
       return;
     }
     this.transfer = null;
+    this.retireDiagnostics();
     this.sourceFiles = [];
     for (const url of this.downloadUrls.values()) URL.revokeObjectURL(url);
     this.downloadUrls.clear();
@@ -775,6 +853,7 @@ export class RoomClient {
     this.retrySuppressed = true;
     this.clearRetry();
     this.closePeer();
+    this.retireDiagnostics();
     if (this.polling) clearInterval(this.polling);
     if (this.heartbeat) clearInterval(this.heartbeat);
     this.socket?.close();
@@ -796,6 +875,8 @@ export class RoomClient {
     this.update({ ...INITIAL });
   }
   dispose(): void {
+    this.retireDiagnostics();
+    this.diagnostics = null;
     this.retrySuppressed = true;
     this.clearRetry();
     void this.transfer?.dispose(false);

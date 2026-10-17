@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@meshdrop/protocol": "workspace:*",
-    "@meshdrop/shared-types": "workspace:*"
+    "@meshdrop/shared-types": "workspace:*",
+    "@meshdrop/network-intelligence": "workspace:*"
   }
 }

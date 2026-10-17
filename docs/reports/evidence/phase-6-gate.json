@@ -1,0 +1,13 @@
+{
+  "scenario": "two real local WebRTC peers, injected pause, ICE restart, fresh comparison, authenticated missing-block resume",
+  "totalBytes": 25165824,
+  "reusedBytes": 8388608,
+  "missingPayloadBytes": 16777216,
+  "sourceSha256": "ecd0f4218a0ef5b91741f38f05c5e08b36ed6b7ff7eeaa62483d63c0927b144a",
+  "savedSha256": "ecd0f4218a0ef5b91741f38f05c5e08b36ed6b7ff7eeaa62483d63c0927b144a",
+  "reportId": "19e3d88a-0673-42d4-b665-6171799dc7a6",
+  "recoveryDurationMs": 1792.199999999255,
+  "pauseDip": true,
+  "jsonCsvRoundTrip": true,
+  "redaction": true
+}

@@ -608,3 +608,78 @@ select {
   background: #f7f9f4;
   font: inherit;
 }
+
+.network-panel {
+  grid-column: 1/-1;
+  min-width: 0;
+}
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.metric-card {
+  border: 1px solid #dbe4dd;
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.metric-card > span {
+  font-size: 0.8rem;
+  color: #4d685c;
+}
+.metric-card > strong {
+  font-size: 1rem;
+}
+.metric-card > small {
+  line-height: 1.5;
+  color: #52695e;
+}
+.metrics-chart {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f6f8f3;
+  border-radius: 10px;
+  min-width: 0;
+}
+.metrics-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+}
+.metrics-chart text {
+  font-size: 12px;
+  fill: #4d685c;
+}
+.metrics-chart select,
+.network-panel select {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+.metrics-chart input[type='range'] {
+  width: 100%;
+  padding: 0;
+  accent-color: #164d42;
+}
+.measurement-events {
+  padding-left: 1.4rem;
+  max-height: 340px;
+  overflow: auto;
+}
+.measurement-events li {
+  margin: 1rem 0;
+  overflow-wrap: anywhere;
+}
+.measurement-events li span,
+.measurement-events li small {
+  display: block;
+  margin-top: 0.4rem;
+  line-height: 1.5;
+}

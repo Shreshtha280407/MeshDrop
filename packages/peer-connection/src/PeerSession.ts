@@ -1,3 +1,5 @@
+import { emptyProbe, readWebRtcStats } from '@meshdrop/network-intelligence';
+import type { TransportProbe } from '@meshdrop/network-intelligence';
 import {
   DEFAULT_FRAME_BYTES,
   MAX_PEER_CONTROL_BYTES,
@@ -105,7 +107,10 @@ export class PeerSession {
   private queuedReceiveBytes = 0;
   private queuedReceiveMessages = 0;
   private remoteSequence = -1;
-  private readonly pendingPings = new Set<string>();
+  private readonly pendingPings = new Map<string, number>();
+  private applicationRtt: { value: number; at: number } | null = null;
+  private lastAutomaticPing = -Infinity;
+  private pathProbe: RTCPeerConnection | null = null;
   constructor(private readonly options: PeerSessionOptions) {}
   get snapshot(): PeerView {
     return this.view;
@@ -161,6 +166,8 @@ export class PeerSession {
     this.sequence = 0;
     this.remoteSequence = -1;
     this.pendingPings.clear();
+    this.applicationRtt = null;
+    this.lastAutomaticPing = -Infinity;
     this.messageQueue = Promise.resolve();
     this.outgoingQueue = Promise.resolve();
     const identity = await createIdentity();
@@ -483,9 +490,16 @@ export class PeerSession {
       this.update({ remoteVerified: true });
     } else if (ping.type === 'PING') {
       this.update({ pingsReceived: this.view.pingsReceived + 1 });
-      await this.enqueuePing('PONG', ping.messageId);
+      // A best-effort timing reply must never close a healthy file transfer under buffer pressure.
+      await this.enqueuePing('PONG', ping.messageId).catch(() => {});
     } else {
-      if (!this.pendingPings.delete(ping.messageId)) throw new Error('Unexpected pong.');
+      const started = this.pendingPings.get(ping.messageId);
+      if (started === undefined) throw new Error('Unexpected pong.');
+      this.pendingPings.delete(ping.messageId);
+      this.applicationRtt = {
+        value: Math.max(0, performance.now() - started),
+        at: performance.now(),
+      };
       this.update({ pongsReceived: this.view.pongsReceived + 1 });
     }
   }
@@ -509,12 +523,15 @@ export class PeerSession {
   }
   private async inspectPath(): Promise<void> {
     const pc = this.pc;
-    if (!pc) return;
+    if (!pc || this.pathProbe === pc) return;
+    this.pathProbe = pc;
     try {
       const path = await selectedIcePath(pc);
       if (pc === this.pc) this.update({ path });
     } catch {
       /* Statistics availability does not decide connectivity or trust. */
+    } finally {
+      if (this.pathProbe === pc) this.pathProbe = null;
     }
   }
   confirmComparison(entered: string, independentConfirmation: boolean): void {
@@ -557,7 +574,7 @@ export class PeerSession {
       throw new Error('Peer handshake is not ready.');
     if (
       (type === 'PING' && this.pendingPings.size >= 16) ||
-      this.channel.bufferedAmount > MAX_PEER_CONTROL_BYTES * 4
+      this.channel.bufferedAmount > (type === 'PONG' ? 512 * 1024 : MAX_PEER_CONTROL_BYTES * 4)
     )
       throw new Error('Peer control queue is full.');
     const generation = this.generation;
@@ -573,8 +590,48 @@ export class PeerSession {
     };
     const signature = await sign(ping, this.identity.privateKey);
     if (!this.current(generation) || !this.view.ready) return;
-    if (type === 'PING') this.pendingPings.add(messageId);
+    if (type === 'PING') this.pendingPings.set(messageId, performance.now());
     this.channel!.send(JSON.stringify({ ping, signature }));
+  }
+  /** Local allowlisted diagnostics. No raw stats, addresses or private peer fields escape. */
+  async diagnostics(): Promise<TransportProbe> {
+    const pc = this.pc,
+      generation = this.generation;
+    if (!pc || !this.view.ready || this.channel?.readyState !== 'open')
+      return emptyProbe('not-connected');
+    const now = performance.now();
+    if (
+      this.canTransfer &&
+      now - this.lastAutomaticPing >= 2000 &&
+      this.pendingPings.size < 4 &&
+      this.channel.bufferedAmount <= MAX_PEER_CONTROL_BYTES * 4
+    ) {
+      this.lastAutomaticPing = now;
+      void this.ping().catch(() => {});
+    }
+    let stats: ReturnType<typeof readWebRtcStats> = {
+      iceRttMs: null,
+      path: null,
+      candidateState: null,
+    };
+    let reason: TransportProbe['reason'] = 'unsupported';
+    try {
+      stats = readWebRtcStats(await pc.getStats());
+    } catch {
+      reason = 'sampler-error';
+    }
+    if (!this.current(generation) || pc !== this.pc || !this.view.ready)
+      return emptyProbe('not-connected');
+    const rtt =
+      this.applicationRtt && performance.now() - this.applicationRtt.at <= 10000
+        ? this.applicationRtt.value
+        : null;
+    return {
+      ...stats,
+      applicationRttMs: rtt,
+      bufferedBytes: this.channel?.bufferedAmount ?? null,
+      reason,
+    };
   }
   get canTransfer(): boolean {
     return this.view.ready && this.view.verification === 'verified' && this.view.remoteVerified;

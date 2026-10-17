@@ -69,6 +69,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@meshdrop/network-intelligence':
+        specifier: workspace:*
+        version: link:../../packages/network-intelligence
       '@meshdrop/peer-connection':
         specifier: workspace:*
         version: link:../../packages/peer-connection
@@ -110,10 +113,17 @@ importers:
         specifier: 7.3.1
         version: 7.3.1(@types/node@24.10.1)(tsx@4.21.0)
 
-  packages/network-intelligence: {}
+  packages/network-intelligence:
+    dependencies:
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
 
   packages/peer-connection:
     dependencies:
+      '@meshdrop/network-intelligence':
+        specifier: workspace:*
+        version: link:../network-intelligence
       '@meshdrop/protocol':
         specifier: workspace:*
         version: link:../protocol

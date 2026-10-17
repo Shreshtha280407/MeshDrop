@@ -79,6 +79,7 @@ export interface TransferOptions {
   frameBytes: number;
   transport: TransferTransport;
   onChange(view: TransferView): void;
+  onStorageCommit?(durationMs: number): void;
   createStorage?: () => HashStorage;
   purgeStorage?: (key: string) => Promise<void>;
   timeoutMs?: number;
@@ -834,7 +835,9 @@ export class TransferMachine {
         digest: block.digest,
         length,
       };
+      const commitStarted = performance.now();
       await this.storage.commitBlock(block.fileId, block.blockIndex, block.bytes, block.digest);
+      this.options.onStorageCommit?.(Math.max(0, performance.now() - commitStarted));
       if (!this.active) return;
       await this.acknowledgeStoredBlock();
     } catch (error) {
@@ -882,7 +885,9 @@ export class TransferMachine {
     )
       return;
     try {
+      const commitStarted = performance.now();
       await this.storage.retryCommit();
+      this.options.onStorageCommit?.(Math.max(0, performance.now() - commitStarted));
       if (!this.active) return;
       // Clear flow pause before the final ACK can transition this endpoint to verifying.
       this.update({ storageFull: false });
