@@ -208,11 +208,6 @@ export class PeerSession {
             error: 'Peer connection interrupted. Try ICE restart, then a new connection.',
           });
         } else if (pc.connectionState === 'connected') {
-          if (this.view.state === 'reconnecting' && this.localHello && this.remoteHello) {
-            void this.finishHandshake(this.generation).catch(() =>
-              this.fail('Peer handshake could not resume.'),
-            );
-          }
           void this.inspectPath();
         }
       };
@@ -394,7 +389,12 @@ export class PeerSession {
           typeof navigator !== 'undefined' && typeof navigator.storage?.getDirectory === 'function'
             ? ['opfs', 'memory']
             : ['memory'],
-        resumeMode: 'unavailable',
+        resumeMode:
+          maxMessageBytes >= 8192 &&
+          typeof navigator.storage?.getDirectory === 'function' &&
+          typeof navigator.locks?.request === 'function'
+            ? 'persistent'
+            : 'unavailable',
       },
     });
     const signature = await sign(hello, identity.privateKey);
@@ -405,6 +405,12 @@ export class PeerSession {
   }
   private async receiveData(raw: unknown, generation: number): Promise<void> {
     if (raw instanceof ArrayBuffer) {
+      if (
+        raw.byteLength >= 72 &&
+        new DataView(raw).getUint32(0) === 0x4d445031 &&
+        new DataView(raw).getUint32(40) < this.epoch
+      )
+        return;
       if (
         !this.canTransfer ||
         !this.options.onFileFrame ||

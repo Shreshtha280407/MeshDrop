@@ -77,7 +77,77 @@ const context = {
   seq: z.number().int().min(0).max(MAX_UINT32),
   transferId: uuidSchema,
 };
+export const RESUME_PROOF_PAGE_SIZE = 32;
+export const blockProofSchema = z.strictObject({
+  fileId: uuidSchema,
+  index: z.number().int().min(0).max(65535),
+  digest: sha256Schema,
+});
+const resumeContext = {
+  attemptId: uuidSchema,
+  manifestDigest: sha256Schema,
+};
 export const fileControlSchema = z.discriminatedUnion('type', [
+  z.strictObject({
+    ...context,
+    type: z.literal('RESUME_UNAVAILABLE'),
+    payload: z.strictObject({
+      ...resumeContext,
+      reason: z.enum(['source-required', 'checkpoint-mismatch']),
+    }),
+  }),
+  z.strictObject({
+    ...context,
+    type: z.literal('RESUME_HELLO'),
+    payload: z.strictObject({
+      ...resumeContext,
+      checkpointDigest: sha256Schema,
+    }),
+  }),
+  z.strictObject({
+    ...context,
+    type: z.literal('MANIFEST_CONFIRM'),
+    payload: z.strictObject({
+      ...resumeContext,
+      manifest: manifestSchema,
+    }),
+  }),
+  z.strictObject({
+    ...context,
+    type: z.literal('HAVE_RANGES'),
+    payload: z.strictObject({
+      ...resumeContext,
+      page: z.number().int().min(0).max(2048),
+      last: z.boolean(),
+      blocks: z.array(blockProofSchema).max(RESUME_PROOF_PAGE_SIZE),
+    }),
+  }),
+  z.strictObject({
+    ...context,
+    type: z.literal('NEED_RANGES'),
+    payload: z.strictObject({
+      ...resumeContext,
+      page: z.number().int().min(0).max(2048),
+      rejected: z
+        .array(
+          z
+            .number()
+            .int()
+            .min(0)
+            .max(RESUME_PROOF_PAGE_SIZE - 1),
+        )
+        .max(RESUME_PROOF_PAGE_SIZE),
+    }),
+  }),
+  z.strictObject({
+    ...context,
+    type: z.literal('RESUME_ACCEPT'),
+    payload: z.strictObject({
+      ...resumeContext,
+      checkpointDigest: sha256Schema,
+      reusedBytes: z.number().int().min(0).max(MAX_TRANSFER_BYTES),
+    }),
+  }),
   z.strictObject({
     ...context,
     type: z.literal('TRANSFER_OFFER'),
@@ -158,6 +228,7 @@ export const signedFileControlSchema = z.strictObject({
   control: fileControlSchema,
   signature: z.string().regex(/^[A-Za-z0-9_-]{86}$/),
 });
+export type BlockProof = z.infer<typeof blockProofSchema>;
 export type TransferManifest = z.infer<typeof manifestSchema>;
 export type TransferFile = z.infer<typeof manifestFileSchema>;
 export type TransferReceipt = z.infer<typeof receiptSchema>;

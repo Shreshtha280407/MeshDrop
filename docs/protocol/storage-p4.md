@@ -1,6 +1,6 @@
 # P4 local storage and checkpoint contract
 
-P4 replaces P3's volatile temporary destination with OPFS bytes and an IndexedDB ledger. The signed P3 wire protocol, one-block flow window and `browser-temporary` destination value remain compatible: this is still origin-local browser storage subject to eviction. Files, names, manifests, block digests, source metadata and receipts stay on the device. Room credentials and ephemeral signing keys remain memory-only. A restored local checkpoint does not restore network admission or implement P5 resume.
+P4 replaces P3's volatile temporary destination with OPFS bytes and an IndexedDB ledger. The signed P3 wire protocol, one-block flow window and `browser-temporary` destination value remain compatible: this is still origin-local browser storage subject to eviction. Files, names, manifests, block digests, source metadata and receipts stay on the device. Room credentials and ephemeral signing keys remain memory-only. A restored local checkpoint does not restore network admission. P5 now adds the [authenticated resume exchange](resume-p5.md) after fresh admission and pairing.
 
 ## ReceiverStore and identity
 

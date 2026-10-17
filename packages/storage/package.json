@@ -14,6 +14,7 @@
     "@meshdrop/shared-types": "workspace:*",
     "@meshdrop/protocol": "workspace:*",
     "@noble/hashes": "2.4.0",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "@meshdrop/recovery": "workspace:*"
   }
 }

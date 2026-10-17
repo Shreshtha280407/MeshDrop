@@ -1,6 +1,16 @@
-import type { TransferFile, TransferManifest, TransferReceipt } from '@meshdrop/protocol';
+import type {
+  BlockProof,
+  TransferFile,
+  TransferManifest,
+  TransferReceipt,
+} from '@meshdrop/protocol';
 import { CheckpointDB, purgeStoredTransfer, StorageFailure } from '@meshdrop/storage';
-import type { RetentionPolicy, CapacityResult } from '@meshdrop/storage';
+import type {
+  RetentionPolicy,
+  CapacityResult,
+  Checkpoint,
+  TransferRecord,
+} from '@meshdrop/storage';
 
 export interface SourceEntry {
   fileId: string;
@@ -20,6 +30,13 @@ export interface HashStorage {
     retention?: RetentionPolicy,
   ): Promise<CapacityResult | void>;
   rememberSources?(manifest: TransferManifest, retention: RetentionPolicy): Promise<void>;
+  openCheckpoint?(
+    transferId: string,
+    digest: string,
+  ): Promise<{ checkpoint: Checkpoint; blocks: BlockProof[] }>;
+  invalidateCheckpoint?(blocks: BlockProof[]): Promise<void>;
+  bindResume?(resume: NonNullable<TransferRecord['lastResume']>): Promise<void>;
+  sourceDigest?(fileId: string, index: number): Promise<string>;
   retryCommit?(): Promise<void>;
   rememberReceipt?(receipt: TransferReceipt): Promise<void>;
   commitBlock(
@@ -83,7 +100,7 @@ export class HashWorker implements HashStorage {
         reject,
         timer: setTimeout(
           () => this.dispose(),
-          operation === 'sources' || operation === 'finalize' ? 300000 : 30000,
+          ['sources', 'finalize', 'open-checkpoint'].includes(operation) ? 300000 : 30000,
         ),
       };
       this.worker!.postMessage({ id, operation, payload }, transfer);
@@ -109,6 +126,21 @@ export class HashWorker implements HashStorage {
   }
   async rememberSources(manifest: TransferManifest, retention: RetentionPolicy): Promise<void> {
     await this.request('remember-sources', { manifest, retention });
+  }
+  openCheckpoint(
+    transferId: string,
+    digest: string,
+  ): Promise<{ checkpoint: Checkpoint; blocks: BlockProof[] }> {
+    return this.request('open-checkpoint', { transferId, digest });
+  }
+  async invalidateCheckpoint(blocks: BlockProof[]): Promise<void> {
+    await this.request('invalidate-checkpoint', blocks);
+  }
+  async bindResume(resume: NonNullable<TransferRecord['lastResume']>): Promise<void> {
+    await this.request('bind-resume', resume);
+  }
+  sourceDigest(fileId: string, index: number): Promise<string> {
+    return this.request('source-digest', { fileId, index });
   }
   async retryCommit(): Promise<void> {
     await this.request('retry-commit', null);

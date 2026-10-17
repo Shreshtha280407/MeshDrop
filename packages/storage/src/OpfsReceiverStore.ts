@@ -131,6 +131,18 @@ export class OpfsReceiverStore implements ReceiverStore {
     }
     return entry;
   }
+  /** Recreate only missing scoped files after reconciliation, and prohibit overwriting reused blocks. */
+  async enableResumeWrites(): Promise<void> {
+    const root = await navigator.storage.getDirectory();
+    const parent = await root.getDirectoryHandle(RECEIVER_DIRECTORY, { create: true });
+    const directory = await parent.getDirectoryHandle(this.manifest.transferId, { create: true });
+    this.directory = await directory.getDirectoryHandle(this.record.storageKey, { create: true });
+    for (const file of this.manifest.files)
+      await this.directory.getFileHandle(file.fileId, { create: true });
+    this.committed.clear();
+    for (const block of await this.db.blocks(this.record.transferId))
+      this.committed.add(`${block.fileId}:${block.index}`);
+  }
   async writeBlock(fileId: string, index: number, bytes: Uint8Array<ArrayBuffer>): Promise<void> {
     const meta = this.meta(fileId);
     if (
@@ -180,6 +192,7 @@ export class OpfsReceiverStore implements ReceiverStore {
       updatedAt: now,
       expiresAt: retentionExpiry(this.record.retention, now),
       state: 'receiving' as const,
+      checkpointDigest: undefined,
     };
     await this.options.onStage?.('before-ledger');
     await this.db.commit(next, {

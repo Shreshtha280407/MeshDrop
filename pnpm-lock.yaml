@@ -78,6 +78,9 @@ importers:
       '@meshdrop/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
+      '@meshdrop/recovery':
+        specifier: workspace:*
+        version: link:../../packages/recovery
       '@meshdrop/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
@@ -130,7 +133,14 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
 
-  packages/recovery: {}
+  packages/recovery:
+    dependencies:
+      '@meshdrop/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
 
   packages/shared-types:
     dependencies:
@@ -143,6 +153,9 @@ importers:
       '@meshdrop/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@meshdrop/recovery':
+        specifier: workspace:*
+        version: link:../recovery
       '@meshdrop/shared-types':
         specifier: workspace:*
         version: link:../shared-types
@@ -158,6 +171,9 @@ importers:
       '@meshdrop/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@meshdrop/recovery':
+        specifier: workspace:*
+        version: link:../recovery
       '@meshdrop/storage':
         specifier: workspace:*
         version: link:../storage

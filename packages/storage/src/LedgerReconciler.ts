@@ -1,3 +1,4 @@
+import { checkpointDigest } from '@meshdrop/recovery';
 import { VERIFICATION_BLOCK_BYTES } from '@meshdrop/protocol';
 import { blockRecordSchema, CheckpointDB } from './CheckpointDB';
 import { digestBytes, digestManifest, storedBlockLength } from './integrity';
@@ -70,6 +71,7 @@ export class LedgerReconciler {
     const next = {
       ...record,
       finalizedFiles: finalized,
+      checkpointDigest: checkpointDigest(record.manifestDigest, valid),
       receipt,
       state: receipt ? ('complete' as const) : ('interrupted' as const),
       updatedAt: Date.now(),

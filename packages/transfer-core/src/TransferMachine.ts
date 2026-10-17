@@ -5,9 +5,11 @@ import {
   VERIFICATION_BLOCK_BYTES,
   MIN_TRANSFER_FRAME_BYTES,
   MAX_TRANSFER_BYTES,
+  RESUME_PROOF_PAGE_SIZE,
 } from '@meshdrop/protocol';
 import type {
   FileControl,
+  BlockProof,
   FileControlInput,
   TransferManifest,
   TransferReceipt,
@@ -20,6 +22,13 @@ import { decodeTransferFrame } from './FrameCodec';
 import { ReceiverAssembler } from './ReceiverAssembler';
 import { SenderScheduler } from './SenderScheduler';
 import type { TransferTransport } from './SenderScheduler';
+import {
+  ResumeMachine,
+  checkpointDigest,
+  proofKey,
+  proofBytes,
+  sourceReselectEntries,
+} from '@meshdrop/recovery';
 import { CheckpointDB, isQuotaError } from '@meshdrop/storage';
 import type { CapacityResult, RetentionPolicy } from '@meshdrop/storage';
 
@@ -37,6 +46,10 @@ export interface TransferView {
   peakBlockBytes: number;
   capacity: CapacityResult | null;
   storageFull: boolean;
+  recovery: string;
+  reusedBytes: number;
+  attemptBytes: number;
+  discardedBlocks: number;
 }
 export const INITIAL_TRANSFER: TransferView = {
   state: null,
@@ -52,11 +65,16 @@ export const INITIAL_TRANSFER: TransferView = {
   peakBlockBytes: 0,
   capacity: null,
   storageFull: false,
+  recovery: '',
+  reusedBytes: 0,
+  attemptBytes: 0,
+  discardedBlocks: 0,
 };
 const terminal = (state: TransferState | null) =>
   state === 'complete' || state === 'failed' || state === 'cancelled';
 export interface TransferOptions {
   role: 'owner' | 'receiver';
+  roomId?: string;
   epoch: number;
   frameBytes: number;
   transport: TransferTransport;
@@ -74,6 +92,17 @@ export class TransferMachine {
   private readonly abort = new AbortController();
   private assembler: ReceiverAssembler | null = null;
   private scheduler: SenderScheduler;
+  private resumeSource: ResumeMachine | null = null;
+  private resumeOriginalDigest = '';
+  private resumeTarget: {
+    confirmed: boolean;
+    attemptId: string;
+    blocks: BlockProof[];
+    page: number;
+    accepted: BlockProof[];
+    rejected: BlockProof[];
+  } | null = null;
+  private readonly reused = new Set<string>();
   private fileIndex = 0;
   private nextBlock = 0;
   private pendingStorage: {
@@ -107,6 +136,7 @@ export class TransferMachine {
         !this.view.state ||
         terminal(this.view.state) ||
         this.view.state === 'preparing' ||
+        this.view.state === 'reconnecting' ||
         this.paused
       )
         return;
@@ -117,6 +147,14 @@ export class TransferMachine {
   }
   get snapshot(): TransferView {
     return this.view;
+  }
+  get canResumeSource(): boolean {
+    return (
+      this.options.role === 'owner' &&
+      this.view.state === 'negotiating' &&
+      this.view.recovery.startsWith('Source ready') &&
+      !this.resumeSource
+    );
   }
   get epoch(): number {
     return this.options.epoch;
@@ -186,6 +224,279 @@ export class TransferMachine {
         'invalid-data',
       );
     }
+  }
+  async restoreSource(input: TransferManifest, files: readonly File[]): Promise<void> {
+    if (this.options.role !== 'owner' || this.view.state)
+      throw new Error('Clear the current attempt before preparing resume.');
+    const manifest = manifestSchema.parse(input);
+    this.update({
+      ...INITIAL_TRANSFER,
+      state: 'preparing',
+      direction: 'send',
+      manifest,
+      recovery: 'Verifying original source…',
+    });
+    this.storage = this.makeStorage();
+    try {
+      this.digest = await manifestDigest(manifest);
+      const entries = sourceReselectEntries(manifest, files);
+      const prepared = await this.storage.prepareSources(entries);
+      if (!this.active) return;
+      if (JSON.stringify(prepared) !== JSON.stringify(manifest.files))
+        throw new Error('Source content changed.');
+      this.transition({ type: 'PREPARED' });
+      this.touch();
+      this.update({ recovery: 'Source ready. The receiver can now resume its saved transfer.' });
+    } catch {
+      await this.fail(
+        'The selected source does not match the original name, size and SHA-256. Reselect the exact original files.',
+        'integrity',
+      );
+    }
+  }
+  async restoreReceiver(input: TransferManifest): Promise<void> {
+    if (this.options.role !== 'receiver' || this.view.state)
+      throw new Error('Clear the current attempt before resuming.');
+    const manifest = manifestSchema.parse(input);
+    this.update({
+      ...INITIAL_TRANSFER,
+      state: 'preparing',
+      direction: 'receive',
+      manifest,
+      recovery: 'Rehashing saved blocks…',
+    });
+    this.storage = this.makeStorage();
+    try {
+      this.digest = await manifestDigest(manifest);
+      if (!this.storage.openCheckpoint) throw new Error('Checkpoint storage unavailable.');
+      const { checkpoint, blocks } = await this.storage.openCheckpoint(
+        manifest.transferId,
+        this.digest,
+      );
+      if (!this.active) return;
+      if (JSON.stringify(checkpoint.manifest) !== JSON.stringify(manifest))
+        throw new Error('Manifest changed.');
+      this.storageKey = checkpoint.record.storageKey;
+      this.options.retention = checkpoint.record.retention;
+      this.resumeTarget = {
+        confirmed: false,
+        attemptId: crypto.randomUUID(),
+        blocks,
+        page: 0,
+        accepted: [],
+        rejected: [],
+      };
+      this.resumeOriginalDigest = checkpointDigest(this.digest, blocks);
+      this.transition({ type: 'PREPARED' });
+      this.touch();
+      this.update({
+        committedBytes: checkpoint.committedBytes,
+        discardedBlocks: checkpoint.discardedBlocks,
+        recovery: 'Waiting for the sender to confirm the original manifest…',
+      });
+      await this.send('RESUME_HELLO', {
+        attemptId: this.resumeTarget.attemptId,
+        manifestDigest: this.digest,
+        checkpointDigest: this.resumeOriginalDigest,
+      });
+    } catch {
+      await this.fail(
+        'Saved data could not be reopened for resume. Check retention, file storage and other open tabs.',
+        'storage',
+      );
+    }
+  }
+  private async resumePage(): Promise<void> {
+    const target = this.resumeTarget!;
+    const start = target.page * RESUME_PROOF_PAGE_SIZE;
+    await this.send('HAVE_RANGES', {
+      attemptId: target.attemptId,
+      manifestDigest: this.digest,
+      page: target.page,
+      last: start + RESUME_PROOF_PAGE_SIZE >= target.blocks.length,
+      blocks: target.blocks.slice(start, start + RESUME_PROOF_PAGE_SIZE),
+    });
+  }
+  private firstMissing(fileId: string, start = 0): number {
+    while (this.reused.has(`${fileId}:${start}`)) start++;
+    return start;
+  }
+  private activateResume(blocks: readonly BlockProof[]): void {
+    for (const block of blocks) this.reused.add(proofKey(block));
+    const reusedBytes = blocks.reduce((sum, b) => sum + proofBytes(this.view.manifest!, b), 0);
+    this.nextBlock = this.firstMissing(this.view.manifest!.files[0]!.fileId);
+    this.assembler = new ReceiverAssembler(
+      this.view.manifest!.transferId,
+      this.options.epoch,
+      this.options.frameBytes,
+    );
+    this.update({
+      committedBytes: reusedBytes,
+      reusedBytes,
+      destinationReady: true,
+      recovery:
+        this.options.role === 'owner'
+          ? 'Resume accepted. Sending only missing or invalid blocks.'
+          : 'Resume accepted. Receiving only missing or invalid blocks.',
+    });
+    this.transition({ type: 'ACCEPT' });
+    this.maybeVerifying();
+    this.touch();
+  }
+  private async receiveResume(message: FileControl): Promise<boolean> {
+    if (message.type === 'RESUME_UNAVAILABLE') {
+      const target = this.resumeTarget;
+      if (
+        !target ||
+        message.payload.attemptId !== target.attemptId ||
+        message.payload.manifestDigest !== this.digest
+      )
+        return true;
+      this.disconnect();
+      this.update({
+        error:
+          'The sender must prepare the exact original source before you retry Resume saved transfer.',
+      });
+      return true;
+    }
+
+    if (
+      !['RESUME_HELLO', 'MANIFEST_CONFIRM', 'HAVE_RANGES', 'NEED_RANGES', 'RESUME_ACCEPT'].includes(
+        message.type,
+      )
+    )
+      return false;
+    if (this.view.state !== 'negotiating') throw new Error('Resume handshake is already closed.');
+    if (message.type === 'RESUME_HELLO') {
+      if (this.options.role !== 'owner' || this.resumeSource || !this.storage)
+        throw new Error('Original source unavailable.');
+      if (message.payload.manifestDigest !== this.digest) throw new Error('Manifest mismatch.');
+      this.resumeSource = new ResumeMachine(
+        this.view.manifest!,
+        this.digest,
+        message.payload.attemptId,
+      );
+      this.resumeOriginalDigest = message.payload.checkpointDigest;
+      this.update({ recovery: 'Checking receiver proofs against the original source…' });
+      await this.send('MANIFEST_CONFIRM', {
+        attemptId: message.payload.attemptId,
+        manifestDigest: this.digest,
+        manifest: this.view.manifest!,
+      });
+      return true;
+    }
+    if (message.type === 'MANIFEST_CONFIRM') {
+      const target = this.resumeTarget;
+      if (
+        this.options.role !== 'receiver' ||
+        !target ||
+        target.confirmed ||
+        target.page !== 0 ||
+        message.payload.attemptId !== target.attemptId ||
+        message.payload.manifestDigest !== this.digest ||
+        JSON.stringify(message.payload.manifest) !== JSON.stringify(this.view.manifest)
+      )
+        throw new Error('Unbound resume manifest.');
+      target.confirmed = true;
+      this.update({ recovery: 'Comparing rehashed blocks with the authenticated sender…' });
+      await this.resumePage();
+      return true;
+    }
+    if (message.type === 'HAVE_RANGES') {
+      const source = this.resumeSource;
+      if (this.options.role !== 'owner' || !source) throw new Error('Unexpected receiver proofs.');
+      source.assertScope(message.payload.attemptId, message.payload.manifestDigest);
+      const rejected = await source.have(
+        message.payload.page,
+        message.payload.last,
+        message.payload.blocks,
+        async (block) => {
+          const digest = this.storage!.sourceDigest
+            ? await this.storage!.sourceDigest(block.fileId, block.index)
+            : (await this.storage!.sourceBlock(block.fileId, block.index)).digest;
+          return digest === block.digest;
+        },
+      );
+      if (!this.active) return true;
+      this.touch();
+      await this.send('NEED_RANGES', {
+        attemptId: source.attemptId,
+        manifestDigest: this.digest,
+        page: message.payload.page,
+        rejected,
+      });
+      return true;
+    }
+    if (message.type === 'NEED_RANGES') {
+      const target = this.resumeTarget;
+      if (
+        this.options.role !== 'receiver' ||
+        !target ||
+        message.payload.attemptId !== target.attemptId ||
+        message.payload.manifestDigest !== this.digest ||
+        message.payload.page !== target.page
+      )
+        throw new Error('Stale missing-range response.');
+      const page = target.blocks.slice(
+        target.page * RESUME_PROOF_PAGE_SIZE,
+        (target.page + 1) * RESUME_PROOF_PAGE_SIZE,
+      );
+      if (
+        new Set(message.payload.rejected).size !== message.payload.rejected.length ||
+        message.payload.rejected.some((index) => !page[index])
+      )
+        throw new Error('Invalid rejected proof index.');
+      for (const [index, block] of page.entries())
+        (message.payload.rejected.includes(index) ? target.rejected : target.accepted).push(block);
+      target.page++;
+      if (target.page * RESUME_PROOF_PAGE_SIZE < target.blocks.length) {
+        await this.resumePage();
+        return true;
+      }
+      await this.storage!.invalidateCheckpoint!(target.rejected);
+      const digest = checkpointDigest(this.digest, target.accepted);
+      const reusedBytes = target.accepted.reduce(
+        (sum, b) => sum + proofBytes(this.view.manifest!, b),
+        0,
+      );
+      await this.storage!.bindResume!({
+        roomId: this.options.roomId ?? message.roomId,
+        epoch: this.epoch,
+        attemptId: target.attemptId,
+        checkpointDigest: digest,
+        reusedBytes,
+      });
+      if (!this.active) return true;
+      this.update({ discardedBlocks: this.view.discardedBlocks + target.rejected.length });
+      this.activateResume(target.accepted);
+      await this.send('RESUME_ACCEPT', {
+        attemptId: target.attemptId,
+        manifestDigest: this.digest,
+        checkpointDigest: digest,
+        reusedBytes,
+      });
+      return true;
+    }
+    if (message.type === 'RESUME_ACCEPT') {
+      const source = this.resumeSource;
+      if (this.options.role !== 'owner' || !source)
+        throw new Error('Unexpected resume acceptance.');
+      source.assertScope(message.payload.attemptId, message.payload.manifestDigest);
+      source.confirm(
+        this.resumeOriginalDigest,
+        message.payload.checkpointDigest,
+        message.payload.reusedBytes,
+      );
+      this.activateResume([...source.accepted.values()]);
+      this.beginSending();
+      return true;
+    }
+    return false;
+  }
+  private beginSending(): void {
+    void this.sendFiles().catch(() => {
+      if (this.active) this.disconnect();
+    });
   }
   async accept(): Promise<void> {
     if (
@@ -275,6 +586,7 @@ export class TransferMachine {
       const manifest = this.view.manifest;
       if (!manifest || message.transferId !== manifest.transferId) return;
       this.touch();
+      if (!terminal(this.view.state) && (await this.receiveResume(message))) return;
       if (terminal(this.view.state)) {
         // Retry terminal confirmation without changing the original receipt or storage.
         if (this.view.state === 'complete' && this.view.receipt) {
@@ -316,13 +628,7 @@ export class TransferMachine {
         if (this.view.state !== 'negotiating') return;
         this.transition({ type: 'ACCEPT' });
         this.maybeVerifying();
-        void this.sendFiles().catch(() => {
-          if (this.active)
-            void this.fail(
-              'Transfer stopped before all bytes were verified and stored.',
-              'invalid-data',
-            );
-        });
+        this.beginSending();
         return;
       }
       if (message.type === 'BLOCK_ACK') {
@@ -436,7 +742,9 @@ export class TransferMachine {
           storageFinalized: true,
         });
         this.fileIndex++;
-        this.nextBlock = 0;
+        this.nextBlock = manifest.files[this.fileIndex]
+          ? this.firstMissing(manifest.files[this.fileIndex]!.fileId)
+          : 0;
         this.verifying = false;
         this.touch();
         return;
@@ -549,9 +857,10 @@ export class TransferMachine {
     const block = this.pendingStorage;
     if (!block) return;
     this.pendingStorage = null;
-    this.nextBlock++;
+    this.nextBlock = this.firstMissing(block.fileId, block.blockIndex + 1);
     this.update({
       committedBytes: this.view.committedBytes + block.length,
+      attemptBytes: this.view.attemptBytes + block.length,
       peakBlockBytes: this.assembler?.peakBytes ?? 0,
       storageFull: false,
       error: '',
@@ -610,6 +919,7 @@ export class TransferMachine {
         blockIndex < Math.ceil(file.size / VERIFICATION_BLOCK_BYTES);
         blockIndex++
       ) {
+        if (this.reused.has(`${file.fileId}:${blockIndex}`)) continue;
         await this.waitUntilResumed();
         this.abort.signal.throwIfAborted();
         const { bytes, digest } = await this.storage!.sourceBlock(file.fileId, blockIndex);
@@ -633,6 +943,7 @@ export class TransferMachine {
           bytes,
           this.abort.signal,
           () => this.waitUntilResumed(),
+          (bytes) => this.update({ attemptBytes: this.view.attemptBytes + bytes }),
         );
         await confirmed;
       }
@@ -696,7 +1007,7 @@ export class TransferMachine {
     clearInterval(this.timer);
   }
   async cancel(notify = true, preserve = false): Promise<void> {
-    if (!this.active) return;
+    if (!this.active && this.view.state !== 'reconnecting') return;
     this.transition({ type: 'CANCEL' });
     this.stop();
     if (notify && this.view.manifest)
@@ -715,11 +1026,22 @@ export class TransferMachine {
     if ((this.options.retention ?? 'discard') === 'discard') await this.cleanup();
   }
   disconnect(): void {
-    if (this.active)
+    if (!this.active) return;
+    if (this.view.state === 'preparing') {
       void this.fail(
-        'Connection changed. Retained blocks can be checked in Saved transfers after reopening. Network resume is not available yet.',
+        'Preparation was interrupted. Reselect the original source to retry.',
         'connection',
       );
+      return;
+    }
+    this.transition({ type: 'DISCONNECT' });
+    this.update({
+      recovery:
+        'Connection interrupted. Saved blocks are retained. Reconnect, compare the new pairing code, then resume.',
+      error: '',
+    });
+    this.stop();
+    if ((this.options.retention ?? 'discard') === 'discard') void this.cleanup();
   }
   download(fileId: string): File | undefined {
     return this.view.state === 'complete' ? this.outputs.get(fileId) : undefined;

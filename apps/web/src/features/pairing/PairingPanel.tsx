@@ -105,7 +105,7 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
         </button>
         <button
           className="secondary"
-          disabled={view.connection !== 'connected' || !peer.ready}
+          disabled={view.connection !== 'connected' || peer.epoch === 0}
           onClick={() => {
             void client.requestConnection('ice-restart');
           }}
@@ -122,6 +122,20 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
           New peer connection
         </button>
       </div>
+      {view.recoveryStatus && (
+        <p role="status" data-testid="recovery-status">
+          {view.recoveryStatus}
+        </p>
+      )}
+      <button
+        className="secondary"
+        disabled={view.busy || view.status?.state !== 'approved'}
+        onClick={() => {
+          void client.retryConnection();
+        }}
+      >
+        Retry connection
+      </button>
       <p className="muted">
         Pings received: <strong data-testid="received-pings">{peer.pingsReceived}</strong> · Replies
         received: <strong data-testid="received-pongs">{peer.pongsReceived}</strong>

@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { requestPersistence, startFileDownload, StorageClient } from '@meshdrop/storage';
+import type { RoomClient, RoomView } from '../pairing/RoomClient';
 import type { RecoveryListing } from '@meshdrop/storage';
 
-export function SavedTransfersPanel() {
+export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: RoomView }) {
+  const selected = useRef(new Map<string, Map<string, File>>());
+  const [selectedCount, setSelectedCount] = useState(0);
+  const paired =
+    view.peer.ready && view.peer.verification === 'verified' && view.peer.remoteVerified;
+
   const client = useRef<StorageClient | null>(null);
   const releases = useRef<(() => void)[]>([]);
   const [listing, setListing] = useState<RecoveryListing | null>(null);
@@ -35,6 +41,14 @@ export function SavedTransfersPanel() {
       releases.current = [];
     };
   }, []);
+  function selectedFiles(id: string): Map<string, File> {
+    let files = selected.current.get(id);
+    if (!files) {
+      files = new Map();
+      selected.current.set(id, files);
+    }
+    return files;
+  }
   async function action(work: (storage: StorageClient) => Promise<void>) {
     const storage = client.current;
     if (!storage || busy) return;
@@ -66,7 +80,8 @@ export function SavedTransfersPanel() {
       </div>
       <p className="demo-note">
         Surviving blocks are reread and rehashed before appearing here. Partial checkpoints are
-        local evidence; they do not reconnect a room or resume a transfer yet. Browser eviction or
+        local evidence. To resume, renew room admission, compare the new pairing code, prepare the
+        original source on the owner, then choose Resume saved on the receiver. Browser eviction or
         clearing site data can remove them.
       </p>
       <div className="actions">
@@ -145,6 +160,16 @@ export function SavedTransfersPanel() {
               {checkpoint.discardedBlocks} missing or changed ledger entries were discarded.
             </p>
           )}
+          {!checkpoint.record.receipt && (
+            <button
+              disabled={busy || !paired || view.status?.role !== 'receiver' || view.busy}
+              onClick={() => {
+                void room.resumeReceiver(checkpoint.manifest);
+              }}
+            >
+              Resume saved {checkpoint.manifest.files[0]?.path}
+            </button>
+          )}
           <ul className="file-list">
             {checkpoint.manifest.files.map((meta) => {
               const file = checkpoint.files.find((file) => file.fileId === meta.fileId)!;
@@ -212,8 +237,11 @@ export function SavedTransfersPanel() {
                   if (selected)
                     void action(async (storage) => {
                       await storage.verifySource(source.transferId, file.fileId, selected);
+                      const map = selectedFiles(source.transferId);
+                      map.set(file.fileId, selected);
+                      setSelectedCount((count) => count + 1);
                       setMessage(
-                        `Source verified: ${file.path}. Network resume is planned for Phase 5.`,
+                        `Source verified: ${file.path}. Prepare the source when both devices are paired.`,
                       );
                     });
                 }}
@@ -221,10 +249,28 @@ export function SavedTransfersPanel() {
             </label>
           ))}
           <button
+            data-selected-count={selectedCount}
+            disabled={
+              busy ||
+              !paired ||
+              view.status?.role !== 'owner' ||
+              view.busy ||
+              selectedFiles(source.transferId).size !== source.manifest.files.length
+            }
+            onClick={() => {
+              void room.resumeSource(source.manifest, [
+                ...selectedFiles(source.transferId).values(),
+              ]);
+            }}
+          >
+            Prepare source {source.manifest.files[0]?.path}
+          </button>
+          <button
             className="secondary"
             disabled={busy}
             onClick={() => {
               void action(async (storage) => {
+                selected.current.delete(source.transferId);
                 await storage.removeSource(source.transferId);
                 setListing(await storage.list());
               });

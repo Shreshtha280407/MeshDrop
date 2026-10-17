@@ -28,9 +28,7 @@ test('signed peer hello, independent comparison, epoch restart and fresh connect
     expect(await receiver.getByTestId('pairing-code').textContent()).toBe(first);
     for (const page of [owner, receiver]) {
       await expect(page.getByTestId('verification-state')).toHaveText('unverified');
-      await expect(page.getByTestId('negotiated-capabilities')).toContainText(
-        'Resume: unavailable',
-      );
+      await expect(page.getByTestId('negotiated-capabilities')).toContainText('Resume: persistent');
       await page.getByLabel('Code shown on the other device', { exact: true }).fill(first!);
       await expect(
         page.getByRole('button', { name: 'Confirm comparison', exact: true }),

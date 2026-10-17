@@ -21,6 +21,16 @@ export interface TransferRecord {
   state: StorageState;
   finalizedFiles: string[];
   receipt: TransferReceipt | null;
+  checkpointDigest?: string | undefined;
+  lastResume?:
+    | {
+        roomId: string;
+        epoch: number;
+        attemptId: string;
+        checkpointDigest: string;
+        reusedBytes: number;
+      }
+    | undefined;
 }
 export interface BlockRecord {
   transferId: string;

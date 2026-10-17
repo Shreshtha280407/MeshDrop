@@ -12,6 +12,8 @@ import {
 } from '@meshdrop/protocol';
 import { INITIAL_TRANSFER, TransferMachine } from '@meshdrop/transfer-core';
 import type { TransferView } from '@meshdrop/transfer-core';
+import { RetryPolicy } from '@meshdrop/recovery';
+import type { TransferManifest } from '@meshdrop/protocol';
 import type { FileControl } from '@meshdrop/protocol';
 import { INITIAL_PEER, PeerSession } from '@meshdrop/peer-connection';
 import type { PeerSignal, PeerView } from '@meshdrop/peer-connection';
@@ -33,6 +35,7 @@ export interface RoomView {
   peer: PeerView;
   transfer: TransferView;
   retention: RetentionPolicy;
+  recoveryStatus: string;
 }
 const INITIAL: RoomView = {
   status: null,
@@ -44,6 +47,7 @@ const INITIAL: RoomView = {
   peer: INITIAL_PEER,
   transfer: INITIAL_TRANSFER,
   retention: '24-hours',
+  recoveryStatus: '',
 };
 export function parseInvitation(value: string): { roomId: string; capability: string } {
   const url = new URL(value);
@@ -85,6 +89,68 @@ export class RoomClient {
   private connecting = false;
   private refreshInFlight = false;
   private generation = 0;
+  private retry = new RetryPolicy();
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
+  private retrySuppressed = false;
+  private sourceFiles: readonly File[] = [];
+  private clearRetry(): void {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.retryTimer = undefined;
+  }
+  private scheduleRecovery(): void {
+    if (this.retryTimer || this.retrySuppressed || this.view.status?.state !== 'approved') return;
+    if (this.view.status.role !== 'owner' && this.socket?.readyState === WebSocket.OPEN) {
+      this.update({
+        recoveryStatus: 'Waiting for the room owner to reconnect. Saved data is retained.',
+      });
+      return;
+    }
+    const next = this.retry.next();
+    if (next.exhausted) {
+      this.update({
+        recoveryStatus:
+          'Automatic retries stopped after 5 attempts. Check both devices, then choose Retry connection.',
+      });
+      return;
+    }
+    this.update({
+      recoveryStatus: `Reconnect attempt ${next.attempt}/5 in ${Math.round((next.nextAt! - Date.now()) / 1000)} seconds. Saved blocks are retained.`,
+    });
+    const generation = this.generation;
+    this.retryTimer = setTimeout(
+      () => {
+        this.retryTimer = undefined;
+        if (generation !== this.generation || this.view.status?.state !== 'approved') return;
+        void (async () => {
+          try {
+            if (this.socket?.readyState !== WebSocket.OPEN) await this.connect();
+            else if (this.view.status?.role === 'owner')
+              await this.requestConnection(this.retry.mode(next.attempt));
+          } catch {
+            this.scheduleRecovery();
+          }
+        })();
+      },
+      Math.max(0, next.nextAt! - Date.now()),
+    );
+  }
+  async retryConnection(): Promise<void> {
+    this.clearRetry();
+    this.retry.reset();
+    this.retrySuppressed = false;
+    if (this.view.status?.state !== 'approved') {
+      this.update({
+        recoveryStatus:
+          'Create a fresh invitation, approve the returning peer and compare its new code before resuming saved data.',
+      });
+      return;
+    }
+    if (this.socket?.readyState !== WebSocket.OPEN) await this.reconnect();
+    else
+      await this.requestConnection(
+        this.peerSession?.snapshot.ready ? 'ice-restart' : 'new-connection',
+      );
+  }
   readonly getSnapshot = () => this.view;
   readonly subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -140,6 +206,8 @@ export class RoomClient {
   }
   async createRoom(): Promise<void> {
     return this.action(async () => {
+      this.retrySuppressed = false;
+      this.retry.reset();
       const room = sessionCreatedSchema.parse(
         await this.api('/v1/sessions', 'POST', undefined, {}),
       );
@@ -158,6 +226,8 @@ export class RoomClient {
   }
   async joinRoom(value: string): Promise<void> {
     return this.action(async () => {
+      this.retrySuppressed = false;
+      this.retry.reset();
       let invitation: ReturnType<typeof parseInvitation>;
       try {
         invitation = parseInvitation(value);
@@ -308,6 +378,7 @@ export class RoomClient {
           if (this.heartbeat) clearInterval(this.heartbeat);
           this.closePeer();
           this.update({ connection: 'disconnected' });
+          this.scheduleRecovery();
           reject(new Error('Signaling connection closed.'));
         };
         socket.onmessage = (event: MessageEvent<unknown>) => {
@@ -341,6 +412,7 @@ export class RoomClient {
       });
     } catch (error) {
       this.update({ connection: 'disconnected' });
+      this.scheduleRecovery();
       throw error;
     } finally {
       this.connecting = false;
@@ -382,9 +454,12 @@ export class RoomClient {
       throw new Error('Unexpected signaling epoch.');
     } else if (envelope.type === 'ERROR') {
       this.update({ error: `${envelope.payload.code}: ${envelope.payload.message}` });
-      if (envelope.payload.code === 'PEER_UNAVAILABLE') this.closePeer();
+      if (envelope.payload.code === 'PEER_UNAVAILABLE') {
+        this.closePeer();
+        this.scheduleRecovery();
+      }
     } else if (envelope.type === 'PEER_READY') {
-      if (status.role === 'owner' && !this.peerSession)
+      if (status.role === 'owner' && (!this.peerSession || !this.view.peer.ready))
         void this.requestConnection('new-connection');
     } else if (envelope.type === 'RENEGOTIATE') {
       if (status.role === 'owner') void this.requestConnection(envelope.payload.reason);
@@ -442,6 +517,7 @@ export class RoomClient {
       this.update({ error: '' });
     } catch (error) {
       this.update({ error: error instanceof Error ? error.message : 'Connection request failed.' });
+      this.scheduleRecovery();
     } finally {
       this.startingEpoch = false;
     }
@@ -457,12 +533,27 @@ export class RoomClient {
     this.peerSession?.confirmComparison(entered, independentConfirmation);
   }
   rejectComparison(): void {
+    this.retrySuppressed = true;
+    this.clearRetry();
     this.peerSession?.rejectComparison();
   }
   private peerChanged(peer: PeerView): void {
     if (this.transfer && (!peer.ready || this.transfer.epoch !== peer.epoch))
       this.transfer.disconnect();
     this.update({ peer });
+    if (peer.ready) {
+      this.clearRetry();
+      this.retry.reset();
+      if (this.view.transfer.state === 'reconnecting')
+        this.update({
+          recoveryStatus:
+            'Compare the new pairing code on both devices. Prepare the original source, then resume the saved transfer.',
+        });
+    } else if (peer.verification === 'mismatch') {
+      this.retrySuppressed = true;
+      this.clearRetry();
+    } else if (peer.epoch > 0 && (peer.state === 'reconnecting' || peer.state === 'closed'))
+      this.scheduleRecovery();
     this.ensureTransfer();
   }
   private ensureTransfer(): void {
@@ -476,6 +567,7 @@ export class RoomClient {
       return;
     this.transfer = new TransferMachine({
       role: this.view.status.role === 'owner' ? 'owner' : 'receiver',
+      roomId: this.credentials!.roomId,
       epoch: peer.epoch,
       frameBytes: peer.snapshot.capabilities.preferredFrameBytes,
       transport: {
@@ -486,11 +578,52 @@ export class RoomClient {
         sendFrame: (bytes) => peer.sendFileFrame(bytes),
         waitForDrain: (signal) => peer.waitForDrain(signal),
       },
-      onChange: (transfer) => this.update({ transfer }),
+      onChange: (transfer) => {
+        const previous = this.view.transfer;
+        this.update({
+          transfer,
+          ...(transfer.recovery.startsWith('Resume accepted')
+            ? {
+                recoveryStatus:
+                  transfer.state === 'complete'
+                    ? 'Recovery complete. The final stored-file hashes and new receipt are verified.'
+                    : 'Recovery authenticated. Both peers must stay online until final verification completes.',
+              }
+            : {}),
+        });
+        if (
+          transfer.recovery.startsWith('Resume accepted') &&
+          !previous.recovery.startsWith('Resume accepted')
+        )
+          this.event(
+            `Resume accepted on epoch ${peer.epoch}: ${transfer.reusedBytes} verified bytes reused.`,
+          );
+        if (transfer.state === 'reconnecting' && previous.state !== 'reconnecting')
+          this.event(
+            'Transfer interrupted. Retained checkpoints require revalidation before reuse.',
+          );
+      },
       retention: this.view.retention,
     });
   }
   private async receiveFileControl(message: FileControl): Promise<void> {
+    if (
+      message.type === 'RESUME_HELLO' &&
+      (!this.transfer?.canResumeSource ||
+        this.transfer.snapshot.manifest?.transferId !== message.transferId)
+    ) {
+      await this.peerSession?.sendFileControl({
+        type: 'RESUME_UNAVAILABLE',
+        transferId: message.transferId,
+        payload: {
+          attemptId: message.payload.attemptId,
+          manifestDigest: message.payload.manifestDigest,
+          reason: 'source-required',
+        },
+      });
+      return;
+    }
+
     this.ensureTransfer();
     if (!this.transfer) throw new Error('This browser cannot accept file transfers.');
     if (
@@ -514,8 +647,47 @@ export class RoomClient {
         throw new Error(
           'Both devices must confirm the pairing code and support temporary browser storage.',
         );
+      this.sourceFiles = files;
       await this.transfer.offer(files);
     });
+  }
+  private async replaceForResume(): Promise<TransferMachine> {
+    if (this.peerSession?.snapshot.capabilities?.resumeMode !== 'persistent')
+      throw new Error('Both browsers must support persistent checkpoint resume.');
+    if (!this.peerSession?.canTransfer)
+      throw new Error('Compare and confirm the new pairing code on both devices first.');
+    const state = this.transfer?.snapshot.state;
+    if (state && !['reconnecting', 'failed', 'cancelled', 'complete'].includes(state))
+      throw new Error('Finish or cancel the current attempt first.');
+    await this.transfer?.dispose(false);
+    this.transfer = null;
+    this.update({ transfer: INITIAL_TRANSFER });
+    this.ensureTransfer();
+    if (!this.transfer) throw new Error('Resume storage is unavailable.');
+    return this.transfer;
+  }
+  async resumeSource(manifest: TransferManifest, files: readonly File[]): Promise<void> {
+    return this.action(async () => {
+      if (this.view.status?.role !== 'owner')
+        throw new Error('The room owner provides the original source.');
+      const transfer = await this.replaceForResume();
+      this.sourceFiles = files;
+      await transfer.restoreSource(manifest, files);
+    });
+  }
+  async resumeReceiver(manifest: TransferManifest): Promise<void> {
+    return this.action(async () => {
+      if (this.view.status?.role !== 'receiver')
+        throw new Error('Join and confirm a fresh room as the receiver first.');
+      const transfer = await this.replaceForResume();
+      await transfer.restoreReceiver(manifest);
+    });
+  }
+  async resumeCurrent(): Promise<void> {
+    const manifest = this.view.transfer.manifest;
+    if (!manifest) return;
+    if (this.view.status?.role === 'owner') await this.resumeSource(manifest, this.sourceFiles);
+    else await this.resumeReceiver(manifest);
   }
   async acceptFiles(): Promise<void> {
     await this.transfer?.accept();
@@ -534,6 +706,8 @@ export class RoomClient {
     await this.transfer?.setPaused(paused);
   }
   async cancelFiles(): Promise<void> {
+    this.retrySuppressed = true;
+    this.clearRetry();
     await this.transfer?.cancel();
   }
   async clearTransfer(): Promise<void> {
@@ -546,6 +720,7 @@ export class RoomClient {
       return;
     }
     this.transfer = null;
+    this.sourceFiles = [];
     for (const url of this.downloadUrls.values()) URL.revokeObjectURL(url);
     this.downloadUrls.clear();
     this.update({ transfer: INITIAL_TRANSFER });
@@ -597,6 +772,8 @@ export class RoomClient {
   }
   private markClosed(): void {
     this.generation++;
+    this.retrySuppressed = true;
+    this.clearRetry();
     this.closePeer();
     if (this.polling) clearInterval(this.polling);
     if (this.heartbeat) clearInterval(this.heartbeat);
@@ -606,17 +783,24 @@ export class RoomClient {
       connection: 'disconnected',
       invitation: '',
       busy: false,
+      recoveryStatus:
+        'Room access ended. Saved data remains local. Start again, renew admission and compare the new pairing code before resuming.',
     });
   }
   reset(): void {
     this.dispose();
     this.credentials = null;
     this.joinAttempt = null;
+    this.retrySuppressed = false;
+    this.retry.reset();
     this.update({ ...INITIAL });
   }
   dispose(): void {
+    this.retrySuppressed = true;
+    this.clearRetry();
     void this.transfer?.dispose(false);
     this.transfer = null;
+    this.sourceFiles = [];
     for (const url of this.downloadUrls.values()) URL.revokeObjectURL(url);
     this.downloadUrls.clear();
     this.generation++;

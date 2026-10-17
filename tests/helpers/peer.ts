@@ -6,9 +6,11 @@ export async function pairPages(owner: Page, receiver: Page): Promise<void> {
   await owner.goto('/');
   await owner.getByRole('button', { name: 'Create invitation', exact: true }).click();
   await expect(owner.getByTestId('connection-state')).toHaveText('connected');
-  await receiver.goto(
-    await owner.getByLabel('Private invitation link', { exact: true }).inputValue(),
-  );
+  const invitation = await owner
+    .getByLabel('Private invitation link', { exact: true })
+    .inputValue();
+  await receiver.goto('/');
+  await receiver.getByLabel('Join with an invitation', { exact: true }).fill(invitation);
   await receiver.getByRole('button', { name: 'Request to join', exact: true }).click();
   await owner.getByRole('button', { name: 'Approve receiver', exact: true }).click();
   for (const page of [owner, receiver])
@@ -27,6 +29,7 @@ export async function pairPages(owner: Page, receiver: Page): Promise<void> {
 export async function pairForTransfer(
   browser: Browser,
   contextOptions: BrowserContextOptions = {},
+  beforePair?: (owner: Page, receiver: Page) => Promise<void>,
 ): Promise<{ owner: Page; receiver: Page; close(): Promise<void> }> {
   // Unrelated local cases get independent rate buckets; the two peers still share one address.
   // Cloudflare supplies/overwrites this header at the public edge. These are documentation IPs.
@@ -44,6 +47,7 @@ export async function pairForTransfer(
   const owner = await a.newPage();
   const receiver = await b.newPage();
   try {
+    await beforePair?.(owner, receiver);
     await pairPages(owner, receiver);
   } catch (error) {
     await a.close();

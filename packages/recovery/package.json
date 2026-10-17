@@ -10,5 +10,8 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@meshdrop/protocol": "workspace:*",
+    "@noble/hashes": "2.4.0"
+  }
 }

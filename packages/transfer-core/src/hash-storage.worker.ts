@@ -1,18 +1,25 @@
 /// <reference lib="webworker" />
 import { sha256 } from '@noble/hashes/sha2.js';
 import { VERIFICATION_BLOCK_BYTES } from '@meshdrop/protocol';
-import type { TransferFile, TransferManifest, TransferReceipt } from '@meshdrop/protocol';
+import type {
+  BlockProof,
+  TransferFile,
+  TransferManifest,
+  TransferReceipt,
+} from '@meshdrop/protocol';
 import {
   CheckpointDB,
+  LedgerReconciler,
   OpfsReceiverStore,
   StorageFailure,
   isQuotaError,
   retentionExpiry,
 } from '@meshdrop/storage';
-import type { RetentionPolicy } from '@meshdrop/storage';
+import type { RetentionPolicy, TransferRecord } from '@meshdrop/storage';
 import { digestManifest, hashLocalFile, hexDigest } from '@meshdrop/storage';
 import type { SourceEntry } from './HashWorker';
 import { blockLength } from './Manifest';
+import { validateResumeEpoch } from '@meshdrop/recovery';
 const sources = new Map<string, File>();
 let store: OpfsReceiverStore | null = null;
 let retry: {
@@ -76,7 +83,7 @@ async function run(operation: string, payload: unknown): Promise<unknown> {
     }
     return null;
   }
-  if (operation === 'source-block') {
+  if (operation === 'source-block' || operation === 'source-digest') {
     const { fileId, index } = payload as { fileId: string; index: number };
     const file = sources.get(fileId);
     if (!file) throw new Error('Source file unavailable.');
@@ -87,7 +94,63 @@ async function run(operation: string, payload: unknown): Promise<unknown> {
         .arrayBuffer(),
     );
     if (bytes.length !== length) throw new Error('Source file could not be read.');
-    return { bytes, digest: hexDigest(sha256(bytes)) };
+    const digest = hexDigest(sha256(bytes));
+    return operation === 'source-digest' ? digest : { bytes, digest };
+  }
+  if (operation === 'open-checkpoint') {
+    if (store || sources.size) throw new Error('Worker already owns a transfer.');
+    const { transferId, digest } = payload as { transferId: string; digest: string };
+    store = new OpfsReceiverStore();
+    await store.open(transferId);
+    if (
+      store.record.manifestDigest !== digest ||
+      store.record.expiresAt <= Date.now() ||
+      store.record.retention === 'discard'
+    )
+      throw new Error('Checkpoint identity or retention changed.');
+    const checkpoint = await new LedgerReconciler().reconcile(store);
+    await store.enableResumeWrites();
+    const blocks = (await store.db.blocks(transferId)).map(({ fileId, index, digest }) => ({
+      fileId,
+      index,
+      digest,
+    }));
+    return { checkpoint, blocks };
+  }
+  if (operation === 'invalidate-checkpoint') {
+    if (!store) throw new Error('No checkpoint.');
+    const rejected = payload as BlockProof[];
+    const all = await store.db.blocks(store.record.transferId);
+    const invalid = all.filter((block) =>
+      rejected.some((b) => b.fileId === block.fileId && b.index === block.index),
+    );
+    const changed = new Set(invalid.map((b) => b.fileId));
+    const next = {
+      ...store.record,
+      receipt: null,
+      state: 'interrupted' as const,
+      finalizedFiles: store.record.finalizedFiles.filter((id) => !changed.has(id)),
+      checkpointDigest: undefined,
+    };
+    await store.db.reconcile(next, invalid);
+    store.record = next;
+    await store.enableResumeWrites();
+    return null;
+  }
+  if (operation === 'bind-resume') {
+    if (!store) throw new Error('No checkpoint.');
+    const resume = payload as NonNullable<TransferRecord['lastResume']>;
+    validateResumeEpoch(store.record.lastResume, resume);
+    const next = {
+      ...store.record,
+      lastResume: resume,
+      checkpointDigest: resume.checkpointDigest,
+      receipt: null,
+      state: 'receiving' as const,
+    };
+    await store.db.put(next);
+    store.record = next;
+    return null;
   }
   if (operation === 'receiver') {
     if (store || sources.size) throw new Error('Worker already owns a transfer.');

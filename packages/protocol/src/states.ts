@@ -123,6 +123,7 @@ export const TRANSFER_TRANSITIONS = {
     CANCEL: 'cancelled',
   },
   verifying: {
+    DISCONNECT: 'reconnecting',
     ALL_BLOCKS_COMMITTED: 'verifying',
     VERIFY_SUCCESS: 'complete',
     FAIL: 'failed',

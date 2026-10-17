@@ -23,6 +23,16 @@ const transferSchema = z.strictObject({
   state: z.enum(['receiving', 'interrupted', 'storage-full', 'complete', 'deleting']),
   finalizedFiles: z.array(uuidSchema).max(16),
   receipt: receiptSchema.nullable(),
+  checkpointDigest: sha256Schema.optional(),
+  lastResume: z
+    .strictObject({
+      roomId: uuidSchema,
+      epoch: z.number().int().min(1).max(0xffffffff),
+      attemptId: uuidSchema,
+      checkpointDigest: sha256Schema,
+      reusedBytes: z.number().int().nonnegative(),
+    })
+    .optional(),
 });
 export const blockRecordSchema = z.strictObject({
   transferId: uuidSchema,

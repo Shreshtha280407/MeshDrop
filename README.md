@@ -2,7 +2,7 @@
 
 Account-free browser-to-browser file transfer. Cloudflare coordinates short-lived rooms; devices own file transport, verification, storage, recovery, and diagnostics.
 
-**Current delivery: Phase 4 — crash-consistent local checkpoints.** Send verified files over WebRTC with explicit pairing/acceptance and committed progress. Receiver bytes now have an IndexedDB commit ledger alongside OPFS. Reopen the same browser profile to rehash surviving blocks, inspect saved ranges, export complete verified files or delete local data. Choose retention before accepting, retry storage after quota failure, and reselect source files by full SHA-256. The [Phase 4 report](docs/reports/phase-4.md) records the 300 MiB receive/close/reopen gate. Reconnect and missing-range transport remain P5. The synthetic P0 workbench remains at `/foundation`.
+**Current delivery: Phase 5 — authenticated missing-block resume.** Transfer verified files over WebRTC, retain crash-consistent local checkpoints, then recover across connection breaks or browser reloads. Renew admission/pairing, reselect the exact source when needed, rehash receiver blocks and authenticate their proofs against the source before skipping them. Bounded retries, quota pause/retry, retention, local export and explicit deletion remain available. The [Phase 5 report](docs/reports/phase-5.md) records a 1 GiB transfer interrupted near 70% and resumed on a different isolated subnet with an exact final SHA-256. The P0 workbench remains at `/foundation`.
 
 ## Tech stack and architecture
 
@@ -32,11 +32,12 @@ pnpm exec playwright install chromium firefox webkit
 pnpm test:e2e                      # admission, pairing, file transfer, faults + P0 workbench
 pnpm bench:p3                      # live 100 MiB + 1 GiB hash/memory gate; requires pnpm dev
 pnpm bench:p4                      # receive >=300 MiB, close browser, reopen/re-hash checkpoint
+pnpm bench:p5                      # 1 GiB, interrupt near 70%, migrate isolated Linux subnet and resume
 ```
 
 `pnpm check` runs all gates. On Linux CI, install browsers with `pnpm exec playwright install --with-deps chromium firefox webkit`. `pnpm test:e2e:headed` opens the two-browser harness when a graphical environment is available. Integration tests and Wrangler need permission to start a local runtime and bind loopback sockets.
 
-Checkpoint storage requires usable OPFS, IndexedDB and Web Locks in a secure context (HTTPS or loopback); API presence alone is insufficient in some private browsing modes. Both bytes and ledger must survive; browser eviction or clearing site data can remove them. Retain interrupted files for 24 hours (default) or 7 days, or choose discard. Expiry is enforced on the next open/check. Cancel/Clear transfer and Delete saved purge scoped data. Reopening rehashes ledger-backed bytes but does not restore memory-only room credentials or resume network transfer. See the [storage recovery runbook](docs/runbooks/storage-recovery.md) and [streaming verification runbook](docs/runbooks/streaming-verification.md).
+Checkpoint storage requires usable OPFS, IndexedDB and Web Locks in a secure context (HTTPS or loopback); API presence alone is insufficient in some private browsing modes. Both bytes and ledger must survive; browser eviction or clearing site data can remove them. Retain interrupted files for 24 hours (default) or 7 days, or choose discard. Expiry is enforced on the next open/check. Cancel/Clear transfer and Delete saved purge scoped data. Reopening rehashes ledger-backed bytes. Renew room admission and compare new codes before network resume; memory-only room credentials are never restored. Prepare the original source on the owner, then resume the saved transfer on the receiver. See the [resume runbook](docs/runbooks/resume.md), [storage recovery runbook](docs/runbooks/storage-recovery.md) and [streaming verification runbook](docs/runbooks/streaming-verification.md).
 
 ## Environment variables
 
@@ -61,12 +62,12 @@ There is no public deployment. `pnpm build` creates local frontend assets and a 
 | `packages/peer-connection`      | WebRTC sessions, ICE, signed pairing and pings                     |
 | `packages/transfer-core`        | Streaming, flow control, worker hashing, storage ACKs and receipts |
 | `packages/storage`              | OPFS, IndexedDB ledger, rehash/reopen, quota, retention and export |
-| `packages/recovery`             | P5 checkpoint/revalidation contract                                |
+| `packages/recovery`             | Resume proof/epoch engine, range sets, retries and source identity |
 | `packages/network-intelligence` | P6 measured/unsupported diagnostics contract                       |
 | `packages/platform`             | Browser API presence detection; P7 platform policy                 |
 
 Later-phase packages expose interfaces, not pretend implementations. File engines remain independent of React lifecycle and server persistence. ESLint prevents protocol/shared types from importing React, Node, or Cloudflare APIs.
 
-Read the [protocol specification](docs/protocol/v1.md), [state machines](docs/protocol/states.md), [ADRs](docs/adr/001-control-data-planes.md), [threat model](docs/threat-model.md), [runbook](docs/runbooks/local-development.md), [Phase 0 report](docs/reports/phase-0.md), [Phase 1 report](docs/reports/phase-1.md), [peer protocol](docs/protocol/peer-p2.md), [Phase 2 report](docs/reports/phase-2.md), [file protocol](docs/protocol/transfer-p3.md), [Phase 3 report](docs/reports/phase-3.md), [storage contract](docs/protocol/storage-p4.md) and [Phase 4 report](docs/reports/phase-4.md).
+Read the [protocol specification](docs/protocol/v1.md), [state machines](docs/protocol/states.md), [ADRs](docs/adr/001-control-data-planes.md), [threat model](docs/threat-model.md), [runbook](docs/runbooks/local-development.md), [Phase 0 report](docs/reports/phase-0.md), [Phase 1 report](docs/reports/phase-1.md), [peer protocol](docs/protocol/peer-p2.md), [Phase 2 report](docs/reports/phase-2.md), [file protocol](docs/protocol/transfer-p3.md), [Phase 3 report](docs/reports/phase-3.md), [storage contract](docs/protocol/storage-p4.md) [Phase 4 report](docs/reports/phase-4.md), [resume protocol](docs/protocol/resume-p5.md) and [Phase 5 report](docs/reports/phase-5.md).
 
 Source requirements: the supplied **MeshDrop Backend Architecture & MVP Master Plan** and **MeshDrop Phase-Wise Implementation Plan**, October 2026. The phase plan is the implementation source of truth. Work remains local; no deployment or GitHub push is part of this phase.

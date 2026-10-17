@@ -13,6 +13,7 @@
   "dependencies": {
     "@meshdrop/protocol": "workspace:*",
     "@noble/hashes": "2.4.0",
-    "@meshdrop/storage": "workspace:*"
+    "@meshdrop/storage": "workspace:*",
+    "@meshdrop/recovery": "workspace:*"
   }
 }

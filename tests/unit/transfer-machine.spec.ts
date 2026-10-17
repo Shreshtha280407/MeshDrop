@@ -474,7 +474,7 @@ it('quota pauses without an ACK, then retry commits once before unpausing', asyn
 it('disconnect retains opted-in partial data while explicit clear still purges it', async () => {
   const h = await receiverWith(new Uint8Array([9]), '24-hours');
   h.machine.disconnect();
-  await vi.waitFor(() => expect(h.machine.snapshot.state).toBe('failed'));
+  await vi.waitFor(() => expect(h.machine.snapshot.state).toBe('reconnecting'));
   await h.machine.dispose(false);
   expect(h.purged).not.toHaveBeenCalled();
   await h.machine.dispose();

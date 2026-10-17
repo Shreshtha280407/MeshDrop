@@ -62,7 +62,8 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
       </div>
       <p className="demo-note">
         Received files stay in this browser with a verified local checkpoint. Save a copy after
-        verification. Reopening checks surviving bytes; network resume is not available yet.
+        verification. Resume rechecks saved blocks and sends only missing bytes after both devices
+        confirm a fresh connection.
       </p>
       {!paired && (
         <p className="status-note">
@@ -93,6 +94,28 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
             Offer files
           </button>
         </form>
+      )}
+      {transfer.recovery && (
+        <div role="status" className="status-note" data-testid="resume-state">
+          <p>{transfer.recovery}</p>
+          <p>
+            Reused verified bytes:{' '}
+            <strong data-testid="reused-bytes">{transfer.reusedBytes}</strong> ·{' '}
+            {isOwner ? 'Payload sent this attempt' : 'Payload committed this attempt'}:{' '}
+            <strong data-testid="attempt-bytes">{transfer.attemptBytes}</strong> · Invalid or
+            missing saved blocks: {transfer.discardedBlocks}
+          </p>
+        </div>
+      )}
+      {transfer.state === 'reconnecting' && (
+        <button
+          disabled={!paired || view.busy}
+          onClick={() => {
+            void client.resumeCurrent();
+          }}
+        >
+          {isOwner ? 'Prepare original source' : 'Resume saved transfer'}
+        </button>
       )}
       {transfer.state === 'preparing' && (
         <p role="status">
@@ -134,7 +157,7 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
           </p>
         </>
       )}
-      {!isOwner && transfer.state === 'negotiating' && (
+      {!isOwner && transfer.state === 'negotiating' && !transfer.recovery && (
         <div className="approval-box">
           <h3>Accept these files?</h3>
           <p>
@@ -183,7 +206,7 @@ export function TransferPanel({ client, view }: { client: RoomClient; view: Room
           </div>
         </div>
       )}
-      {isOwner && transfer.state === 'negotiating' && (
+      {isOwner && transfer.state === 'negotiating' && !transfer.recovery && (
         <p role="status">Waiting for the receiver to accept the offer.</p>
       )}
       {(transfer.state === 'active' || transfer.state === 'paused') && !transfer.storageFull && (

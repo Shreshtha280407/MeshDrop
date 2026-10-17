@@ -1,0 +1,54 @@
+{
+  "phase": "P5",
+  "pass": true,
+  "startedAt": "2026-10-17T13:46:14.222Z",
+  "totalBytes": 1073741824,
+  "targetBytes": 751828992,
+  "directory": "/home/Shreshtha/documents/MeshDrop/.meshdrop-artifacts/phase-5-resume/run-QH77bd",
+  "scope": "Two independent persistent Chromium processes; a real isolated Linux network namespace changes its sole candidate interface/subnet from 10.90.0.2/24 to 10.91.0.2/24. No host routes/interfaces changed. This is controlled network migration, not a physical Wi-Fi/mobile or public-NAT certification.",
+  "browserFlag": "--disable-features=WebRtcHideLocalIpsWithMdns (test processes only; application defaults unchanged)",
+  "expectedSha256": "bafa6507e9866ce146f467b7143686d3ffb3022ae1396881fb0dff0d24493bca",
+  "browser": "156.0.8078.4",
+  "beforePath": {
+    "local": "10.90.0.2",
+    "remote": "10.90.0.2",
+    "localType": "host",
+    "remoteType": "host",
+    "protocol": "udp"
+  },
+  "connectionsBefore": 1,
+  "committedBefore": 751828992,
+  "interruptedPercent": 70.01953125,
+  "networkChangedAt": "2026-10-17T13:48:07.480Z",
+  "resumeEpoch": 3,
+  "afterPath": {
+    "local": "10.91.0.2",
+    "remote": "10.91.0.2",
+    "localType": "host",
+    "remoteType": "host",
+    "protocol": "udp"
+  },
+  "connectionsAfter": 1,
+  "resumeDurationMs": 76105,
+  "reusedBytes": 751828992,
+  "payloadBytesSentAfterResume": 321912832,
+  "actualSha256": "bafa6507e9866ce146f467b7143686d3ffb3022ae1396881fb0dff0d24493bca",
+  "receipt": {
+    "receiptId": "0ad46f46-504f-4725-9d25-a2a91e126209",
+    "transferId": "37f08c87-ba5e-426f-a97e-0c6e5af84ba6",
+    "manifestDigest": "7506043088c56b3a7b9551f140f04f9248cb5b91797b06e931bc52b2a2c23453",
+    "epoch": 3,
+    "totalBytes": 1073741824,
+    "files": [
+      {
+        "fileId": "e2a7f5cf-39b1-4f86-b885-d3817fafd9e4",
+        "path": "resume-source.bin",
+        "size": 1073741824,
+        "sha256": "bafa6507e9866ce146f467b7143686d3ffb3022ae1396881fb0dff0d24493bca"
+      }
+    ],
+    "destination": "browser-temporary",
+    "completedAt": "2026-10-17T13:49:49.980Z"
+  },
+  "completedAt": "2026-10-17T13:49:55.102Z"
+}

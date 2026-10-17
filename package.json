@@ -25,7 +25,8 @@
     "build": "pnpm -r build",
     "check": "pnpm -r typecheck && pnpm typecheck && pnpm lint && pnpm check:secrets && pnpm test:unit && pnpm test:integration && pnpm test:faults && pnpm build && pnpm test:e2e",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "bench:p4": "tsx scripts/local-dev/verify-storage.mjs"
+    "bench:p4": "tsx scripts/local-dev/verify-storage.mjs",
+    "bench:p5": "bash scripts/local-dev/run-resume-network.sh"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

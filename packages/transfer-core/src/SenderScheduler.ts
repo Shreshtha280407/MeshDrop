@@ -23,6 +23,7 @@ export class SenderScheduler {
     bytes: Uint8Array,
     signal: AbortSignal,
     waitUntilResumed: () => Promise<void>,
+    onPayload?: (bytes: number) => void,
   ): Promise<void> {
     const payloadBytes = this.frameBytes - TRANSFER_FRAME_HEADER_BYTES;
     const fragmentCount = Math.ceil(bytes.length / payloadBytes);
@@ -47,6 +48,7 @@ export class SenderScheduler {
         await this.transport.waitForDrain(signal);
       signal.throwIfAborted();
       this.transport.sendFrame(frame);
+      onPayload?.(frame.length - TRANSFER_FRAME_HEADER_BYTES);
       this.peakBufferedBytes = Math.max(this.peakBufferedBytes, this.transport.bufferedAmount);
     }
   }

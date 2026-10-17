@@ -33,7 +33,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </a>
         <span className="phase-label">
           <i />
-          Local checkpoints / Phase 4
+          Verified resume / Phase 5
         </span>
       </header>
       <main>
@@ -259,7 +259,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </section>
         {status && <PairingPanel key={view.peer.epoch} client={client} view={view} />}
         {status && <TransferPanel client={client} view={view} />}
-        <SavedTransfersPanel />
+        <SavedTransfersPanel room={client} view={view} />
         <section className="details-grid">
           <div>
             <p className="eyebrow">ON THIS BROWSER</p>
@@ -299,9 +299,12 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               storage contains credential verifiers and temporary room state.
             </p>
             <div className="next-phase">
-              <span>UP NEXT · PHASE 5</span>
-              <strong>Fault-tolerant resume</strong>
-              <p>Authenticate returning peers and request only missing or invalid blocks.</p>
+              <span>UP NEXT · PHASE 6</span>
+              <strong>Network intelligence and diagnostics</strong>
+              <p>
+                Explain observed connection paths and transfer performance with clearly labeled
+                measurements.
+              </p>
             </div>
           </div>
         </section>
