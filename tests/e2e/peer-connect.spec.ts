@@ -1,7 +1,90 @@
 import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
+import { pairPages } from '../helpers/peer';
 
 test.use({ trace: 'off', video: 'off' });
+
+test('a slow replacement connection cancels the previous pending recovery retry', async ({
+  browser,
+}) => {
+  test.setTimeout(60000);
+  const a = await browser.newContext();
+  const b = await browser.newContext();
+  const owner = await a.newPage();
+  const receiver = await b.newPage();
+  let requests = 0;
+  let interrupt: (() => void) | undefined;
+  await owner.routeWebSocket('**/v1/sessions/*/ws', (socket) => {
+    const server = socket.connectToServer();
+    let latest: Record<string, unknown> | undefined;
+    interrupt = () => {
+      if (!latest) throw new Error('No signaling context.');
+      socket.send(
+        JSON.stringify({
+          ...latest,
+          type: 'ERROR',
+          payload: {
+            code: 'PEER_UNAVAILABLE',
+            message: 'Synthetic peer interruption.',
+            retryable: true,
+          },
+        }),
+      );
+    };
+    let delaySignaling = false;
+    socket.onMessage((message) => {
+      try {
+        const envelope = JSON.parse(String(message));
+        if (envelope.type === 'SDP_OFFER' && envelope.epoch > 1) delaySignaling = true;
+      } catch {
+        /* Heartbeat frames contain no JSON. */
+      }
+      // Delay every subsequent frame equally, preserving WebSocket ordering.
+      if (delaySignaling) setTimeout(() => server.send(message), 2500);
+      else server.send(message);
+    });
+    server.onMessage((message) => {
+      try {
+        latest = JSON.parse(String(message)) as Record<string, unknown>;
+      } catch {
+        /* Heartbeats do not replace the admitted test context. */
+      }
+      socket.send(message);
+    });
+  });
+  try {
+    await pairPages(owner, receiver);
+    owner.on('request', (request) => {
+      if (new URL(request.url()).pathname.endsWith('/connection')) requests++;
+    });
+    // A real control-plane error arms the owner's 1s retry. Start an admitted
+    // replacement before it fires, then keep negotiation slower than that timer.
+    interrupt!();
+    await expect(owner.getByTestId('recovery-status')).toContainText('Reconnect attempt');
+    await owner.getByRole('button', { name: 'New peer connection', exact: true }).click();
+    for (const page of [owner, receiver]) {
+      await expect(page.getByTestId('peer-epoch')).toHaveText('2');
+      await expect(page.getByTestId('peer-state')).toHaveText('connected', { timeout: 20000 });
+    }
+    expect(requests).toBe(1);
+    await owner.getByRole('button', { name: 'Revoke room', exact: true }).click();
+  } catch (error) {
+    console.log(
+      JSON.stringify({
+        scenario: 'delayed replacement after synthetic interruption',
+        connectionRequests: requests,
+        ownerState: await owner.getByTestId('peer-state').textContent(),
+        receiverState: await receiver.getByTestId('peer-state').textContent(),
+        ownerError: await owner.locator('.signaling-panel .error').allTextContents(),
+        receiverError: await receiver.locator('.signaling-panel .error').allTextContents(),
+      }),
+    );
+    throw error;
+  } finally {
+    await a.close();
+    await b.close();
+  }
+});
 
 test('signed peer hello, independent comparison, epoch restart and fresh connection', async ({
   browser,

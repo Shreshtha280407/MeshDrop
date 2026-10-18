@@ -1,0 +1,39 @@
+{
+  "phase": "P9",
+  "scope": "physical Oppo and laptop; public HTTPS/WSS; real Wi-Fi disconnect; synthetic files only",
+  "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+  "desktopBrowser": "156.0.8078.4",
+  "phoneBrowser": "155.0.8059.79",
+  "pass": true,
+  "checks": [
+    {
+      "bytes": 8388608,
+      "recovery": false,
+      "retainedBytes": 0,
+      "previousEpoch": 1,
+      "resumedEpoch": null,
+      "sha256": "a82389c100e7139972d596d025b5dabf0be38165d61bd93bf609018eda7b38fa",
+      "connectionPath": "direct",
+      "nativeAndroidDownloadVerified": true,
+      "receiptVerified": true,
+      "diagnosticsExported": true
+    },
+    {
+      "bytes": 33554432,
+      "recovery": true,
+      "retainedBytes": 24117248,
+      "previousEpoch": 1,
+      "resumedEpoch": 3,
+      "sha256": "6f7ec37c97f0e74e40a11591c691072f77cb4ee85b3e69376683411edd6d05ab",
+      "connectionPath": "direct",
+      "nativeAndroidDownloadVerified": true,
+      "receiptVerified": true,
+      "diagnosticsExported": true
+    }
+  ],
+  "transport": {
+    "cspErrors": 0,
+    "failedHttpStatuses": []
+  },
+  "physicalOfflineObserved": true
+}

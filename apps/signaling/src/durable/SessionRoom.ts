@@ -21,6 +21,7 @@ import { SOCKET_PROTOCOL, socketCredential } from '../auth/tickets';
 import { allowedOrigins, duration } from '../env';
 import type { Env } from '../env';
 import { HttpError, errorResponse } from '../errors';
+import { operatorAuthorized } from '../operations';
 import {
   HOUSEKEEPING_MS,
   MAX_PEER_MESSAGES_PER_WINDOW,
@@ -197,6 +198,11 @@ export class SessionRoom extends DurableObject<Env> {
       if (action === 'initialize' && request.method === 'POST')
         return await this.initialize(request);
       this.room();
+      if (action === 'operator-revoke' && request.method === 'POST') {
+        await operatorAuthorized(request, this.env);
+        this.closeRoom('revoked');
+        return Response.json({ state: 'closed' });
+      }
       this.budget('http');
       if (action === 'join' && request.method === 'POST') return await this.join(request);
       if (action === 'ws' && request.method === 'GET') return await this.upgrade(request);

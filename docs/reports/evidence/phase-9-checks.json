@@ -1,0 +1,25 @@
+{
+  "phase": "P9",
+  "scope": "component gate commands on the final application code; no production release certification",
+  "core": 453,
+  "browser": 106,
+  "productionPwa": 5,
+  "totalUniqueCases": 564,
+  "pass": true,
+  "dependencyAudit": "zero known vulnerabilities; registry retry recorded",
+  "originalQueuedRetry": {
+    "connectionRequests": 3,
+    "epoch": 4
+  },
+  "fixedQueuedRetry": {
+    "connectionRequests": 1,
+    "epoch": 2
+  },
+  "physicalIphone": false,
+  "productionDeployed": false,
+  "publicOppoWifiRecovery": true,
+  "publicOppoMobileDataBytes": 1048576,
+  "publicWorkerRollbackRestored": true,
+  "fullLocalBenchmarkCases": 6,
+  "turnEnabled": false
+}

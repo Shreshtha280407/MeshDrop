@@ -1,0 +1,52 @@
+# Measured support and release coverage
+
+Evidence is device/browser/scenario specific. Browser API presence, an emulated
+viewport and a WebKit engine test do not certify a physical iPhone or macOS Safari.
+The [public preview](https://meshdrop-8ab9cb08-preview.pages.dev) passes HTTPS/WSS,
+8 MiB Wi-Fi delivery, 32 MiB real Wi-Fi disconnect/resume and 1 MiB existing
+mobile-data delivery between the laptop and Oppo. Native downloads, independent
+hashes, receipts and diagnostics passed. See the detailed
+[device matrix](../tests/devices/browser-matrix.md) and phase reports.
+
+| Platform                                       | Evidence already recorded                                                                                                                                                                                                        | Limits / remaining coverage                                                                                                                                                                                               |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Linux Chromium                                 | Automated pairing, transfer, independent digest/export, OPFS/IndexedDB checkpoints, resume/faults, diagnostics, PWA/CSP/offline export; all six P9 local 100 MiB/1 GiB/2 GiB normal/disconnect cases                             | Full-size matrix is local desktop evidence. Public physical Wi-Fi/mobile results use smaller files.                                                                                                                       |
+| Linux Firefox                                  | Real Firefox engine transfer/peer checks in the cross-browser suite                                                                                                                                                              | No claim that every Chromium-specific storage/export/PWA workflow has the same support.                                                                                                                                   |
+| Linux WebKit                                   | Real WebKit engine transfer/peer checks                                                                                                                                                                                          | This is not physical Safari/iPhone coverage.                                                                                                                                                                              |
+| Pixel 7 viewport                               | Chromium mobile layout and lifecycle/storage/error automation                                                                                                                                                                    | Emulation, not a physical Pixel test.                                                                                                                                                                                     |
+| Oppo F19 Pro, Android 13, Chrome 155.0.8059.79 | P7 physical 8 MiB both directions, 32 MiB lifecycle/recovery, 320 MiB receive/export/hash. P9 public Wi-Fi 8 MiB delivery and 32 MiB real outage/recovery; mobile data 1 MiB delivery; native downloads/hash/receipt/diagnostics | Optical QR, native file picker/share and PWA installation are not certified. P7 screen-lock/app-switch scenarios began paused; injected lifecycle events are identified separately. No public large-file or relay result. |
+| Physical iPhone / iOS Safari                   | Not available                                                                                                                                                                                                                    | P7 laptop-to-iPhone transfer/export exit gate remains open.                                                                                                                                                               |
+| Windows hardware browsers                      | Not available                                                                                                                                                                                                                    | Physical coverage pending.                                                                                                                                                                                                |
+| macOS Safari hardware                          | Not available                                                                                                                                                                                                                    | Physical coverage pending.                                                                                                                                                                                                |
+
+Large-file acceptance requires an actual quota estimate and available disk, plus
+headroom and the explicit warning from 300 MiB. Unknown quota permits at most
+64 MiB per new offer in this application. A measured 1/2 GiB desktop transfer is
+not a universal mobile maximum. Browser eviction and OS background restrictions
+can interrupt delivery or remove saved data. WebRTC transport requires both
+devices online and the app open; installing a PWA does not change this contract.
+
+## P9 release evidence
+
+- Passed: stable public HTTPS and WSS on the available Wi-Fi and mobile network.
+- Passed: physical laptop/Oppo create → admit → compare → transfer → disconnect → compare
+  fresh codes → resume → inspect diagnostics → export independent file and receipt.
+- Pending: managed/coturn relay under the owner's free-only constraint, forced relay path and
+  UDP-blocked TCP/TLS fallback.
+- Passed locally: normal and controlled-disconnect 100 MiB, 1 GiB and 2 GiB matrix,
+  exact SHA-256, missing-only resumed payload, bounded queues and memory scope.
+- Passed: public admission/revocation and recorded-version Worker rollback/restore;
+  local rate-limit, TTL cleanup, drain and gateway outage tests. Pending: actual
+  account quota alerts, Pages rollback and separate production environment acceptance.
+
+Every evidence record must identify local/emulated/physical and direct/relay/unknown
+scope. An incomplete row remains pending; do not promote it using unrelated tests.
+
+The successful public Oppo tests used normal Chromium/Android Chrome networking,
+without USB reverse forwarding or a browser mDNS workaround, and selected direct
+paths. Wi-Fi recovery reused 23 MiB at a fresh epoch after an observed real outage;
+mobile-data delivery used an already-enabled connection, with Wi-Fi disabled.
+Both loaded the current client in the mobile run. Earlier public recovery failed;
+the pending-retry fix, regression and successful rerun are described in the
+[P9 report](reports/phase-9.md), along with all reviewed evidence and limitations.
+This does not establish relay, every carrier/router or universal mobile size support.

@@ -20,9 +20,11 @@ export async function runtime(
     createLimit?: number;
     requestLimit?: number;
     persist?: string;
+    gateway?: boolean;
+    script?: string;
   } = {},
 ): Promise<Miniflare> {
-  if (!bundle) {
+  if (!bundle && !options.script) {
     const result = await build({
       entryPoints: ['apps/signaling/src/index.ts'],
       bundle: true,
@@ -34,37 +36,67 @@ export async function runtime(
     });
     bundle = result.outputFiles?.[0]?.text;
   }
-  if (!bundle) throw new Error('Missing Worker bundle.');
-  return new Miniflare(
-    convertV4MiniflareOptions({
-      cf: false,
-      unsafeInspectDurableObjects: true,
-      ...(options.persist ? { resourcePersistencePath: options.persist } : {}),
-      name: 'meshdrop-p1-test',
-      modules: true,
-      script: bundle,
-      compatibilityDate: '2026-07-01',
-      bindings: {
-        ALLOWED_ORIGINS: `${ORIGIN},http://localhost:5173`,
-        ROOM_TTL_SECONDS: '900',
-        INVITE_TTL_SECONDS: '300',
-        WS_TICKET_TTL_SECONDS: '30',
-        CLOSED_TOMBSTONE_SECONDS: '60',
-        ...options.bindings,
+  const script = options.script ?? bundle;
+  if (!script) throw new Error('Missing Worker bundle.');
+  const config = {
+    cf: false as const,
+    unsafeInspectDurableObjects: true,
+    ...(options.persist ? { resourcePersistencePath: options.persist } : {}),
+    name: 'meshdrop-p1-test',
+    modules: true,
+    script,
+    compatibilityDate: '2026-07-01',
+    bindings: {
+      ALLOWED_ORIGINS: `${ORIGIN},http://localhost:5173`,
+      ROOM_TTL_SECONDS: '900',
+      INVITE_TTL_SECONDS: '300',
+      WS_TICKET_TTL_SECONDS: '30',
+      CLOSED_TOMBSTONE_SECONDS: '60',
+      ...options.bindings,
+    },
+    durableObjects: { SESSION_ROOMS: { className: 'SessionRoom', useSQLite: true } },
+    ratelimits: {
+      CREATE_LIMITER: {
+        namespace_id: '1001',
+        simple: { limit: options.createLimit ?? 500, period: 60 as const },
       },
-      durableObjects: { SESSION_ROOMS: { className: 'SessionRoom', useSQLite: true } },
-      ratelimits: {
-        CREATE_LIMITER: {
-          namespace_id: '1001',
-          simple: { limit: options.createLimit ?? 500, period: 60 },
-        },
-        REQUEST_LIMITER: {
-          namespace_id: '1002',
-          simple: { limit: options.requestLimit ?? 3000, period: 60 },
-        },
+      REQUEST_LIMITER: {
+        namespace_id: '1002',
+        simple: { limit: options.requestLimit ?? 3000, period: 60 as const },
       },
-    }),
-  );
+    },
+  };
+  if (options.gateway) {
+    const edge = await build({
+      entryPoints: ['infrastructure/cloudflare/pages-worker.ts'],
+      bundle: true,
+      write: false,
+      format: 'esm',
+      platform: 'browser',
+      target: 'es2022',
+    });
+    return new Miniflare(
+      convertV4MiniflareOptions({
+        cf: false as const,
+        unsafeInspectDurableObjects: true,
+        workers: [
+          {
+            name: 'meshdrop-pages-test',
+            modules: true,
+            script: edge.outputFiles[0]!.text,
+            compatibilityDate: '2026-07-01',
+            bindings: { PUBLIC_ORIGIN: API },
+            serviceBindings: {
+              SIGNALING: 'meshdrop-p1-test',
+              ASSETS: async () => new Response('<html>MeshDrop</html>'),
+            },
+          },
+          config,
+        ],
+      }),
+    );
+  }
+  return new Miniflare(convertV4MiniflareOptions(config));
 }
 export function request(
   mf: Miniflare,

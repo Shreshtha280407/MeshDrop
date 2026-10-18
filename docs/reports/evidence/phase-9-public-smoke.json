@@ -1,0 +1,14 @@
+{
+  "phase": "P9",
+  "scope": "public HTTPS/WSS control plane; not physical file delivery",
+  "environment": "preview",
+  "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+  "pass": true,
+  "checks": [
+    "public HTTPS shell/CSP/readiness",
+    "untrusted origin denied; create/join/owner approval",
+    "explicit direct-only ICE configuration",
+    "WSS upgrade through Pages service binding and actor JOINED",
+    "owner cannot use operator route; operator closes socket and revokes tickets"
+  ]
+}

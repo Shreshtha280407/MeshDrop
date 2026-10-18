@@ -1,0 +1,72 @@
+name: Deploy reviewed release
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Isolated deployment target
+        type: choice
+        options: [preview, production]
+        default: preview
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: meshdrop-deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  gates:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    uses: ./.github/workflows/ci.yml
+  release:
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    env:
+      TARGET: ${{ inputs.environment }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Write private environment configuration
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PAGES_PROJECT: ${{ vars.PAGES_PROJECT }}
+          PUBLIC_ORIGIN: ${{ vars.PUBLIC_ORIGIN }}
+          OPS_REVOKE_SECRET: ${{ secrets.OPS_REVOKE_SECRET }}
+          TURN_URLS: ${{ vars.TURN_URLS }}
+          TURN_SHARED_SECRET: ${{ secrets.TURN_SHARED_SECRET }}
+          TURN_PROVIDER: ${{ vars.TURN_PROVIDER }}
+          CLOUDFLARE_TURN_KEY_ID: ${{ secrets.CLOUDFLARE_TURN_KEY_ID }}
+          CLOUDFLARE_TURN_API_TOKEN: ${{ secrets.CLOUDFLARE_TURN_API_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          import { mkdir, writeFile } from 'node:fs/promises';
+          const directory = `infrastructure/cloudflare/${process.env.TARGET}`;
+          const names = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'PAGES_PROJECT', 'PUBLIC_ORIGIN', 'OPS_REVOKE_SECRET', 'TURN_PROVIDER', 'TURN_URLS', 'TURN_SHARED_SECRET', 'CLOUDFLARE_TURN_KEY_ID', 'CLOUDFLARE_TURN_API_TOKEN'];
+          await mkdir(directory, { recursive: true, mode: 0o700 });
+          await writeFile(`${directory}/.env`, names.map(name => `${name}=${JSON.stringify(process.env[name] ?? '')}`).join('\n') + '\n', { mode: 0o600 });
+          JS
+      - run: pnpm deploy:cloud prepare "$TARGET"
+      - run: pnpm deploy:cloud dry-run "$TARGET"
+      # Create each Pages project once locally before enabling this workflow.
+      - run: pnpm deploy:cloud publish "$TARGET"
+      - name: Remove ephemeral deployment secrets
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import { rm } from 'node:fs/promises';
+          await rm(`infrastructure/cloudflare/${process.env.TARGET}/.env`, { force: true });
+          await rm('.meshdrop-artifacts/deploy', { recursive: true, force: true });
+          JS
+      # Public device and TURN acceptance remain a separate human release gate.
+      # Never upload browser traces, environment files or raw failure artifacts.

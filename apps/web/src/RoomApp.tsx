@@ -65,7 +65,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
         </a>
         <span className="phase-label">
           <i />
-          Security & abuse controls / Phase 8
+          Private device-to-device sharing
         </span>
       </header>
       <main>

@@ -32,7 +32,13 @@
     "bench:p7": "playwright test tests/e2e/mobile-hardening.spec.ts --project chromium --workers 1 --retries 0 && pnpm test:pwa",
     "test:security": "vitest run --project security --reporter default --reporter json --outputFile .meshdrop-artifacts/phase-8/security.json",
     "bench:p8": "pnpm test:security && pnpm test:integration && playwright test tests/e2e/security-abuse.spec.ts --project chromium --workers 1 --retries 0 && pnpm test:pwa",
-    "audit:release": "pnpm audit --audit-level low"
+    "audit:release": "pnpm audit --audit-level low",
+    "deploy:cloud": "tsx scripts/deploy/cloudflare.ts",
+    "bench:p9": "node scripts/benchmarks/release.mjs",
+    "verify:rollback": "tsx scripts/deploy/verify-rollback.ts",
+    "verify:public": "tsx scripts/deploy/public-smoke.ts",
+    "verify:phone": "node --import tsx scripts/deploy/verify-phone.mjs",
+    "verify:public-rollback": "tsx scripts/deploy/verify-public-rollback.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

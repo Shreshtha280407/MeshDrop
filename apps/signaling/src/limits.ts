@@ -26,7 +26,7 @@ export async function throttle(request: Request, env: Env, create: boolean): Pro
   )
     throw new HttpError(429, 'RATE_LIMITED', 'Too many requests. Try again later.', true);
 }
-export async function readJson(request: Request): Promise<unknown> {
+export async function readJson(request: Pick<Request, 'headers' | 'body'>): Promise<unknown> {
   if (
     request.headers.get('Content-Type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json'
   )

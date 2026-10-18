@@ -567,6 +567,7 @@ export class RoomClient {
     if (envelope.type === 'CONNECTION_EPOCH') {
       const epoch = connectionEpochSchema.parse(envelope.payload);
       if (epoch.epoch !== envelope.epoch || epoch.epoch <= (this.peerSession?.epoch ?? 0)) return;
+      this.clearRetry();
       this.update({ status: { ...status, epoch: epoch.epoch } });
       const credentials = this.credentials!;
       const configuration = iceConfigurationSchema.parse(

@@ -1,0 +1,11 @@
+{
+  "phase": "P9",
+  "scope": "local workerd SQLite code rollback; not Cloudflare remote rollout",
+  "baseline": "e108e7a1f59bc37f41ba703240e08f176d47b33c",
+  "pass": true,
+  "stages": [
+    "P9 create/admit/approve",
+    "P8 reads same persisted approved room",
+    "P9 roll-forward, drain denies new room, existing room readable and closable"
+  ]
+}

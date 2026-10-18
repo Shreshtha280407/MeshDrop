@@ -3,5 +3,10 @@
   "compilerOptions": {
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src", "../../tests/security/http-input.spec.ts"]
+  "include": [
+    "src",
+    "../../tests/security/http-input.spec.ts",
+    "../../tests/unit/cloudflare-turn.spec.ts",
+    "../../infrastructure/cloudflare/pages-worker.ts"
+  ]
 }

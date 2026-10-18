@@ -10,6 +10,9 @@ import { throttle } from './limits';
 import { createSession, roomRoute } from './routes/sessions';
 import { bearer } from './auth/capabilities';
 import { socketCredential } from './auth/tickets';
+import { operatorAuthorized, readiness } from './operations';
+import { audit } from './audit';
+import { uuidSchema } from '@meshdrop/protocol';
 export { SessionRoom } from './durable/SessionRoom';
 
 /** Public control plane. No file bodies or credentials in URLs. */
@@ -17,6 +20,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const requestId = crypto.randomUUID();
     let origin: string | undefined;
+    let operation = 'other';
     try {
       const url = new URL(request.url);
       const path = url.pathname;
@@ -24,12 +28,16 @@ export default {
         return secureResponse(
           Response.json({
             service: 'meshdrop-signaling',
-            phase: 'P8',
-            status: 'ready',
-            sessionsAvailable: true,
+            phase: 'P9',
+            status: 'alive',
+            sessionsAvailable: env.ADMISSION_PAUSED !== 'true',
           }),
           requestId,
         );
+      if (request.method === 'GET' && path === '/ready') {
+        const ready = await readiness(env);
+        return secureResponse(Response.json({ ready }, { status: ready ? 200 : 503 }), requestId);
+      }
       if (request.method === 'GET' && path === '/v1/protocol')
         return secureResponse(
           Response.json({
@@ -39,7 +47,38 @@ export default {
           }),
           requestId,
         );
+      if (path.startsWith('/ops/rooms/')) {
+        operation = 'revoke';
+        if (url.protocol !== 'https:' || url.search || request.method !== 'POST')
+          throw new HttpError(403, 'FORBIDDEN', 'Operator request denied.');
+        await throttle(request, env, false);
+        await operatorAuthorized(request, env);
+        const match = /^\/ops\/rooms\/([^/]+)\/revoke$/.exec(path);
+        if (!match || !uuidSchema.safeParse(match[1]).success)
+          throw new HttpError(404, 'NOT_FOUND', 'Route unavailable.');
+        const response = await env.SESSION_ROOMS.get(env.SESSION_ROOMS.idFromName(match[1]!)).fetch(
+          new Request('https://room.internal/operator-revoke', {
+            method: 'POST',
+            headers: {
+              Authorization: request.headers.get('Authorization')!,
+              'X-Request-Id': requestId,
+            },
+          }),
+        );
+        audit(env, operation, response.status);
+        return secureResponse(response, requestId);
+      }
       const route = path === '/v1/sessions' ? null : roomRoute(path);
+      operation =
+        !route && path === '/v1/sessions'
+          ? 'create'
+          : route?.action === 'join'
+            ? 'join'
+            : route?.action === 'ws'
+              ? 'ws'
+              : route
+                ? 'control'
+                : 'other';
       if (path !== '/v1/sessions' && !route)
         throw new HttpError(404, 'NOT_FOUND', 'Route unavailable.');
       if (url.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
@@ -95,6 +134,8 @@ export default {
       if (request.method !== method)
         throw new HttpError(405, 'INVALID_MESSAGE', 'Method is not allowed.');
       await throttle(request, env, !route);
+      if (!route && env.ADMISSION_PAUSED === 'true')
+        throw new HttpError(503, 'SERVICE_UNAVAILABLE', 'New rooms are temporarily paused.', true);
       if (route) {
         // Reject missing/malformed proof before resolving a stateful room actor.
         if (route.action === 'ws') socketCredential(request);
@@ -114,9 +155,12 @@ export default {
           internal,
         );
       }
+      audit(env, operation, response.status);
       return secureResponse(response, requestId, origin);
     } catch (error) {
-      return secureResponse(errorResponse(error, requestId), requestId, origin);
+      const response = errorResponse(error, requestId);
+      audit(env, operation, response.status);
+      return secureResponse(response, requestId, origin);
     }
   },
 } satisfies ExportedHandler<Env>;

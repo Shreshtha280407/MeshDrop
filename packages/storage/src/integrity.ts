@@ -18,8 +18,39 @@ export function storedBlockLength(size: number, index: number): number {
 }
 export async function hashLocalFile(file: File): Promise<string> {
   const hash = sha256.create();
-  for (let at = 0; at < file.size; at += VERIFICATION_BLOCK_BYTES)
-    hash.update(new Uint8Array(await file.slice(at, at + VERIFICATION_BLOCK_BYTES).arrayBuffer()));
+  const stream = file.stream();
+  let byob: ReadableStreamBYOBReader | undefined;
+  try {
+    byob = stream.getReader({ mode: 'byob' });
+  } catch {
+    // Older browser Blob streams may not expose a byte reader.
+  }
+  if (byob) {
+    let buffer = new ArrayBuffer(VERIFICATION_BLOCK_BYTES);
+    try {
+      for (;;) {
+        const { value, done } = await byob.read(new Uint8Array(buffer));
+        if (value?.byteLength) hash.update(value);
+        if (done) break;
+        // BYOB transfers ownership on each read. Reuse the returned backing
+        // buffer instead of allocating a new MiB for every file block.
+        buffer = value.buffer;
+      }
+    } finally {
+      byob.releaseLock();
+    }
+  } else {
+    const reader = stream.getReader();
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        hash.update(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
   return hexDigest(hash.digest());
 }
 export async function verifyReselectedSource(file: File, expected: TransferFile): Promise<string> {

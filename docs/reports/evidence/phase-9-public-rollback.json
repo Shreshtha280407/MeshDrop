@@ -1,0 +1,15 @@
+{
+  "phase": "P9",
+  "scope": "public preview Worker rollback and roll-forward; Pages assets unchanged",
+  "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+  "pass": true,
+  "checks": [
+    "current Worker creates and approves a synthetic room",
+    "recorded previous Worker reads the same approved SQLite room",
+    "latest recorded Worker restored; readiness and same room verified"
+  ],
+  "latestVersion": "9da41241-eb08-4675-8268-b6f72a6e390f",
+  "rollbackVersion": "97ca9828-267a-41ff-8a84-e4f320aa839d",
+  "restored": true,
+  "error": ""
+}

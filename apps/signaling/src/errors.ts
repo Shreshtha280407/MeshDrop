@@ -1,16 +1,6 @@
-import type { ErrorCode } from '@meshdrop/protocol';
 import type { ApiError } from '@meshdrop/shared-types';
-
-export class HttpError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly code: ErrorCode,
-    message: string,
-    public readonly retryable = false,
-  ) {
-    super(message);
-  }
-}
+import { HttpError } from './http-error';
+export { HttpError } from './http-error';
 export function errorResponse(error: unknown, requestId: string): Response {
   const known =
     error instanceof HttpError

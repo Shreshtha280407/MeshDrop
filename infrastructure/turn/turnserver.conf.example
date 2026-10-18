@@ -1,0 +1,36 @@
+# Public VPS example. Render the shared secret from the private .env into a
+# private runtime config; never put its real value in this tracked template.
+listening-port=3478
+tls-listening-port=5349
+min-port=49160
+max-port=49259
+fingerprint
+use-auth-secret
+static-auth-secret=REPLACE_FROM_PRIVATE_ENV
+realm=turn.example.com
+cert=/etc/coturn/tls/fullchain.pem
+pkey=/etc/coturn/tls/privkey.pem
+no-tlsv1
+no-tlsv1_1
+no-cli
+no-multicast-peers
+no-loopback-peers
+no-tcp-relay
+stale-nonce=600
+max-allocate-lifetime=600
+user-quota=4
+total-quota=100
+# Bytes/second, per allocation and across the server respectively.
+max-bps=12500000
+bps-capacity=50000000
+denied-peer-ip=0.0.0.0-0.255.255.255
+denied-peer-ip=10.0.0.0-10.255.255.255
+denied-peer-ip=100.64.0.0-100.127.255.255
+denied-peer-ip=127.0.0.0-127.255.255.255
+denied-peer-ip=169.254.0.0-169.254.255.255
+denied-peer-ip=172.16.0.0-172.31.255.255
+denied-peer-ip=192.168.0.0-192.168.255.255
+denied-peer-ip=224.0.0.0-255.255.255.255
+denied-peer-ip=::1
+denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff

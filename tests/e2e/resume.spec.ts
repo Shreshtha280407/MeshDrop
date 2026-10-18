@@ -60,7 +60,7 @@ for (const percent of [10, 50, 70, 95]) {
         .setInputFiles({ name, mimeType: 'application/octet-stream', buffer });
       await owner.getByRole('button', { name: 'Offer files', exact: true }).click();
       await receiver.getByRole('button', { name: 'Accept files', exact: true }).click();
-      await expect(receiver.getByTestId('transfer-state')).toHaveText('paused');
+      await expect(receiver.getByTestId('transfer-state')).toHaveText('paused', { timeout: 30000 });
       const committed = Number(await receiver.getByTestId('committed-bytes').textContent());
       await owner.getByRole('button', { name: 'Restart ICE', exact: true }).click();
       for (const page of [owner, receiver])

@@ -6,11 +6,18 @@ export interface Env {
   STUN_URLS?: string;
   TURN_URLS?: string;
   TURN_SHARED_SECRET?: string;
+  TURN_PROVIDER?: string;
+  CLOUDFLARE_TURN_KEY_ID?: string;
+  CLOUDFLARE_TURN_API_TOKEN?: string;
   TURN_TTL_SECONDS?: string;
   ROOM_TTL_SECONDS?: string;
   INVITE_TTL_SECONDS?: string;
   WS_TICKET_TTL_SECONDS?: string;
   CLOSED_TOMBSTONE_SECONDS?: string;
+  ENVIRONMENT?: string;
+  ADMISSION_PAUSED?: string;
+  AUDIT_LOGS?: string;
+  OPS_REVOKE_SECRET?: string;
 }
 export function duration(value: string | undefined, fallback: number, maximum: number): number {
   const seconds = value === undefined ? fallback : Number(value);

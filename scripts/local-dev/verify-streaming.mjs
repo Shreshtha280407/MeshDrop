@@ -1,28 +1,48 @@
+/* global navigator, window, Event */
 import { Buffer } from 'node:buffer';
 import { setTimeout, clearTimeout } from 'node:timers';
 import { chromium, expect } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { mkdir, mkdtemp, open, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, open, readFile, rm, statfs, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { pairPages } from '../../tests/helpers/peer.ts';
+import { pauseAt } from '../../tests/helpers/diagnostics.ts';
 
 const baseURL = process.env.MESHDROP_TEST_URL ?? 'http://127.0.0.1:5173';
-const artifactRoot = resolve('.meshdrop-artifacts/phase-3-streaming');
+const release = process.env.MESHDROP_BENCH_PHASE === 'P9';
+const faulted = release && process.env.MESHDROP_BENCH_SCENARIO === 'disconnect';
+const local = ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(baseURL).hostname);
+if (!local && new URL(baseURL).protocol !== 'https:')
+  throw new Error('Public benchmarks require HTTPS.');
+const artifactRoot = resolve(
+  release ? '.meshdrop-artifacts/phase-9-benchmarks' : '.meshdrop-artifacts/phase-3-streaming',
+);
 await mkdir(artifactRoot, { recursive: true });
 const runDirectory = await mkdtemp(join(artifactRoot, 'run-'));
 const sizes = process.env.MESHDROP_BENCH_BYTES
   ? process.env.MESHDROP_BENCH_BYTES.split(',').map(Number)
   : [100 * 1024 ** 2, 1024 ** 3];
-if (sizes.some((size) => !Number.isSafeInteger(size) || size < 0 || size > 1024 ** 3))
+if (
+  sizes.some(
+    (size) => !Number.isSafeInteger(size) || size < 0 || size > (release ? 2 : 1) * 1024 ** 3,
+  )
+)
   throw new Error('Invalid benchmark size.');
 const report = {
-  phase: 'P3',
+  phase: release ? 'P9' : 'P3',
+  requestedBytes: sizes,
+  scenario: faulted ? 'controlled-disconnect' : 'normal',
+  deployment: local
+    ? `${new URL(baseURL).origin} (loopback; not public release evidence)`
+    : new URL(baseURL).origin,
+  physicalDeviceCoverage: false,
   startedAt: new Date().toISOString(),
   pass: false,
   cases: [],
-  testBrowserFlag:
-    '--disable-features=WebRtcHideLocalIpsWithMdns (two isolated persistent local Chromium profiles; application browser defaults are unchanged)',
+  testBrowserFlag: local
+    ? '--disable-features=WebRtcHideLocalIpsWithMdns (local profiles only)'
+    : 'none; Chromium defaults',
   memoryScope:
     'Unforced-GC CDP Runtime.getHeapUsage sampled every 500ms for both page isolates and their dedicated workers, including ArrayBuffer/external-string backing storage. This measures JS-owned memory, not total browser RSS, OS file cache or native WebRTC buffers.',
   directory: runDirectory,
@@ -120,20 +140,28 @@ async function heapSampler(context, page) {
 }
 let ownerContext;
 let receiverContext;
+let stage = 'launch';
 try {
+  // A source, OPFS copy, exported copy and browser quota reserve coexist.
+  // Reject insufficient disk before creating another multi-GiB partial fixture.
+  const disk = await statfs(artifactRoot);
+  const required = Math.max(...sizes) * 4 + 1024 ** 3;
+  report.freeDiskBytesAtStart = disk.bavail * disk.bsize;
+  if (report.freeDiskBytesAtStart < required)
+    throw new Error('Insufficient workspace disk for benchmark copies and reserve.');
   ownerContext = await chromium.launchPersistentContext(join(runDirectory, 'owner-profile'), {
     headless: true,
     baseURL,
     viewport: { width: 1440, height: 1080 },
     acceptDownloads: true,
-    args: ['--disable-features=WebRtcHideLocalIpsWithMdns'],
+    args: local ? ['--disable-features=WebRtcHideLocalIpsWithMdns'] : [],
   });
   receiverContext = await chromium.launchPersistentContext(join(runDirectory, 'receiver-profile'), {
     headless: true,
     baseURL,
     viewport: { width: 1440, height: 1080 },
     acceptDownloads: true,
-    args: ['--disable-features=WebRtcHideLocalIpsWithMdns'],
+    args: local ? ['--disable-features=WebRtcHideLocalIpsWithMdns'] : [],
   });
   report.browser = ownerContext.browser()?.version();
   const owner = ownerContext.pages()[0];
@@ -156,6 +184,7 @@ try {
         unexpectedApiRequest = true;
       if ((request.postDataBuffer()?.length ?? 0) > 8192) unexpectedApiRequest = true;
     });
+  stage = 'pair-and-compare';
   await pairPages(owner, receiver);
   const samplers = await Promise.all(
     [
@@ -177,19 +206,38 @@ try {
       peakJsBytes: baseline,
       peakWorkerBytes: 0,
       workerSamples: 0,
+      maxSamplingGapMs: 0,
       progress: [],
+      pass: false,
     };
+    report.cases.push(result);
     const started = Date.now();
     let sampling = true;
     let sampleError;
+    let lastSampleAt = Date.now();
+    let rejectInterruption;
+    const interruption = new Promise((_, reject) => {
+      rejectInterruption = reject;
+    });
+    void interruption.catch(() => {});
     const monitor = (async () => {
       while (sampling) {
         try {
+          const sampledAt = Date.now();
+          result.maxSamplingGapMs = Math.max(result.maxSamplingGapMs, sampledAt - lastSampleAt);
+          lastSampleAt = sampledAt;
           const heaps = await Promise.all(samplers.map((sampler) => sampler.sample()));
-          result.peakJsBytes = Math.max(
-            result.peakJsBytes,
-            heaps.reduce((sum, heap) => sum + heap.total, 0),
-          );
+          const sampledTotal = heaps.reduce((sum, heap) => sum + heap.total, 0);
+          if (sampledTotal > result.peakJsBytes)
+            result.peakSample = {
+              stage,
+              isolates: heaps.map(({ main, workerTotal, workers }) => ({
+                main,
+                workerTotal,
+                workers,
+              })),
+            };
+          result.peakJsBytes = Math.max(result.peakJsBytes, sampledTotal);
           result.peakWorkerBytes = Math.max(
             result.peakWorkerBytes,
             heaps.reduce((sum, heap) => sum + heap.workerTotal, 0),
@@ -200,6 +248,31 @@ try {
             .evaluateAll((elements) => Number(elements[0]?.textContent ?? '0'));
           if (result.progress.length < 4096)
             result.progress.push({ elapsedMs: Date.now() - started, committedBytes: committed });
+          if (
+            release &&
+            ['transfer-to-fault-boundary', 'transfer-to-completion', 'resumed-completion'].includes(
+              stage,
+            )
+          ) {
+            const signaling = await owner.getByTestId('connection-state').textContent();
+            if (signaling === 'disconnected') {
+              result.unplannedSignalingLoss = true;
+              rejectInterruption(new Error('Unplanned signaling loss outside controlled fault.'));
+            }
+          }
+          if (release && result.progress.length % 10 === 0)
+            await writeFile(
+              join(artifactRoot, 'live.json'),
+              JSON.stringify({
+                scenario: report.scenario,
+                bytes: size,
+                committedBytes: committed,
+                elapsedMs: Date.now() - started,
+                peakJsBytes: result.peakJsBytes,
+                sender: await owner.getByTestId('transfer-state').textContent(),
+                receiver: await receiver.getByTestId('transfer-state').textContent(),
+              }),
+            );
         } catch (error) {
           sampleError = error;
         }
@@ -207,13 +280,82 @@ try {
       }
     })();
     try {
+      stage = 'offer';
+      if (faulted) await pauseAt(receiver, Math.floor(size * 0.7));
       await owner.getByLabel('Choose files to send', { exact: true }).setInputFiles(source);
       await owner.getByRole('button', { name: 'Offer files', exact: true }).click();
       await expect(receiver.getByTestId('transfer-state')).toHaveText('negotiating', {
         timeout: 300000,
       });
+      const acknowledgement = receiver.getByLabel(
+        'I understand the storage and export limits and will keep both devices open',
+        { exact: true },
+      );
+      // Policy probes finish after the offer paints. Wait for the policy before
+      // deciding whether its acknowledgement exists, or a large offer can stay
+      // disabled after an early isVisible() observation.
+      await expect(receiver.getByTestId('receive-strategy')).toContainText('Receive strategy:', {
+        timeout: 30000,
+      });
+      if (await acknowledgement.isVisible()) await acknowledgement.check();
       await receiver.getByRole('button', { name: 'Accept files', exact: true }).click();
-      await expect(owner.getByTestId('transfer-state')).toHaveText('complete', { timeout: 600000 });
+      stage = faulted ? 'transfer-to-fault-boundary' : 'transfer-to-completion';
+      if (faulted) {
+        await Promise.race([
+          expect(receiver.getByTestId('transfer-state')).toHaveText('paused', {
+            timeout: 1200000,
+          }),
+          interruption,
+        ]);
+        result.reusedBytes = Number(await receiver.getByTestId('committed-bytes').textContent());
+        if (result.reusedBytes < size * 0.7 || result.reusedBytes >= size)
+          throw new Error('Fault boundary missed.');
+        // Controlled checkpoint, then real browser network denial plus the app's
+        // offline lifecycle (which closes its RTC connection). This is not a
+        // physical Wi-Fi/mobile handover or a random packet-loss simulation.
+        stage = 'controlled-disconnect';
+        await receiverContext.setOffline(true);
+        await receiver.evaluate(() => {
+          Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+          window.dispatchEvent(new Event('offline'));
+        });
+        await expect(receiver.getByTestId('transfer-state')).toHaveText('reconnecting');
+        await receiverContext.setOffline(false);
+        await receiver.evaluate(() => {
+          Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+          window.dispatchEvent(new Event('online'));
+        });
+        stage = 'fresh-comparison';
+        for (const page of [owner, receiver])
+          await expect(page.getByTestId('peer-state')).toHaveText('connected', { timeout: 60000 });
+        const code = await owner.getByTestId('pairing-code').textContent();
+        expect(await receiver.getByTestId('pairing-code').textContent()).toBe(code);
+        for (const page of [owner, receiver]) {
+          await page.getByLabel('Code shown on the other device', { exact: true }).fill(code);
+          await page
+            .getByLabel('I compared using a separate trusted channel', { exact: true })
+            .check();
+          await page.getByRole('button', { name: 'Confirm comparison', exact: true }).click();
+        }
+        for (const page of [owner, receiver])
+          await expect(page.getByTestId('remote-verification')).toContainText('confirmed');
+        result.resumedEpoch = Number(await owner.getByTestId('peer-epoch').textContent());
+        if (result.resumedEpoch < 2)
+          throw new Error('Recovery did not advance the connection epoch.');
+        stage = 'source-revalidation';
+        await owner.getByRole('button', { name: 'Prepare original source', exact: true }).click();
+        await expect(owner.getByTestId('resume-state')).toContainText('Source ready', {
+          timeout: 300000,
+        });
+        await receiver.getByRole('button', { name: 'Resume saved transfer', exact: true }).click();
+        stage = 'resumed-completion';
+      }
+      await Promise.race([
+        expect(owner.getByTestId('transfer-state')).toHaveText('complete', {
+          timeout: 1200000,
+        }),
+        interruption,
+      ]);
       await expect(receiver.getByTestId('transfer-state')).toHaveText('complete', {
         timeout: 30000,
       });
@@ -222,9 +364,25 @@ try {
       await monitor;
     }
     if (sampleError) throw sampleError;
+    stage = 'export-and-resource-checks';
     result.elapsedMs = Date.now() - started;
     await expect(owner.getByTestId('committed-bytes')).toHaveText(String(size));
     await expect(receiver.getByTestId('file-sha256')).toHaveText(expected);
+    if (faulted) {
+      await expect(owner.getByTestId('reused-bytes')).toHaveText(String(result.reusedBytes));
+      await expect(owner.getByTestId('attempt-bytes')).toHaveText(
+        String(size - result.reusedBytes),
+      );
+      result.newPayloadBytes = size - result.reusedBytes;
+    }
+    if (release) {
+      const diagnosticsEvent = receiver.waitForEvent('download');
+      await receiver.getByRole('button', { name: 'Export diagnostics JSON', exact: true }).click();
+      const diagnosticsPath = join(runDirectory, `diagnostics-${size}.json`);
+      await (await diagnosticsEvent).saveAs(diagnosticsPath);
+      result.diagnosticsExported = true;
+      result.connectionPath = await receiver.getByTestId('metric-connection-path').textContent();
+    }
     const downloadEvent = receiver.waitForEvent('download');
     await receiver.getByRole('button', { name: `Save fixture-${size}.bin`, exact: true }).click();
     const downloaded = join(runDirectory, `downloaded-${size}.bin`);
@@ -239,6 +397,7 @@ try {
     const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
     if (receipt.totalBytes !== size || receipt.files[0]?.sha256 !== expected)
       throw new Error('Receipt does not match independently hashed fixture.');
+    result.receiptVerified = true;
     result.senderPeakBufferedBytes = Number(
       await owner.locator('.transfer-panel').getAttribute('data-buffer-peak'),
     );
@@ -270,7 +429,6 @@ try {
       throw new Error('Memory/progress measurement did not meet the 256 MiB JS budget.');
     await receiver.screenshot({ path: join(runDirectory, `received-${size}.png`), fullPage: true });
     result.pass = true;
-    report.cases.push(result);
     console.log(
       `Verified ${size} bytes; peak page+worker JS/backing storage ${result.peakJsBytes} bytes; duration ${result.elapsedMs} ms.`,
     );
@@ -288,13 +446,42 @@ try {
   await owner.getByRole('button', { name: 'Revoke room', exact: true }).click();
   report.pass = true;
 } catch (error) {
-  report.error = error instanceof Error ? error.message : 'Large-transfer verification failed';
+  const knownErrors = new Map([
+    ['Memory/progress measurement did not meet the 256 MiB JS budget.', 'MEMORY_OR_PROGRESS_GATE'],
+    ['Owned transfer queue bound exceeded.', 'QUEUE_BOUND_GATE'],
+    ['Downloaded fixture checksum mismatch.', 'DIGEST_GATE'],
+    ['Fault boundary missed.', 'FAULT_BOUNDARY_GATE'],
+    ['Insufficient workspace disk for benchmark copies and reserve.', 'DISK_PREFLIGHT_GATE'],
+    ['Unplanned signaling loss outside controlled fault.', 'UNPLANNED_SIGNALING_LOSS'],
+  ]);
+  report.failureStage = stage;
+  report.states = {};
+  for (const [name, context] of [
+    ['sender', ownerContext],
+    ['receiver', receiverContext],
+  ]) {
+    const page = context?.pages()[0];
+    if (!page) continue;
+    report.states[name] = {};
+    for (const field of ['transfer-state', 'peer-state', 'connection-state', 'committed-bytes'])
+      report.states[name][field] = await page
+        .getByTestId(field)
+        .textContent({ timeout: 1000 })
+        .catch(() => 'unavailable');
+  }
+  report.errorCode =
+    knownErrors.get(error instanceof Error ? error.message : '') ?? 'WORKFLOW_GATE';
+  report.error = release
+    ? 'RELEASE_BENCHMARK_FAILED (inspect locally; no raw private browser state exported)'
+    : error instanceof Error
+      ? error.message
+      : 'Large-transfer verification failed';
 } finally {
   await ownerContext?.close();
   await receiverContext?.close();
   report.completedAt = new Date().toISOString();
   await writeFile(
-    join(runDirectory, 'phase-3-streaming.json'),
+    join(runDirectory, release ? 'phase-9-streaming.json' : 'phase-3-streaming.json'),
     `${JSON.stringify(report, null, 2)}\n`,
   );
   await writeFile(join(artifactRoot, 'latest.json'), `${JSON.stringify(report, null, 2)}\n`);
@@ -305,7 +492,7 @@ try {
   console.log(
     JSON.stringify({
       pass: report.pass,
-      report: join(runDirectory, 'phase-3-streaming.json'),
+      report: join(runDirectory, release ? 'phase-9-streaming.json' : 'phase-3-streaming.json'),
       error: report.error,
     }),
   );
