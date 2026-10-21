@@ -5,7 +5,8 @@ Once published, the laptop is not the host and can be switched off, unless it is
 one of the devices transferring a file. No tunnel or always-on local server is
 required. The public preview is [available here](https://meshdrop-8ab9cb08-preview.pages.dev).
 Its physical Oppo Wi-Fi recovery/mobile-data checks, public Worker rollback and
-the separate six-case local full-size benchmark matrix pass. Production release
+the separate six-case local full-size benchmark matrix pass. The separate
+[Pages rollback/restoration drill](runbook.md#rollback) now passes too. Production release
 is pending relay, account alerts and remaining physical-platform acceptance;
 see the [P9 report](reports/phase-9.md) for measured scope.
 

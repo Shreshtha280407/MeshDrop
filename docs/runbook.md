@@ -95,6 +95,28 @@ window. The recorded P9 drill passed and restored the latest Worker; see
 [reviewed evidence](reports/evidence/phase-9-public-rollback.json). It does not
 change Pages assets or prove a Pages rollback.
 
+`pnpm verify:pages-rollback preview` exercises Pages separately on the isolated
+preview project. It requires two successful production-branch deployments of
+that project (the Pages API calls these `production` even though the project is
+MeshDrop's preview environment). It records the original deployment and asset
+digest before mutation, promotes an older successful deployment, verifies changed
+client assets plus CSP/readiness and the same approved synthetic room, and
+restores the original deployment and exact asset digest in `finally`. The drill
+refuses a changed preflight target and does not overwrite a detected concurrent
+release during restoration. It closes its room and exits nonzero on any failed
+gate. No Worker version, production project, plan or billing setting changes.
+
+The public Pages drill passed on 21 October 2026:
+[reviewed evidence](reports/evidence/phase-9-pages-rollback.json). The previous
+and restored client module digests differ and match their expected stages.
+This proves Pages asset/gateway rollback separately from the prior Worker drill;
+it does not prove a coordinated product release or file transfer during rollback.
+The report and pre-mutation restore record are in ignored
+`.meshdrop-artifacts/phase-9/pages-rollback.json` and `pages-restore-target.json`.
+If restoration fails, stop releases, consult that restore record, restore its
+original deployment through the provider dashboard, then recheck public
+assets/readiness. Never restore over another operator's concurrent release.
+
 Code rollback does not restore a SQLite backup or undo migrations. P9 introduces
 no SQL schema change; the v1 SQLite migration and P8 actor tables remain compatible.
 Future migrations must remain readable by the previous release or block rollback
@@ -102,7 +124,8 @@ until an explicit forward recovery is prepared. Existing rooms have short TTLs
 and capability state; version changes do not extend expired invitations or restore
 memory-only browser secrets. If no previous healthy release exists, repair and
 redeploy rather than invent a rollback target. Public Worker rollback/restore is
-verified in preview; a matching Pages rollback and production drill remain pending.
+verified in preview, as is the separate Pages drill above; a matching product
+release rollback and production drill remain pending.
 
 ## Retention and cleanup
 

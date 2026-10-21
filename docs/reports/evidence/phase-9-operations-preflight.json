@@ -1,0 +1,24 @@
+{
+  "phase": "P9",
+  "scope": "read-only existing account permissions; no policy/key/billing changes",
+  "results": [
+    {
+      "scope": "notification-types",
+      "method": "GET",
+      "status": 403
+    },
+    {
+      "scope": "notification-policies",
+      "method": "GET",
+      "status": 403
+    },
+    {
+      "scope": "turn-key-permission",
+      "method": "GET",
+      "status": 403
+    }
+  ],
+  "recordedAt": "2026-10-21T12:41:00.159Z",
+  "releaseGatePassed": false,
+  "note": "Existing deployment OAuth lacks these permissions. No notification delivery, TURN key, no-charge provider cap or alert configuration is certified."
+}

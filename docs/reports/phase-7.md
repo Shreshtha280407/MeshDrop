@@ -1,8 +1,37 @@
 # MeshDrop Phase 7 report — mobile and PWA hardening
 
-Date: 2026-10-18. Source: P7.1–P7.6, contracts and acceptance gates in the supplied phase-wise plan, with the architecture's device-owned storage boundary. Baseline: the user's Phase 6 commit `232b596`. All phase changes remain local and uncommitted. No GitHub commit, push, public deployment or Phase 8 work was performed.
+Original checkpoint: 2026-10-18. Source: P7.1–P7.6, contracts and acceptance gates in the supplied phase-wise plan, with the architecture's device-owned storage boundary. Baseline: the user's Phase 6 commit `232b596`. At that checkpoint, changes were local and no public deployment or Phase 8 work had been performed. The current continuation is described below.
 
-**Phase 7 implementation is delivered, but the phase is not complete: its mandatory physical iPhone exit demonstration is pending.** The available hardware is the user's Oppo F19 Pro and Linux laptop. An unavailable iPhone is not evidence of a capability failure. Linux WebKit and native-API mocks do not replace a real iPhone/Safari save/export test. The phase plan explicitly requires the real laptop-to-iPhone accept/store/verify/export workflow, followed by a recovery test if storage survives, before moving on.
+**Current status: the real-iPhone live demonstration passes; broader Phase 7 platform acceptance remains open.** At the original 18 October checkpoint, only the Oppo and Linux laptop were available and the iPhone gate was pending. The continuation below supersedes that hardware limitation. Linux WebKit and native-API mocks remain separate from real-device results.
+
+Continuation, 21 October 2026: the verified Free BrowserStack account provided
+real iPhone 15 Pro Max/Safari and iPad hardware. Laptop → iPhone 1 MiB receive,
+storage, final verification and actual exported-file hashing passed. A second
+2 MiB case paused at 1 MiB, reloaded both browsers, rehashed the surviving
+checkpoint, renewed admission/comparison, reselected the exact source, sent only
+the missing 1 MiB, and exported an independently matching file. This satisfies
+the specific live demonstration in the phase plan. iPhone → laptop and both
+OPPO ↔ iPhone directions also passed at 1 MiB, including destination exports.
+iPhone source selection used a synthetic File in the real input; the native
+source picker was not tested.
+
+The real iPad Pro 13 2025 passed a 1 MiB receive/verify/export. Native Windows
+11 Chrome 155 and Mac Safari 26.4 then passed public laptop pairing, signed ping,
+1 MiB receive/verify/export with independently matching saved files. Earlier
+incomplete bundled-engine results remain recorded: Windows Chromium 153 stayed
+checking across devices (a same-host control passed), and macOS Playwright WebKit
+26.6 did not pass the usable-storage probe. The later native-browser passes do
+not identify the cause of those earlier results.
+
+**Larger iPhone export remains unverified:** normal and recovered 8 MiB cases
+completed storage/final hashes, but cloud automation did not return saved bytes.
+Both overall cases remain false. A smaller passing export is not a measured
+maximum, and the cause of the larger observation is unresolved. See
+[reviewed iOS evidence](evidence/phase-7-ios-cloud.json),
+[tablet/desktop evidence](evidence/phase-7-device-cloud-matrix.json), and
+[cloud reproduction](../runbooks/mobile-pwa.md#real-iphone-cloud-automation-on-a-free-account).
+The remaining original results below retain their 18 October scope. No phone,
+service, billing activation or plan upgrade was purchased.
 
 ## Implementation delivered
 
@@ -75,15 +104,15 @@ The complete test took 272,563 ms (about 4 min 33 sec), including acceptance, de
 
 ### Remaining gates and limitations
 
-- **Physical iPhone Safari exit gate pending:** laptop-to-iPhone accept, store, verify and actual export; repeat pause/resume if browser storage survives.
-- Android-to-iPhone and reverse-role tests need the same unavailable iPhone. Actual macOS Safari and Windows hardware were also unavailable.
+- **iPhone live demonstration now passed:** 1 MiB normal export and 2 MiB reload/recovery/export. Real OS lock/app switching, native source picker/share and installation remain uncertified on iPhone; 8 MiB exported bytes remain unverified.
+- Android-to-iPhone and reverse roles now pass at 1 MiB. Native Windows Chrome and Mac Safari public 1 MiB receive/export also pass. Broader desktop/tablet reverse-role, recovery and size coverage remains unverified; all cloud attempts and limitations are recorded separately.
 - Linux WebKit/Firefox cross-engine checks are real engine tests on Linux; they do not certify Apple's native Files/share UI or another OS.
 - Mocked quota/full-destination and denied-permission tests validate failure behavior. They do not establish behavior on an actually full user's disk. No device is filled to create pressure.
 - Camera API and synthetic QR roundtrip checks must be distinguished from a physical optical scan. Native sharing and PWA home-screen installation require their own OS observations before certification.
 - Both peers need foreground availability and connectivity. Browser eviction, explicit site-data clearing, process termination and destination space may still prevent recovery/export.
 - No unlimited iPhone, universal 10 GB, guaranteed background delivery, universal memory bound or production capacity claim is made.
 
-The [browser/device matrix](../../tests/devices/browser-matrix.md) records scope without converting missing hardware into a pass. Phase 8 has not started.
+The [browser/device matrix](../../tests/devices/browser-matrix.md) records scope without converting missing hardware into a pass. Later implementation through P9 exists; see the [full audit](implementation-audit-2026-10-21.md) for the remaining cross-phase acceptance debt.
 
 ## Secrets and repository state
 
@@ -97,11 +126,11 @@ pnpm check
 pnpm bench:p7
 ```
 
-Use the mobile runbook for opt-in physical Android tests. Once you have reviewed the local changes, you can commit this implementation and its explicit pending gate:
+Use the mobile runbook for opt-in physical Android and free cloud tests. The original P7 checkpoint command was:
 
 ```sh
 git add .
 git commit -m "feat: add phase 7 mobile and PWA hardening"
 ```
 
-No commit or push was executed by the assistant. This commit records delivered implementation and evidence; it does not assert that the physical iPhone gate passed.
+The original checkpoint did not assert an iPhone pass. For the current rollback/device-validation continuation, use the [P9 checkpoint commands](phase-9.md#reproduction-and-commit-command). No commit or push was executed by the assistant.

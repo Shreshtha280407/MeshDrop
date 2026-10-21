@@ -1,0 +1,238 @@
+{
+  "phase": "P7/P9",
+  "scope": "additional free cloud tablet and desktop checks; synthetic fixtures only",
+  "freePlanVerifiedBeforeEachSession": true,
+  "ipadReceive": {
+    "scope": "real cloud iPad Safari receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-ipad",
+    "profile": "ipad",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "a93306cf-c79a-4da2-80a1-a87b7168e2b3",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "real cloud iPad Safari loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": false,
+    "error": "",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Safari/605.1.15",
+      "platform": "MacIntel",
+      "secureContext": true,
+      "maxTouchPoints": 5
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "exportUiResult": [
+      "Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data."
+    ],
+    "nativeExportRoute": "real cloud iPad Safari download returned by the provider download stream",
+    "recordedAt": "2026-10-21T12:09:05.987Z"
+  },
+  "windowsCrossNetwork": {
+    "scope": "cloud Windows 11 Chromium receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-windows",
+    "profile": "windows",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "64ef7f29-e590-4373-8165-866e97ceff87",
+    "pass": false,
+    "stage": "pair",
+    "checks": ["cloud Windows 11 Chromium loads public shell and usable checkpoint storage"],
+    "nativeExportVerified": false,
+    "recoveryVerified": false,
+    "error": "IOS_STATE_GATE_PEER_STATE",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "secureContext": true,
+      "maxTouchPoints": 0
+    },
+    "errorKind": "Error",
+    "errorDetail": "IOS_STATE_GATE_PEER_STATE",
+    "laptopStates": ["connected", "checking", "idle"],
+    "laptopStoragePolicy": [],
+    "iphoneStates": ["connected", "checking", "idle"],
+    "iphoneStoragePolicy": [],
+    "recordedAt": "2026-10-21T12:09:35.172Z"
+  },
+  "macosWebkit": {
+    "scope": "cloud macOS Tahoe Playwright WebKit receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-macos-webkit",
+    "profile": "macos-webkit",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "916c321a-12e8-4a34-9394-36ad51c36896",
+    "pass": false,
+    "stage": "connect",
+    "checks": [],
+    "nativeExportVerified": false,
+    "recoveryVerified": false,
+    "error": "IOS_STATE_GATE_CAPABILITY_OPFS",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+      "platform": "MacIntel",
+      "secureContext": true,
+      "maxTouchPoints": 0
+    },
+    "errorKind": "Error",
+    "errorDetail": "IOS_STATE_GATE_CAPABILITY_OPFS",
+    "iphoneStates": [],
+    "iphoneStoragePolicy": [],
+    "recordedAt": "2026-10-21T12:42:24.998Z"
+  },
+  "limitations": [
+    "Real iPhone/iPad and native Windows Chrome/Mac Safari cases are distinct from Playwright engine tests.",
+    "The earlier Windows Chromium 153 cross-network attempt stayed checking. Branded Windows Chrome 155 later passed public cross-network pairing/1 MiB transfer/export; no root cause for the earlier attempt is claimed.",
+    "Windows Chromium 153 same-host control passed 1 MiB pairing/transfer/export; it has no cross-network scope.",
+    "Cloud macOS Playwright WebKit 26.6 failed its usable OPFS gate. Native Mac Safari 26.4 separately passed public 1 MiB pairing/receive/export.",
+    "iPad and native desktop cloud cases are small-file receiving scenarios. Reverse roles, larger sizes, recovery, native picker/share UI and installation were not certified for those platforms.",
+    "No universal Android-tablet, PC model, router, carrier or mobile file-size claim."
+  ],
+  "windowsSameHostControl": {
+    "scope": "cloud Windows 11 Chromium receiving from a separate Windows cloud browser context over public HTTPS/WSS",
+    "direction": "laptop-to-windows",
+    "profile": "windows",
+    "peerScope": "two separate cloud browser contexts on one Windows host; no cross-network claim",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "a5e58f43-d06c-4d48-917b-f16cfd9371c3",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "cloud Windows 11 Chromium loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": false,
+    "error": "",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "secureContext": true,
+      "maxTouchPoints": 0
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: choose a save location or download.",
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "exportUiResult": [
+      "Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data."
+    ],
+    "nativeExportRoute": "cloud Windows 11 Chromium download returned by the provider download stream",
+    "recordedAt": "2026-10-21T13:03:02.088Z"
+  },
+  "ipadProviderDevice": {
+    "model": "iPad Pro 13 2025",
+    "os": "ios",
+    "version": "26.6",
+    "source": "provider completed-session metadata"
+  },
+  "windowsProviderPlatform": {
+    "os": "Windows",
+    "version": "11",
+    "browser": "playwright-chromium",
+    "browserVersion": "153.0",
+    "source": "provider completed-session metadata"
+  },
+  "macosWebkitProviderPlatform": {
+    "os": "OS X",
+    "version": "Tahoe",
+    "browser": "playwright-webkit",
+    "browserVersion": "26.6",
+    "source": "provider completed-session metadata"
+  },
+  "macosNativeSafari": {
+    "scope": "cloud macOS Tahoe native Safari receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-macos-safari",
+    "profile": "macos-safari",
+    "peerScope": "separate devices over public signaling",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "87d66e6f-8b0c-47aa-b1d5-9d7cb6b24583",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "cloud macOS Tahoe native Safari loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": false,
+    "error": "",
+    "nativeBrowser": {
+      "name": "Safari",
+      "version": "26.4",
+      "platform": "macOS"
+    },
+    "platform": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15",
+      "platform": "MacIntel",
+      "secureContext": true,
+      "maxTouchPoints": 0
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "exportUiResult": [
+      "Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data."
+    ],
+    "providerFileRetrievalAttempted": true,
+    "recordedAt": "2026-10-21T13:23:46.648Z"
+  },
+  "macosNativeSafariExportRoute": "Actual saved download returned by BrowserStack saveFile/getFileContent executors; independently hashed locally.",
+  "windowsChromeCrossNetwork": {
+    "scope": "cloud Windows 11 Chrome receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-windows-chrome",
+    "profile": "windows-chrome",
+    "peerScope": "separate devices over public signaling",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "a081eb60-c89f-4c52-b5db-c5c3851ba355",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "cloud Windows 11 Chrome loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": false,
+    "error": "",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "secureContext": true,
+      "maxTouchPoints": 0
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: choose a save location or download.",
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "exportUiResult": [
+      "Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data."
+    ],
+    "nativeExportRoute": "cloud Windows 11 Chrome download returned by the provider download stream",
+    "recordedAt": "2026-10-21T13:25:46.306Z"
+  },
+  "passingScenariosWithIndependentlyRecheckedExportedFiles": 9,
+  "finalCloudState": {
+    "plan": "Free",
+    "runningSessions": 0,
+    "recordedAfterCheckAt": "2026-10-21T13:29:15.782713+00:00"
+  }
+}

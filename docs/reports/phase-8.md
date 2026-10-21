@@ -2,7 +2,7 @@
 
 Date: 2026-10-18. Source: P8.1–P8.6 and the strict P8 exit gate in the supplied implementation plan, with the architecture's device-owned data-plane boundary. Baseline: the user's Phase 7 commit `ca296f3`. Work is local and uncommitted; no commit, GitHub push, deployment or Phase 9 implementation was performed.
 
-**Phase 8 is complete for its local implementation and required automated/live-browser exit demonstrations. Phase 7's physical iPhone gate remains pending.** The user explicitly requested moving to this phase; P8 tests do not substitute for that missing device evidence. No phone was needed for the P8 local gate.
+**Phase 8 is complete for its local implementation and required automated/live-browser exit demonstrations. Phase 7's physical iPhone gate was pending at this original checkpoint; its [21 October continuation](phase-7.md) now records passing real-device normal/recovery/export tests.** The user explicitly requested moving to this phase; P8 tests do not substitute for that missing device evidence. No phone was needed for the P8 local gate.
 
 ## Delivered work
 

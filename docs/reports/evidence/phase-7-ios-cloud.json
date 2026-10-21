@@ -1,0 +1,393 @@
+{
+  "phase": "P7",
+  "scope": "real BrowserStack iPhone; public preview; synthetic fixtures only",
+  "freePlanVerified": true,
+  "requestedDevice": {
+    "model": "iPhone 15 Pro Max",
+    "iosVersion": "26"
+  },
+  "normalReceive": {
+    "scope": "real cloud iPhone Safari receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-iphone",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "d3514102-26b2-469b-a748-0c3592db1da1",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "real iPhone loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": false,
+    "error": "",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "nativeExportRoute": "real iOS Safari download returned by the provider download stream",
+    "recordedAt": "2026-10-20T22:31:48.530Z"
+  },
+  "reloadRecovery": {
+    "scope": "real cloud iPhone Safari receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-iphone",
+    "profile": "iphone",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "4689a8fb-6ac4-46e9-8cf3-c90a0477a706",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "real cloud iPhone Safari loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "real iPhone reload rehashes its checkpoint; fresh admission/comparison and exact-source resume send only missing bytes",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": true,
+    "error": "",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true,
+      "maxTouchPoints": 5
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+    "reusedBytes": 1048576,
+    "bytes": 2097152,
+    "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+    "exportUiResult": [
+      "Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data."
+    ],
+    "nativeExportRoute": "real cloud iPhone Safari download returned by the provider download stream",
+    "recordedAt": "2026-10-21T13:01:15.183Z"
+  },
+  "earlierIncompleteHarnessRun": {
+    "scope": "real cloud iPhone Safari receiving from the local laptop Chromium over public HTTPS/WSS",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "960f8fef-aaa0-4df7-9cb9-4258c2895a7f",
+    "pass": false,
+    "stage": "transfer",
+    "checks": [
+      "real iPhone loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping"
+    ],
+    "nativeExportVerified": false,
+    "recoveryVerified": false,
+    "error": "IOS_PROVIDER_OR_AUTOMATION_GATE_FAILED",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "laptopStates": ["connected", "connected", "preparing"],
+    "iphoneStates": ["connected", "connected", "negotiating"],
+    "recordedAt": "2026-10-20T22:11:10.423Z"
+  },
+  "nativeIphoneExportVerified": true,
+  "providerDevice": {
+    "model": "iPhone 15 Pro Max",
+    "os": "iOS",
+    "osVersion": "26.6",
+    "source": "BrowserStack Automate session metadata; user-agent text is retained separately"
+  },
+  "iphoneToLaptop": {
+    "scope": "real cloud iPhone Safari sending to the local laptop Chromium over public HTTPS/WSS; synthetic source selected programmatically",
+    "direction": "iphone-to-laptop",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "bb196e50-422c-4f9b-84f0-8814e01bd083",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "real iPhone loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": false,
+    "error": "",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "sourceSelection": "synthetic File assigned to the real input; native iOS picker not tested",
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: choose a save location or download.",
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "recordedAt": "2026-10-20T22:20:44.616Z"
+  },
+  "earlierReverseHarnessFailure": {
+    "scope": "real cloud iPhone Safari sending to the local laptop Chromium over public HTTPS/WSS; synthetic source selected programmatically",
+    "direction": "iphone-to-laptop",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "1aabd978-3186-42f9-9fef-79dd67aea335",
+    "pass": false,
+    "stage": "pair",
+    "checks": ["real iPhone loads public shell and usable checkpoint storage"],
+    "nativeExportVerified": false,
+    "recoveryVerified": false,
+    "error": "IOS_PROVIDER_OR_AUTOMATION_GATE_FAILED",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "errorKind": "Error",
+    "errorDetail": "locator.click: Failed to execute click. browserstack_error: No elements found for selector: internal:role=button[name=\"Approve receiver\"s]",
+    "laptopStates": [],
+    "laptopStoragePolicy": [],
+    "iphoneStates": ["connected", "idle", "idle"],
+    "iphoneStoragePolicy": [],
+    "recordedAt": "2026-10-20T22:18:34.997Z"
+  },
+  "iphoneToAndroid": {
+    "scope": "real cloud iPhone Safari sending to physical OPPO Android Chrome over public HTTPS/WSS; synthetic source selected programmatically",
+    "direction": "iphone-to-android",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "26dab080-fe3e-4f27-aafa-54a40714514a",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "real iPhone loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": false,
+    "error": "",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "androidBrowser": "155.0.8059.79",
+    "androidModel": "CPH2285",
+    "androidOs": "13",
+    "usbScope": "debugging only; no reverse forwarding or application traffic",
+    "sourceSelection": "synthetic File assigned to the real input; native iOS picker not tested",
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: choose a save location or download.",
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "nativeExportRoute": "Android native Downloads; exact synthetic filename pulled for hashing",
+    "recordedAt": "2026-10-20T22:27:31.104Z"
+  },
+  "earlierAndroidDebugReadinessFailure": {
+    "scope": "real cloud iPhone Safari sending to physical OPPO Android Chrome over public HTTPS/WSS; synthetic source selected programmatically",
+    "direction": "iphone-to-android",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "1e977620-1c85-43c0-aee2-946dfa8e90fe",
+    "pass": false,
+    "stage": "connect",
+    "checks": ["real iPhone loads public shell and usable checkpoint storage"],
+    "nativeExportVerified": false,
+    "recoveryVerified": false,
+    "error": "IOS_PROVIDER_OR_AUTOMATION_GATE_FAILED",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "errorKind": "TypeError",
+    "errorDetail": "fetch failed",
+    "iphoneStates": [],
+    "iphoneStoragePolicy": [],
+    "recordedAt": "2026-10-20T22:25:11.372Z"
+  },
+  "androidToIphone": {
+    "scope": "real cloud iPhone Safari receiving from physical OPPO Android Chrome over public HTTPS/WSS",
+    "direction": "android-to-iphone",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "35b83c46-6e8a-4e95-8bbb-e77c9421df78",
+    "pass": true,
+    "stage": "complete",
+    "checks": [
+      "real iPhone loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification",
+      "actual exported download independently hashes to the source digest"
+    ],
+    "nativeExportVerified": true,
+    "recoveryVerified": false,
+    "error": "",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "androidBrowser": "155.0.8059.79",
+    "androidModel": "CPH2285",
+    "androidOs": "13",
+    "usbScope": "debugging only; no reverse forwarding or application traffic",
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "recordedAt": "2026-10-20T22:30:03.442Z"
+  },
+  "earlierNormalExportUnobservable": {
+    "scope": "real cloud iPhone Safari receiving from the local laptop Chromium over public HTTPS/WSS",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "3273a5fc-38c2-4728-84a3-51caf7672783",
+    "pass": false,
+    "stage": "native-export",
+    "checks": [
+      "real iPhone loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire 1 MiB file and completes final SHA-256 verification"
+    ],
+    "nativeExportVerified": false,
+    "error": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "bytes": 1048576,
+    "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+    "laptopStates": ["connected", "connected", "complete"],
+    "iphoneStates": ["connected", "connected", "complete"],
+    "recordedAt": "2026-10-20T21:30:33.323Z"
+  },
+  "earlierRecoveryExportUnobservable": {
+    "scope": "real cloud iPhone Safari receiving from the local laptop Chromium over public HTTPS/WSS",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "53a22023-b026-4ab7-af8d-f10107ebcf57",
+    "pass": false,
+    "stage": "native-export",
+    "checks": [
+      "real iPhone loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "real iPhone reload rehashes its checkpoint; fresh admission/comparison and exact-source resume send only missing bytes",
+      "receiver commits the entire fixture and completes final SHA-256 verification"
+    ],
+    "nativeExportVerified": false,
+    "recoveryVerified": true,
+    "error": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+    "reusedBytes": 1048576,
+    "bytes": 8388608,
+    "sha256": "d6da60c0eddd93a5c447f65a7e12dc629ec32618609c9c39674722f7ece241db",
+    "providerFileRetrievalAttempted": true,
+    "errorKind": "Error",
+    "errorDetail": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+    "laptopStates": ["connected", "connected", "complete"],
+    "laptopStoragePolicy": [],
+    "iphoneStates": ["connected", "connected", "complete"],
+    "iphoneStoragePolicy": [],
+    "recordedAt": "2026-10-20T22:14:26.582Z"
+  },
+  "largerRecoveryExportUnobservable": {
+    "scope": "real cloud iPhone Safari receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-iphone",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "2394a740-2815-49ad-8a1e-2cbdd9325d97",
+    "pass": false,
+    "stage": "native-export",
+    "checks": [
+      "real iPhone loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "real iPhone reload rehashes its checkpoint; fresh admission/comparison and exact-source resume send only missing bytes",
+      "receiver commits the entire fixture and completes final SHA-256 verification"
+    ],
+    "nativeExportVerified": false,
+    "recoveryVerified": true,
+    "error": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+    "reusedBytes": 1048576,
+    "bytes": 8388608,
+    "sha256": "d6da60c0eddd93a5c447f65a7e12dc629ec32618609c9c39674722f7ece241db",
+    "providerFileRetrievalAttempted": true,
+    "errorKind": "Error",
+    "errorDetail": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+    "laptopStates": ["connected", "connected", "complete"],
+    "laptopStoragePolicy": [],
+    "iphoneStates": ["connected", "connected", "complete"],
+    "iphoneStoragePolicy": [],
+    "recordedAt": "2026-10-20T22:33:14.081Z"
+  },
+  "largerNormalExportUnobservable": {
+    "scope": "real cloud iPhone Safari receiving from local laptop Chromium over public HTTPS/WSS",
+    "direction": "laptop-to-iphone",
+    "profile": "iphone",
+    "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+    "plan": "Free",
+    "clientVersion": "1.63.0",
+    "caseId": "0eee0932-561b-4577-9b62-707bf78979a9",
+    "pass": false,
+    "stage": "native-export",
+    "checks": [
+      "real cloud iPhone Safari loads public shell and usable checkpoint storage",
+      "public admission, real WebRTC, independently compared codes and signed ping",
+      "receiver commits the entire fixture and completes final SHA-256 verification"
+    ],
+    "nativeExportVerified": false,
+    "recoveryVerified": false,
+    "error": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+    "platform": {
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+      "platform": "iPhone",
+      "secureContext": true,
+      "maxTouchPoints": 5
+    },
+    "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+    "bytes": 8388608,
+    "sha256": "d6da60c0eddd93a5c447f65a7e12dc629ec32618609c9c39674722f7ece241db",
+    "exportUiResult": [
+      "Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data."
+    ],
+    "providerFileRetrievalAttempted": true,
+    "errorKind": "Error",
+    "errorDetail": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+    "laptopStates": ["connected", "connected", "complete"],
+    "laptopStoragePolicy": [],
+    "iphoneStates": ["connected", "connected", "complete"],
+    "iphoneStoragePolicy": [],
+    "recordedAt": "2026-10-21T13:01:17.736Z"
+  },
+  "iphoneLiveDemonstrationPassed": true,
+  "fullPhase7AcceptancePassed": false,
+  "remainingCoverage": [
+    "Native Mac Safari and Windows Chrome public 1 MiB receive/export pass in the separate cloud matrix. Broader desktop reverse/recovery/size coverage remains unverified.",
+    "Real iPhone OS screen-lock/app-switch/radio handover, native source picker/share UI and installation are not certified.",
+    "8 MiB iPhone normal/recovered storage and final hashes pass; exported bytes were not returned by cloud automation, so those overall cases remain false. A 2 MiB successful export is not a measured maximum."
+  ]
+}

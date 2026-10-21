@@ -1,14 +1,32 @@
 # MeshDrop Phase 9 report — deployment and benchmark release
 
-Date: 2026-10-19. Requirements: P9.1–P9.6 and the strict exit gate in the supplied
-phase-wise implementation plan. Baseline: P8 commit `e108e7a`. All source changes
-remain local and uncommitted. No Git staging, commit or push was performed.
+Original report: 2026-10-19, implementation baseline P8 commit `e108e7a`.
+Continuation: 2026-10-21, baseline P9 commit `2426b4e`. Requirements: P9.1–P9.6
+and the strict exit gate in the supplied phase-wise implementation plan.
+Continuation changes remain local and uncommitted. No Git staging, commit or push
+was performed by the agent.
 
 **The public preview and available-device verification are delivered. Phase 9's
 full release gate remains open** for a verified free-only relay, account quota
 alerts, production rollout and the remaining required physical platforms. The
 public multi-device transfer/disconnect/resume demonstration passed on the Oppo
 and laptop; it is no longer a pending gate.
+
+Continuation, 21 October 2026: the
+[full implementation audit](implementation-audit-2026-10-21.md) checks both supplied
+plans against code and evidence. A new `pnpm verify:pages-rollback preview` drill
+passed against the real public preview, verified changed assets and preserved
+approved-room access, then restored the original deployment and exact client
+SHA-256. See [Pages evidence](evidence/phase-9-pages-rollback.json). The Worker
+was unchanged; coordinated product rollback and production acceptance remain open.
+Fresh component gates total 575 distinct passing automated cases, including 11
+new deployment/recovery tests. The initial full run needed a WebKit library-path
+correction and separate focused/PWA runs; the audit records the precise scope.
+Real iPhone normal/recovery/export, iPhone → laptop and both OPPO ↔ iPhone
+directions now pass. A real iPad receive/export and Windows same-host control
+also pass. Native Windows Chrome and Mac Safari public 1 MiB receive/export
+also pass. Earlier bundled-engine failures remain separately recorded.
+See the [device continuation](phase-7.md) for measured sizes and limitations.
 
 Public preview: <https://meshdrop-8ab9cb08-preview.pages.dev>.
 Cloudflare hosts the application independently of the laptop. Both devices
@@ -20,7 +38,7 @@ participating in a transfer still need to stay online with MeshDrop open.
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | P9.1   | Separate preview/production Pages and private signaling Worker configuration; SQLite Durable Object migration v1; distinct room/rate namespaces and operator secrets; ignored 0600 `.env`; frozen bundles and SHA-256 manifest; prepare/dry-run/publish tooling; live preview | Production resources and rollout after release acceptance                                                                           |
 | P9.2   | coturn configuration/capacity template; optional Cloudflare TURN API adapter; approved-peer short-lived credentials; fixed provider endpoint, bounded response/deadline and strict ICE validation; documented fallback and costs                                              | Account permission/key and a verified no-charge boundary; actual managed relay, bandwidth metering and UDP-blocked TCP/TLS fallback |
-| P9.3   | Full CI reusable by a manual default-branch deployment workflow; separate GitHub Environments; no push-triggered deployment; bundle/config integrity validation; local P9→P8→P9 persisted-room rollback and public recorded-version Worker rollback/restore                   | Actual GitHub environment protections; Pages rollback and production rollout acceptance                                             |
+| P9.3   | Full CI reusable by a manual default-branch deployment workflow; separate GitHub Environments; no push-triggered deployment; bundle/config integrity validation; local P9→P8→P9 persisted-room rollback and public recorded-version Worker rollback/restore                   | Actual GitHub environment protections; coordinated product rollback and production acceptance                                       |
 | P9.4   | Liveness/readiness, admission drain, independently authorized operator revocation, sampled fixed-field audit events without file content/IDs/URLs; quota/failed-join/relay operations guide                                                                                   | Configure actual account alert destinations and verify quota notifications; relay capacity/usage evidence                           |
 | P9.5   | All six normal/disconnect 100 MiB, 1 GiB and 2 GiB benchmark cases passed; exact downloaded SHA-256 and receipts; missing-only resume; bounded queues and measured memory; public physical Wi-Fi recovery and mobile-data transfer                                            | Large-file measurements are local desktop evidence; no universal public/mobile throughput or size claim                             |
 | P9.6   | Deployment guide, runbook, user guide, privacy notice, measured support matrix, hosting ADR, release notes and reviewed evidence; existing protocol documentation retained                                                                                                    | Keep measured limits and open release gates explicit                                                                                |
@@ -156,8 +174,10 @@ The phone can be disconnected now.
 
 These small public physical transfers and the separate local 2 GiB measurements
 do not certify 2 GiB phone delivery, every mobile carrier/router, background
-delivery, native Share, optical QR, or PWA installation. Physical
-iPhone/Windows/macOS coverage remains pending where required by the supplied plan.
+delivery, native Share, optical QR, or PWA installation. The real-iPhone
+continuation now closes its specific live demonstration. Native Windows Chrome
+and Mac Safari public 1 MiB receive/export pass separately. Other explicitly
+listed physical scenarios and larger-file coverage remain open.
 
 ## Operations and rollback
 
@@ -185,7 +205,10 @@ purchase was created. The existing deployment OAuth token returned 403 for TURN
 management and does not grant Calls permissions. Cloudflare's initial TURN
 allowance is not a guaranteed spending cap. The implemented adapter stays
 disabled until a compatible no-charge setup is verified; application logs cannot
-enforce provider billing. See [TURN operations](../../infrastructure/turn/README.md).
+enforce provider billing. On 21 October, read-only notification types/policies
+and TURN key queries all returned 403 using the existing deployment OAuth; no
+alert destination, delivery or relay key was changed. See [permission evidence](evidence/phase-9-operations-preflight.json)
+and [TURN operations](../../infrastructure/turn/README.md).
 
 The open release items are:
 
@@ -195,9 +218,11 @@ The open release items are:
 2. Configure and verify account quota/failed-join alert destinations. A runbook
    and sampled logs do not prove operational alert delivery.
 3. Configure actual GitHub environment protections if the manual CI deployment
-   path is used; prove Pages rollback alongside the tested Worker rollback.
-4. Complete remaining physical iPhone/Windows/macOS evidence required by the
-   supplied cross-phase device gates. Engine tests do not replace those devices.
+   path is used; prove matching product-release rollback. Separate Pages and
+   Worker rollback/restoration have now both passed on the public preview.
+4. Complete remaining real OS lifecycle and platform coverage required by the
+   supplied device matrix. The passing iPhone/iPad/native desktop smaller-file
+   results do not certify larger files, every device or every network.
 5. Provision/publish and accept the separate production environment after the
    preceding release gates. The current public address is the preview.
 
@@ -218,8 +243,10 @@ After reviewing the local diff, create a checkpoint commit with:
 
 ```sh
 git add .
-git commit -m "feat: add Cloudflare deployment and phase 9 release tooling"
+git commit -m "feat: add preview rollback and real device validation tooling"
+git push origin main
 ```
 
-This does not push or mark open release gates complete. No commit or push was
+These are owner-run commands; running the final command publishes the checkpoint.
+They do not mark open release gates complete. No staging, commit or push was
 executed by the agent.

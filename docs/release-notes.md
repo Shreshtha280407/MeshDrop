@@ -1,5 +1,18 @@
 # P9 release candidate
 
+21 October continuation: added a preview-only Pages rollback/restoration tool,
+11 recovery/provider-boundary tests, a real public Pages drill with matching
+restored asset SHA-256, and a [phase-by-phase audit](reports/implementation-audit-2026-10-21.md)
+of both supplied plans. Current component checks total 575 distinct passing cases.
+The Worker and production environment were unchanged. The earlier results below
+remain historical evidence. Real iPhone 1 MiB receive/export and 2 MiB
+reload/recovery/export now pass, as do iPhone → laptop, both OPPO ↔ iPhone
+directions, and real iPad 1 MiB receive/export. A Windows same-host 1 MiB control
+passes. Native Windows Chrome 155 and Mac Safari 26.4 also passed public 1 MiB
+receive/export. Earlier bundled-engine failures remain separately recorded. Larger
+iPhone exports and the remaining P9 release gates stay open. Provider plan checks
+reported Free; no billing/plan upgrade was activated.
+
 **Status:** public preview deployed; the public laptop/Oppo Wi-Fi and mobile-data
 checks, Worker rollback/restore, all six local full-size benchmark cases and
 564 automated tests passed. Production rollout, free-only relay verification,

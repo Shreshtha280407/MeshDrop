@@ -38,7 +38,10 @@
     "verify:rollback": "tsx scripts/deploy/verify-rollback.ts",
     "verify:public": "tsx scripts/deploy/public-smoke.ts",
     "verify:phone": "node --import tsx scripts/deploy/verify-phone.mjs",
-    "verify:public-rollback": "tsx scripts/deploy/verify-public-rollback.ts"
+    "verify:public-rollback": "tsx scripts/deploy/verify-public-rollback.ts",
+    "verify:pages-rollback": "tsx scripts/deploy/verify-pages-rollback.ts",
+    "verify:ios": "node scripts/local-dev/verify-ios.mjs",
+    "verify:device-cloud": "node scripts/local-dev/verify-ios.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

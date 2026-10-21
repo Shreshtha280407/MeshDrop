@@ -1,0 +1,28 @@
+{
+  "phase": "P9",
+  "scope": "public preview Pages rollback and restoration; Worker version unchanged",
+  "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+  "pass": true,
+  "error": "",
+  "originalAssets": {
+    "module": "/assets/index-BisTmpzy.js",
+    "sha256": "15dcbc4392afaee9432219ff1f5a072a440dd4f4e852382d0dfc098515236868"
+  },
+  "rollbackAssets": {
+    "module": "/assets/index-BZ9zNG1z.js",
+    "sha256": "61f834aa72d0eb8e66c54025f58f9ef09395769523f0062f2b444c4e6606f954"
+  },
+  "restoredAssets": {
+    "module": "/assets/index-BisTmpzy.js",
+    "sha256": "15dcbc4392afaee9432219ff1f5a072a440dd4f4e852382d0dfc098515236868"
+  },
+  "latestDeployment": "d00a8791-2d5d-4bc4-affb-aee33b178bf3",
+  "rollbackDeployment": "222a425f-6d16-4ee2-ac1d-faca8e8e65e4",
+  "restored": true,
+  "checks": [
+    "previous Pages deployment serves working control routes and changed assets",
+    "original Pages deployment, assets and control routes restored"
+  ],
+  "roomClosed": true,
+  "recordedAt": "2026-10-20T21:11:15.801Z"
+}
