@@ -7,6 +7,9 @@
     "src",
     "../../tests/security/http-input.spec.ts",
     "../../tests/unit/cloudflare-turn.spec.ts",
-    "../../infrastructure/cloudflare/pages-worker.ts"
+    "../../tests/unit/metered-turn.spec.ts",
+    "../../tests/unit/monitoring.spec.ts",
+    "../../infrastructure/cloudflare/pages-worker.ts",
+    "../../tests/unit/account-usage.spec.ts"
   ]
 }

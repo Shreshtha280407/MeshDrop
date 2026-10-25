@@ -1,0 +1,73 @@
+{
+  "phase": "P7",
+  "scope": "additional real cloud native Safari attempts; earlier smaller passing cases retain their separate scope",
+  "cases": [
+    {
+      "scope": "real cloud iPhone native Safari via WebDriver receiving from local laptop Chromium over public HTTPS/WSS",
+      "profile": "iphone-native",
+      "plan": "Free",
+      "caseId": "18b6b1f5-6bb9-41a2-8892-68318fd2581c",
+      "pass": false,
+      "stage": "native-export",
+      "checks": [
+        "real cloud iPhone native Safari via WebDriver loads public shell and usable checkpoint storage",
+        "public admission, real WebRTC, independently compared codes and signed ping",
+        "receiver commits the entire fixture and completes final SHA-256 verification"
+      ],
+      "nativeExportVerified": false,
+      "recoveryVerified": false,
+      "error": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+      "nativeBrowser": {
+        "name": "safari",
+        "version": "latest",
+        "platform": "iOS"
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+        "platform": "iPhone",
+        "secureContext": true,
+        "maxTouchPoints": 5
+      },
+      "bytes": 8388608,
+      "sha256": "d6da60c0eddd93a5c447f65a7e12dc629ec32618609c9c39674722f7ece241db",
+      "laptopStates": ["connected", "connected", "complete"],
+      "iphoneStates": ["connected", "connected", "complete"],
+      "recordedAt": "2026-10-21T17:47:05.862Z"
+    },
+    {
+      "scope": "real cloud iPhone native Safari via WebDriver receiving from local laptop Chromium over public HTTPS/WSS",
+      "profile": "iphone-native",
+      "plan": "Free",
+      "caseId": "4f46c41c-b36a-4137-ac65-7540d3b83761",
+      "pass": false,
+      "stage": "os-interruption",
+      "checks": [
+        "real cloud iPhone native Safari via WebDriver loads public shell and usable checkpoint storage",
+        "public admission, real WebRTC, independently compared codes and signed ping"
+      ],
+      "nativeExportVerified": false,
+      "recoveryVerified": false,
+      "error": "IOS_NATIVE_SAFARI_COMMAND_FAILED",
+      "nativeBrowser": {
+        "name": "safari",
+        "version": "latest",
+        "platform": "iOS"
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+        "platform": "iPhone",
+        "secureContext": true,
+        "maxTouchPoints": 5
+      },
+      "reusedBytes": 1048576,
+      "laptopStates": ["connected", "connected", "paused"],
+      "iphoneStates": ["connected", "connected", "paused"],
+      "recordedAt": "2026-10-21T19:40:19.507Z"
+    }
+  ],
+  "remaining": [
+    "8 MiB native exported bytes were not observable through this provider interface",
+    "Real OS lock/unlock command failed; lock recovery is not certified",
+    "The interruption attempt started from a paused committed checkpoint; it does not certify automatic pause during active hidden delivery"
+  ]
+}

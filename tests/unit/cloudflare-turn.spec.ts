@@ -36,7 +36,7 @@ describe('Cloudflare TURN credential boundary', () => {
     expect(Object.keys(body)).toEqual(['ttl']);
     expect(body.ttl).toBeGreaterThan(280);
     expect(body.ttl).toBeLessThanOrEqual(295);
-    expect(options.redirect).toBe('error');
+    expect(options.redirect).toBe('manual');
     expect(result.expiresAt).toBeLessThanOrEqual(expires - 5000);
     expect(result.iceServers).toHaveLength(1);
     expect(result.relayAvailable).toBe(true);

@@ -4,8 +4,9 @@ Cloudflare Pages/Workers host the control plane. They do not host coturn or
 provide free unlimited relay bandwidth. A TURN service needs a public VPS or a
 managed provider. No paid service is provisioned automatically. This project's
 current authorization is **free services only, with no billing activation or
-paid plan**. The deployed preview remains `TURN_PROVIDER=direct` until the account
-can supply a relay with a verified no-charge boundary.
+paid plan**. Preview and production now use `TURN_PROVIDER=metered` with a verified Free
+0.5 GB shared monthly hard stop. Cloudflare Realtime TURN and coturn remain
+optional alternatives, disabled in the current deployment.
 
 ## Cloudflare Realtime TURN
 
@@ -84,3 +85,65 @@ release gate. Removing relay from an existing deployment also requires removing
 its old server secret (see the deployment runbook).
 
 Configuration reference: [coturn's maintained configuration example](https://github.com/coturn/coturn/blob/master/examples/etc/turnserver.conf).
+
+## Metered Free relay pool
+
+The `metered` adapter supports the verified $0/month 500 MB plan whose service
+stops at its monthly quota. It requires `METERED_DOMAIN`, `METERED_SECRET_KEY`
+and the explicit `METERED_FREE_ONLY=true`; leave other providers' settings empty.
+The adapter rejects a changed quota, nonzero overage or invalid usage response.
+This validation supplements the provider's hard stop; a lagging API counter
+cannot enforce a spending limit on a paid account. Never upgrade this account or
+add payment details under the project's current authorization.
+
+The SQLite `RelayPool` creates ten-minute credentials ahead of use, waits the
+provider's full two-minute propagation window, and rotates every five minutes
+with overlap. Its alarm and the deployment cron keep the small pool warm.
+Credentials are issued only after room approval, and only when their latest
+possible expiry is inside the room lifetime. Cold starts, unknown usage and
+provider errors return direct/STUN-only configuration. `/ready` validates local
+configuration; it does not assert that a relay key is ready. Operators can use:
+
+```sh
+pnpm ops:warm-relay preview
+pnpm ops:status preview
+```
+
+Usage is refreshed at most once a minute. New issuance stops at 0.45 GB, reserving
+the last 10% for in-flight allocations; a `relay_quota` alert starts at 0.4 GB.
+Existing allocations can continue until provider expiry or its quota hard stop.
+The shared free quota is not separate preview and production allowances. The
+pool has at most two live credential records per deployment; this is not a
+measured simultaneous-transfer capacity guarantee.
+
+`pnpm verify:free-relay` runs actual MeshDrop admission, comparison, transfer,
+committed storage, independently hashed file export, receipt and diagnostics
+through the real provider over UDP, TCP and TLS. It uses port 5193 and an isolated
+local Worker. Put only the provider settings and explicit free-only confirmation
+in mode-0600 `.meshdrop-artifacts/relay-cloud/.env`. The runner makes at most
+three 1 MiB transfers, then closes its rooms, browsers, web server and Worker.
+Reports remain ignored. Each credential expires naturally in ten minutes.
+
+TCP/TLS use the browser's UDP-disabled policy in the normal runner. For a genuine
+OS test, run it inside a disposable isolated network namespace with OUTPUT UDP
+blocked except DNS, verify the firewall counter, and set
+`MESHDROP_TEST_UDP_BLOCKED=true` inside that namespace. That flag is an external
+assertion, not firewall proof. Never change the developer's host firewall. The
+25 October audit separately records a successful isolated Docker firewall test.
+These are real remote relay transfers with local signaling, not hosted-production
+or physical cross-network device acceptance.
+
+References: [credential propagation and rotation](https://www.metered.ca/docs/turnserver-guides/rotating-turn-credentials/),
+[temporary credential API](https://www.metered.ca/docs/turn-rest-api/post-create-credential/),
+[provider usage](https://www.metered.ca/docs/turn-rest-api/get-current-usage/).
+
+## Hosted acceptance — 25–26 October 2026
+
+Both deployed environments passed actual UDP/TCP/TLS 1 MiB MeshDrop transfers
+and two simultaneous 1 MiB pairs, with independent saved-file hashes, receipts
+and diagnostics. The physical Oppo passed production 8 MiB receive/export and
+32 MiB actual Wi-Fi outage/recovery/export, reusing 23 MiB. Selected candidate
+types were relay at both endpoints. USB carried debugging only. These measured
+sizes and four-peer load do not establish maximum size or concurrency. See the
+[hosted release evidence](../../docs/reports/evidence/phase-9-hosted-release.json)
+and [physical Android evidence](../../docs/reports/evidence/phase-9-android-production-relay.json).

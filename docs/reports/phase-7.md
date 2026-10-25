@@ -1,5 +1,12 @@
 # MeshDrop Phase 7 report — mobile and PWA hardening
 
+25–26 October continuation: the production Oppo relay receive/download and
+32 MiB real Wi-Fi outage/recovery/export checks pass. Additional real iPhone
+forced-relay 8 MiB export and 2 MiB reload/recovery/export passed before the user
+deferred further iPhone work. Native Android chooser/install results and current
+limits are recorded in the [latest audit](continuation-2026-10-25.md). Earlier
+failures and historical counts below retain their dated scope.
+
 Original checkpoint: 2026-10-18. Source: P7.1–P7.6, contracts and acceptance gates in the supplied phase-wise plan, with the architecture's device-owned storage boundary. Baseline: the user's Phase 6 commit `232b596`. At that checkpoint, changes were local and no public deployment or Phase 8 work had been performed. The current continuation is described below.
 
 **Current status: the real-iPhone live demonstration passes; broader Phase 7 platform acceptance remains open.** At the original 18 October checkpoint, only the Oppo and Linux laptop were available and the iPhone gate was pending. The continuation below supersedes that hardware limitation. Linux WebKit and native-API mocks remain separate from real-device results.

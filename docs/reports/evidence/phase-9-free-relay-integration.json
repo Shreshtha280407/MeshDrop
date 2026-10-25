@@ -1,0 +1,166 @@
+{
+  "date": "2026-10-25",
+  "billingChanges": false,
+  "providerPlan": {
+    "monthlyPriceUSD": 0,
+    "quotaInGB": 0.5,
+    "overagesEnabled": false,
+    "providerHardStopVerifiedInDashboard": true
+  },
+  "normal": {
+    "checkedAt": "2026-10-24T22:19:56.209Z",
+    "pass": true,
+    "scope": "real free Metered provider; real local Worker/SQLite authorization; two Linux Chromium contexts running the complete MeshDrop transfer/export flow",
+    "rawSummarySha256": "b1f5e8bc8feaefed2bbbda7de829282e753f09fb7e01e0d14c41c01550995c60",
+    "udpDropPackets": null,
+    "usageBeforeWarmup": {
+      "quotaInGB": 0.5,
+      "usageInGB": 0,
+      "overageInGB": 0
+    },
+    "results": [
+      {
+        "transport": "udp",
+        "pass": true,
+        "bytes": 1048576,
+        "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+        "exportedFileVerified": true,
+        "receiptVerified": true,
+        "diagnosticsExported": true,
+        "relayProof": [
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "udp"
+          },
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "udp"
+          }
+        ],
+        "relayOnly": true,
+        "udpDisabledByBrowserPolicy": false,
+        "signalingScope": "local HTTP/WS Worker and browser app; actual remote Metered TURN transport"
+      },
+      {
+        "transport": "tcp",
+        "pass": true,
+        "bytes": 1048576,
+        "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+        "exportedFileVerified": true,
+        "receiptVerified": true,
+        "diagnosticsExported": true,
+        "relayProof": [
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "tcp"
+          },
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "tcp"
+          }
+        ],
+        "relayOnly": true,
+        "udpDisabledByBrowserPolicy": true,
+        "signalingScope": "local HTTP/WS Worker and browser app; actual remote Metered TURN transport"
+      },
+      {
+        "transport": "tls",
+        "pass": true,
+        "bytes": 1048576,
+        "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+        "exportedFileVerified": true,
+        "receiptVerified": true,
+        "diagnosticsExported": true,
+        "relayProof": [
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "tls"
+          },
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "tls"
+          }
+        ],
+        "relayOnly": true,
+        "udpDisabledByBrowserPolicy": true,
+        "signalingScope": "local HTTP/WS Worker and browser app; actual remote Metered TURN transport"
+      }
+    ]
+  },
+  "isolatedFirewall": {
+    "checkedAt": "2026-10-24T22:27:54.415Z",
+    "pass": true,
+    "scope": "real free Metered provider; real local Worker/SQLite authorization; two Linux Chromium contexts inside an isolated Docker bridge namespace with OS OUTPUT UDP DROP except DNS; running the complete MeshDrop transfer/export flow",
+    "rawSummarySha256": "2e758170017cec9dc366af7300d0c127445e494fd6127c88f46315a0e909a4bc",
+    "udpDropPackets": 15,
+    "usageBeforeWarmup": {
+      "quotaInGB": 0.5,
+      "usageInGB": 0.01,
+      "overageInGB": 0
+    },
+    "results": [
+      {
+        "transport": "tcp",
+        "pass": true,
+        "bytes": 1048576,
+        "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+        "exportedFileVerified": true,
+        "receiptVerified": true,
+        "diagnosticsExported": true,
+        "relayProof": [
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "tcp"
+          },
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "tcp"
+          }
+        ],
+        "relayOnly": true,
+        "udpDisabledByBrowserPolicy": false,
+        "signalingScope": "local HTTP/WS Worker and browser app; actual remote Metered TURN transport"
+      },
+      {
+        "transport": "tls",
+        "pass": true,
+        "bytes": 1048576,
+        "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+        "exportedFileVerified": true,
+        "receiptVerified": true,
+        "diagnosticsExported": true,
+        "relayProof": [
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "tls"
+          },
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay",
+            "relayProtocol": "tls"
+          }
+        ],
+        "relayOnly": true,
+        "udpDisabledByBrowserPolicy": false,
+        "signalingScope": "local HTTP/WS Worker and browser app; actual remote Metered TURN transport"
+      }
+    ]
+  },
+  "limitations": [
+    "These are complete MeshDrop flows using a real remote provider with local signaling; not hosted-preview or production acceptance.",
+    "The historical helper hardcoded public HTTPS/WSS in nested scope strings; reviewed signalingScope corrects that description to match the caller origin.",
+    "Firewall blocked outbound UDP except DNS inside a disposable Docker bridge namespace; host firewall was unchanged.",
+    "Two peers and 1 MiB files establish tested connectivity, not a high-concurrency capacity guarantee.",
+    "Provider usage changed from 0 to 0.01 GB across small runs; rounding/lag prevent exact billing reconciliation.",
+    "The provider hard stop is the no-charge boundary; the application counter can lag."
+  ]
+}

@@ -11,7 +11,7 @@ const TURN_URL = /^turns?:turn\.cloudflare\.com:(3478|443|80|5349)\?transport=(u
 export async function cloudflareTurn(
   env: Pick<Env, 'CLOUDFLARE_TURN_KEY_ID' | 'CLOUDFLARE_TURN_API_TOKEN'>,
   expiresAt: number,
-  transport: typeof fetch = fetch,
+  transport: typeof fetch = globalThis.fetch.bind(globalThis),
 ): Promise<IceConfiguration> {
   try {
     // Reserve the entire API deadline so an issued credential cannot outlive
@@ -23,7 +23,7 @@ export async function cloudflareTurn(
       `https://rtc.live.cloudflare.com/v1/turn/keys/${env.CLOUDFLARE_TURN_KEY_ID}/credentials/generate-ice-servers`,
       {
         method: 'POST',
-        redirect: 'error',
+        redirect: 'manual',
         headers: {
           Authorization: `Bearer ${env.CLOUDFLARE_TURN_API_TOKEN}`,
           'Content-Type': 'application/json',

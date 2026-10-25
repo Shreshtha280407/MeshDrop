@@ -48,11 +48,15 @@ jobs:
           TURN_PROVIDER: ${{ vars.TURN_PROVIDER }}
           CLOUDFLARE_TURN_KEY_ID: ${{ secrets.CLOUDFLARE_TURN_KEY_ID }}
           CLOUDFLARE_TURN_API_TOKEN: ${{ secrets.CLOUDFLARE_TURN_API_TOKEN }}
+          METERED_DOMAIN: ${{ vars.METERED_DOMAIN }}
+          METERED_FREE_ONLY: ${{ vars.METERED_FREE_ONLY }}
+          METERED_SECRET_KEY: ${{ secrets.METERED_SECRET_KEY }}
+          CLOUDFLARE_ANALYTICS_API_TOKEN: ${{ secrets.CLOUDFLARE_ANALYTICS_API_TOKEN }}
         run: |
           node --input-type=module <<'JS'
           import { mkdir, writeFile } from 'node:fs/promises';
           const directory = `infrastructure/cloudflare/${process.env.TARGET}`;
-          const names = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'PAGES_PROJECT', 'PUBLIC_ORIGIN', 'OPS_REVOKE_SECRET', 'TURN_PROVIDER', 'TURN_URLS', 'TURN_SHARED_SECRET', 'CLOUDFLARE_TURN_KEY_ID', 'CLOUDFLARE_TURN_API_TOKEN'];
+          const names = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'PAGES_PROJECT', 'PUBLIC_ORIGIN', 'OPS_REVOKE_SECRET', 'TURN_PROVIDER', 'TURN_URLS', 'TURN_SHARED_SECRET', 'CLOUDFLARE_TURN_KEY_ID', 'CLOUDFLARE_TURN_API_TOKEN', 'METERED_DOMAIN', 'METERED_FREE_ONLY', 'METERED_SECRET_KEY', 'CLOUDFLARE_ANALYTICS_API_TOKEN'];
           await mkdir(directory, { recursive: true, mode: 0o700 });
           await writeFile(`${directory}/.env`, names.map(name => `${name}=${JSON.stringify(process.env[name] ?? '')}`).join('\n') + '\n', { mode: 0o600 });
           JS

@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { turnProvider } from '../../apps/signaling/src/turn-config';
+import { accountAnalyticsConfigured } from '../../apps/signaling/src/account-usage-config';
 
 export type Environment = 'preview' | 'production';
 export function environment(value: string | undefined): Environment {
@@ -25,6 +26,8 @@ export function deploymentConfig(
     throw new Error('PUBLIC_ORIGIN must be one exact HTTPS origin.');
   if (!/^[A-Za-z0-9_-]{43}$/.test(values.OPS_REVOKE_SECRET ?? ''))
     throw new Error('OPS_REVOKE_SECRET must be a random 32-byte base64url value.');
+  if (values.CLOUDFLARE_ANALYTICS_API_TOKEN && !accountAnalyticsConfigured(values))
+    throw new Error('Set an exact Cloudflare account and a server-only Analytics Read token.');
   const turnUrls = values.TURN_URLS?.trim() ?? '';
   const turnSecret = values.TURN_SHARED_SECRET?.trim() ?? '';
   const provider = turnProvider({
@@ -33,6 +36,9 @@ export function deploymentConfig(
     TURN_SHARED_SECRET: turnSecret,
     CLOUDFLARE_TURN_KEY_ID: values.CLOUDFLARE_TURN_KEY_ID,
     CLOUDFLARE_TURN_API_TOKEN: values.CLOUDFLARE_TURN_API_TOKEN,
+    METERED_DOMAIN: values.METERED_DOMAIN,
+    METERED_SECRET_KEY: values.METERED_SECRET_KEY,
+    METERED_FREE_ONLY: values.METERED_FREE_ONLY,
   });
   if (values.ADMISSION_PAUSED && !['true', 'false'].includes(values.ADMISSION_PAUSED))
     throw new Error('ADMISSION_PAUSED must be true or false.');
@@ -57,6 +63,12 @@ export function deploymentConfig(
       ALLOWED_ORIGINS: origin,
       STUN_URLS: 'stun:stun.cloudflare.com:3478',
       TURN_PROVIDER: provider,
+      ...(values.CLOUDFLARE_ANALYTICS_API_TOKEN
+        ? { CLOUDFLARE_ACCOUNT_ID: values.CLOUDFLARE_ACCOUNT_ID! }
+        : {}),
+      ...(provider === 'metered'
+        ? { METERED_DOMAIN: values.METERED_DOMAIN!, METERED_FREE_ONLY: 'true' }
+        : {}),
       TURN_URLS: turnUrls,
       TURN_TTL_SECONDS: '300',
       ROOM_TTL_SECONDS: '900',
@@ -66,8 +78,20 @@ export function deploymentConfig(
       ADMISSION_PAUSED: values.ADMISSION_PAUSED ?? 'false',
       AUDIT_LOGS: 'true',
     },
-    durable_objects: { bindings: [{ name: 'SESSION_ROOMS', class_name: 'SessionRoom' }] },
-    migrations: [{ tag: 'v1', new_sqlite_classes: ['SessionRoom'] }],
+    durable_objects: {
+      bindings: [
+        { name: 'SESSION_ROOMS', class_name: 'SessionRoom' },
+        { name: 'RELAY_POOLS', class_name: 'RelayPool' },
+        { name: 'OPERATIONS_MONITOR', class_name: 'OperationsMonitor' },
+      ],
+    },
+    migrations: [
+      { tag: 'v1', new_sqlite_classes: ['SessionRoom'] },
+      { tag: 'v2', new_sqlite_classes: ['RelayPool', 'OperationsMonitor'] },
+    ],
+    triggers: {
+      crons: provider === 'metered' || values.CLOUDFLARE_ANALYTICS_API_TOKEN ? ['* * * * *'] : [],
+    },
     ratelimits: [
       {
         name: 'CREATE_LIMITER',

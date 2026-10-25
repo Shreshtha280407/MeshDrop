@@ -1,4 +1,29 @@
-# P9 release candidate
+# P9 release verification
+
+25–26 October continuation: production and preview are live on Cloudflare
+Pages/Workers with Metered Free relay. Actual hosted UDP/TCP/TLS transfers, two
+simultaneous small-file pairs, physical Android 8 MiB relay delivery and 32 MiB
+Wi-Fi outage/recovery/export passed. Provider request analytics, authenticated
+HTTPS alert-journal delivery, environment isolation and compatible paired v2
+rollback/restoration passed. Both environments share provider account quotas.
+No paid plan or billing activation was used. The final full check passed 642
+distinct tests, types, lint/formatting, secret checks and builds; patched dependency
+audit found zero known vulnerabilities. Further iPhone work is deferred at the
+user's request. See the [current audit](reports/continuation-2026-10-25.md) for
+measured scopes, native Android results and remaining platform limitations.
+
+The entries below are historical; pending status and test counts describe the
+dated release at that time.
+
+22 October continuation: coordinated public preview Pages/Worker rollback now
+passes persisted-room, exact asset and real 1 MiB transfer/export/receipt gates
+before rollback, during rollback and after restoration. Both original versions
+were restored. Fourteen new recovery/provider-boundary tests pass, bringing the
+aggregate baseline plus focused local checks to 589 distinct cases. Production
+bundles and the Worker dry run are prepared; production remains unpublished.
+See [coordinated rollback evidence](reports/evidence/phase-9-product-rollback.json)
+and [production preparation](reports/evidence/phase-9-production-preparation.json).
+The earlier component-only descriptions below retain their original scope.
 
 21 October continuation: added a preview-only Pages rollback/restoration tool,
 11 recovery/provider-boundary tests, a real public Pages drill with matching

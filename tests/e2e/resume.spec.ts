@@ -115,9 +115,24 @@ for (const damage of ['none', 'corrupt', 'forged'] as const)
       await expect(receiver.getByTestId('transfer-state')).toHaveText('paused');
       const committed = Number(await receiver.getByTestId('committed-bytes').textContent());
       await owner.getByRole('button', { name: 'Revoke room', exact: true }).click();
+      await expect(receiver.getByTestId('connection-state')).toHaveText('disconnected');
       if (damage !== 'none') {
         await startStoreHarness(receiver);
-        const checkpoint = (await storeRequest<RecoveryListing>(receiver, 'list')).checkpoints[0]!;
+        // Room closure reaches the receiver asynchronously; terminated storage
+        // workers can release their exclusive lock after the UI changes state.
+        // Wait for a readable checkpoint before injecting damage, preserving
+        // the production rule that a busy store must never be opened twice.
+        let checkpoints: RecoveryListing['checkpoints'] = [];
+        await expect
+          .poll(
+            async () => {
+              checkpoints = (await storeRequest<RecoveryListing>(receiver, 'list')).checkpoints;
+              return checkpoints.length;
+            },
+            { timeout: 10000 },
+          )
+          .toBe(1);
+        const checkpoint = checkpoints[0]!;
         await storeRequest(receiver, 'mutate', {
           transferId: checkpoint.record.transferId,
           fileId: checkpoint.manifest.files[0]!.fileId,

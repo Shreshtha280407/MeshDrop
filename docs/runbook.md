@@ -61,9 +61,10 @@ Client diagnostics export is user initiated and locally retained.
 
 Alert at quota thresholds from the deployment guide, on sustained 5xx/readiness
 failure and failed joins, and on relay bandwidth/capacity from the TURN runbook.
-Define actual alert destinations and budgets in the provider dashboard before
-claiming monitored production. No alert subscription or paid monitor is silently
-created by this repository.
+The deployed destination is the authenticated private polling journal described
+below; actual failed-join delivery is verified in both environments. Aggregate
+counters and account request analytics are separate from sampled application
+logs. No human notification or paid alert subscription was created.
 
 ## Rollback
 
@@ -117,15 +118,39 @@ If restoration fails, stop releases, consult that restore record, restore its
 original deployment through the provider dashboard, then recheck public
 assets/readiness. Never restore over another operator's concurrent release.
 
-Code rollback does not restore a SQLite backup or undo migrations. P9 introduces
-no SQL schema change; the v1 SQLite migration and P8 actor tables remain compatible.
+`pnpm verify:product-rollback preview .meshdrop-artifacts/releases/previous.json`
+exercises both components together using a private mode-0600 recorded release.
+It requires explicit previously recorded component IDs, validates their preview
+project and version metadata, and writes a private restore record before the
+first change. It verifies a real 1 MiB browser transfer, saved-file hash, receipt
+and diagnostics before mutation, on the older pair, and after restoring the
+original pair. The same approved persisted room must survive both switches;
+the exact expected client asset digest must match each stage. The drill checks
+for a concurrent release before each write and refuses detected third versions.
+These checks are not an atomic lock against other deployers.
+
+The coordinated public preview drill passed and restored both original IDs:
+[reviewed evidence](reports/evidence/phase-9-product-rollback.json). Its candidate
+versions were recorded separately and proved compatible together in this drill;
+they are not claimed as a historical release built from one source commit.
+Restore metadata is limited to required fields in ignored
+`.meshdrop-artifacts/phase-9/product-rollback/restore-target.json`. If restoration
+fails, stop releases and restore that recorded Worker/Pages pair, avoiding another
+operator's release, then repeat asset/readiness and transfer acceptance.
+
+Code rollback does not restore a SQLite backup or undo migrations. The historical
+P9/P8 drill used migration v1 and unchanged room tables. The current operational
+monitor/relay release adds migration v2; use only a compatible target that keeps
+those actor exports, as described below.
 Future migrations must remain readable by the previous release or block rollback
 until an explicit forward recovery is prepared. Existing rooms have short TTLs
 and capability state; version changes do not extend expired invitations or restore
 memory-only browser secrets. If no previous healthy release exists, repair and
 redeploy rather than invent a rollback target. Public Worker rollback/restore is
-verified in preview, as is the separate Pages drill above; a matching product
-release rollback and production drill remain pending.
+verified in preview, including the coordinated pair and transfer drill above.
+The measured v2 paired rollback drill is in preview. It does not claim an
+actual production rollback; retain a compatible healthy production release
+record before a future production rollback.
 
 ## Retention and cleanup
 
@@ -138,8 +163,72 @@ scoped bytes. Clearing a cloud room cannot erase browser files.
 
 Local automation covers rate limits, TTL/alarm cleanup, proof denial, operator
 revocation, admission drain, configuration failure and gateway outage behavior.
-Cloud quota alerts, paired Pages/Worker production rollback and seamless physical
-Wi-Fi/mobile handover need separate evidence. The P9 Oppo test exercised a real
+Actual deployed quota-monitor availability and failed-join alert delivery now
+pass; see the latest audit. Paired rollback is verified in preview, while a
+production rollback and seamless physical Wi-Fi/mobile handover are unclaimed. The P9 Oppo test exercised a real
 Wi-Fi outage/recovery and a separate mobile-data transfer, not seamless handover.
 Never deliberately exhaust a paid public quota as
 a test; simulate outages in preview and verify fail-closed behavior.
+
+## Free operational counters and webhook journal
+
+Migration v2 adds SQLite-backed `RelayPool` and `OperationsMonitor` actors.
+Room migration v1 is retained. Operators can inspect the selected deployment:
+
+```sh
+pnpm ops:status preview
+pnpm ops:evaluate preview
+pnpm ops:test-alert preview
+pnpm verify:operations preview
+```
+
+These commands read the environment's mode-0600 `.env` and send the independent
+operator proof in an Authorization header to its exact origin. Room owners and
+anonymous callers cannot read counters, warm the relay or submit alerts.
+`verify:operations` creates a synthetic room, produces ten actual denied joins,
+checks the aggregate, evaluates the alert, verifies its journal delivery and
+closes the room. It fails if delivery or cleanup cannot be established.
+
+The counter actor evaluates failed joins (10 in five minutes), server errors
+(5 in five minutes), observed control requests (80,000 per UTC day) and fresh
+Metered usage (0.4 GB). It sends an authenticated HTTPS webhook to this
+deployment's `/ops/alerts/receive`; a separate journal actor validates, deduplicates
+and stores the fixed alert shape. An outbox retains failed/lost-acknowledgement
+deliveries for retry. No email or external human message is sent. Operators must
+poll the private journal; this is not a push notification to a person.
+
+Only operation classifications, numeric aggregates, environment, timestamps and
+fixed alert IDs are stored. Counter buckets/outbox expire after 24 hours; the
+journal keeps at most 128 entries for seven days and returns the newest 20.
+No room, peer, file, IP, credential or URL metadata is accepted in an alert.
+Control counters exclude health checks, assets and other account services, and
+are **not account-wide Cloudflare billing or usage measurements**. Continue to
+check the provider's account-wide limits separately. Local injected usage tests
+do not establish live account quota notifications.
+
+For rollback after applying v2, retain both new actor exports in the previous
+Worker release. An old v1-only release is not a compatible rollback target once
+these namespaces exist. Publish and record a compatible v2 baseline before
+switching relay configuration, then verify the matching Pages/Worker pair.
+Rolling code back does not delete actors or reverse migrations. Existing v1
+rollback evidence predates this change and must not certify a v2 target.
+
+The current monitor also refreshes Cloudflare account request analytics every
+15 minutes with an account-scoped Analytics Read token. It reads separate
+Workers, Pages Functions and Durable Object aggregates, warns at 80,000 combined
+Workers/Pages requests and 80,000 Durable Object requests per UTC day, and reports
+unknown measurements as unavailable. Sampling and delay mean these are early
+warning signals, not invoice data or hard limits. Duration and storage quotas
+still need separate provider inspection. The current read-only token expires
+on 23 January 2027; rotate it in the private deployment environments before then.
+
+A v2 release record has `{ "migration": "v2", "release": ... }`, with the exact
+previous Worker version, validated Pages deployment metadata and actual client
+module SHA-256. The rollback CLI independently checks both Worker versions still
+export the required actor bindings. Cloudflare code 10220 requires confirmation
+when secrets changed. An optional `allowedSecretChanges` list in that private
+record can confirm only the specifically reviewed provider-secret names; the
+tool refuses operator-secret changes and other names. Never broadly force an
+unreviewed secret rollback. The 25 October v2 drill reviewed only Metered and
+Analytics Read secret changes, preserved room access and restored both current
+IDs after real transfers at all three stages.

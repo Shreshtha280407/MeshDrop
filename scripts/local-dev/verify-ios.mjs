@@ -28,6 +28,13 @@ const profiles = {
     osVersion: '26',
     platform: 'iPhone',
   },
+  'iphone-native': {
+    label: 'real cloud iPhone native Safari via WebDriver',
+    engine: 'webdriver',
+    deviceName: 'iPhone 15 Pro Max',
+    osVersion: '26',
+    platform: 'iPhone',
+  },
   ipad: {
     label: 'real cloud iPad Safari',
     engine: 'webkit',
@@ -68,7 +75,7 @@ const profiles = {
 const selected = profiles[profile];
 if (!selected)
   throw new Error(
-    'Choose iphone, ipad, windows, windows-chrome, macos-webkit or macos-safari cloud profile.',
+    'Choose iphone, iphone-native, ipad, windows, windows-chrome, macos-webkit or macos-safari cloud profile.',
   );
 const colocated = process.env.MESHDROP_CLOUD_PEER === 'cloud';
 if (colocated && profile !== 'windows')
@@ -84,10 +91,17 @@ if (
   throw new Error(
     'Choose laptop-to-iphone, iphone-to-laptop, android-to-iphone or iphone-to-android.',
   );
+const relayOnly = process.env.MESHDROP_CLOUD_RELAY_ONLY === 'true';
 const reverse = direction.startsWith('iphone-to-');
 const android = direction.includes('android');
 const serial = process.env.MESHDROP_ANDROID_SERIAL;
 const recovery = process.env.MESHDROP_IOS_RECOVERY === 'true';
+const interruption = process.env.MESHDROP_IOS_OS_INTERRUPTION;
+if (
+  interruption &&
+  (profile !== 'iphone-native' || !recovery || !['lock', 'background'].includes(interruption))
+)
+  throw new Error('OS interruption requires iphone-native, recovery and lock|background.');
 const fixtureMiB = Number(process.env.MESHDROP_CLOUD_FIXTURE_MIB ?? (recovery ? 8 : 1));
 if (!Number.isInteger(fixtureMiB) || fixtureMiB < (recovery ? 2 : 1) || fixtureMiB > 8)
   throw new Error('Synthetic cloud fixtures must be 1–8 MiB, or 2–8 MiB for recovery.');
@@ -148,6 +162,7 @@ const report = {
     : 'separate devices over public signaling',
   origin,
   plan: 'Free',
+  relayOnly,
   clientVersion,
   caseId: id,
   pass: false,
@@ -359,6 +374,25 @@ try {
     laptop = await (await laptopBrowser.newContext({ acceptDownloads: true })).newPage();
   }
   await laptop.goto(origin);
+  if (relayOnly) {
+    if (recovery && selected.engine === 'webdriver')
+      throw new Error('IOS_NATIVE_RELAY_RELOAD_NOT_SUPPORTED');
+    const forceRelay = () => {
+      if (globalThis.__meshdropRelayPeers) return;
+      globalThis.__meshdropRelayPeers = [];
+      const Native = globalThis.RTCPeerConnection;
+      globalThis.RTCPeerConnection = class extends Native {
+        constructor(configuration) {
+          super({ ...configuration, iceTransportPolicy: 'relay' });
+          globalThis.__meshdropRelayPeers.push(this);
+        }
+      };
+    };
+    for (const page of [iphone, laptop]) {
+      if (typeof page.addInitScript === 'function') await page.addInitScript(forceRelay);
+      await page.evaluate(forceRelay);
+    }
+  }
   owner = reverse ? iphone : laptop;
   receiver = reverse ? laptop : iphone;
   report.stage = 'pair';
@@ -445,6 +479,18 @@ try {
     if (committed < 1024 ** 2 || committed >= bytes.length)
       throw new Error('IOS_PARTIAL_CHECKPOINT_REQUIRED');
     report.reusedBytes = committed;
+    if (interruption) {
+      report.stage = 'os-interruption';
+      console.log(
+        `Testing real cloud iPhone ${interruption} from its paused committed checkpoint.`,
+      );
+      report.osInterruption = await iosBrowser.osInterruption(interruption);
+      await state(receiver, 'transfer-state', 'paused');
+      await state(receiver, 'committed-bytes', String(committed));
+      report.checks.push(
+        `actual iOS ${interruption} preserves the paused committed checkpoint before fresh-admission recovery`,
+      );
+    }
     report.stage = 'reload-recovery';
     console.log('Real iPhone retained partial bytes; reloading and renewing admission.');
     await owner.getByRole('button', { name: 'Revoke room', exact: true }).click();
@@ -540,6 +586,36 @@ try {
     throw new Error('IOS_EXPORTED_DIGEST_MISMATCH');
   report.nativeExportVerified = true;
   report.checks.push('actual exported download independently hashes to the source digest');
+  if (relayOnly) {
+    report.stage = 'relay-proof';
+    report.relayProof = [];
+    for (const page of [owner, receiver]) {
+      const proof = await page.evaluate(async () => {
+        const pc = globalThis.__meshdropRelayPeers?.find(
+          (peer) => peer.connectionState === 'connected',
+        );
+        if (!pc) throw new Error('IOS_RELAY_CONNECTION_MISSING');
+        const stats = await pc.getStats();
+        let pair;
+        stats.forEach((row) => {
+          if (row.type === 'transport' && row.selectedCandidatePairId)
+            pair = stats.get(row.selectedCandidatePairId);
+        });
+        if (!pair)
+          stats.forEach((row) => {
+            if (row.type === 'candidate-pair' && row.state === 'succeeded' && row.nominated)
+              pair = row;
+          });
+        const local = stats.get(pair?.localCandidateId),
+          remote = stats.get(pair?.remoteCandidateId);
+        if (local?.candidateType !== 'relay' || remote?.candidateType !== 'relay')
+          throw new Error('IOS_RELAY_SELECTION_REQUIRED');
+        return { localCandidateType: 'relay', remoteCandidateType: 'relay' };
+      });
+      report.relayProof.push(proof);
+    }
+    report.checks.push('both actual selected candidate pairs use relay on both ends');
+  }
   report.stage = 'complete';
   report.pass = true;
 } catch (error) {

@@ -32,7 +32,9 @@ export async function connectNativeSafari(caps) {
         browserName: 'Safari',
         browserVersion: 'latest',
         'bstack:options': {
-          os: caps.os,
+          ...(caps.deviceName
+            ? { deviceName: caps.deviceName, realMobile: true }
+            : { os: caps.os }),
           osVersion: caps.osVersion,
           userName: caps['browserstack.username'],
           accessKey: caps['browserstack.accessKey'],
@@ -49,6 +51,9 @@ export async function connectNativeSafari(caps) {
   if (!/^[a-f0-9]{40}$/.test(session ?? '')) throw new Error('IOS_NATIVE_SAFARI_SESSION_INVALID');
   const route = (path) => `/session/${session}${path}`;
   const execute = (script, args = []) => command(route('/execute/sync'), { script, args });
+  // Native OS operations must stay on Appium's protocol endpoints. A browser
+  // execute call can bring Safari to the foreground and invalidate a state probe.
+  const nativeDevice = (path, payload = {}) => command(route(path), payload);
   const elementKey = 'element-6066-11e4-a52e-4f735466cecf';
   function locator(find, argument, all = false) {
     const query = `(${find.toString()})(arguments[0])`;
@@ -134,6 +139,41 @@ export async function connectNativeSafari(caps) {
       platform: result.capabilities?.platformName,
     },
     newContext: async () => ({ newPage: async () => page }),
+    async osInterruption(mode) {
+      // Only the reset cloud test device and its current Safari session are used.
+      if (mode === 'lock') {
+        let locked;
+        try {
+          await nativeDevice('/appium/device/lock', { seconds: 0 });
+          locked = await nativeDevice('/appium/device/is_locked');
+          await setTimeout(2000);
+        } finally {
+          await nativeDevice('/appium/device/unlock');
+        }
+        const unlocked = await nativeDevice('/appium/device/is_locked');
+        if (locked !== true || unlocked !== false)
+          throw new Error('IOS_NATIVE_LOCK_STATE_NOT_VERIFIED');
+        return { mode, locked, unlocked: !unlocked, startedFromPausedCheckpoint: true };
+      }
+      if (mode === 'background') {
+        const bundleId = 'com.apple.mobilesafari';
+        const appState = () => nativeDevice('/appium/device/app_state', { appId: bundleId });
+        if ((await appState()) !== 4) throw new Error('IOS_NATIVE_SAFARI_APP_REQUIRED');
+        let backgroundState;
+        try {
+          await nativeDevice('/appium/app/background', { seconds: -1 });
+          backgroundState = await appState();
+          await setTimeout(2000);
+        } finally {
+          await nativeDevice('/appium/device/activate_app', { appId: bundleId });
+        }
+        const foregroundState = await appState();
+        if (![2, 3].includes(backgroundState) || foregroundState !== 4)
+          throw new Error('IOS_NATIVE_APP_STATE_NOT_VERIFIED');
+        return { mode, backgroundState, foregroundState, startedFromPausedCheckpoint: true };
+      }
+      throw new Error('IOS_NATIVE_INTERRUPTION_MODE_REQUIRED');
+    },
     async nativeExport(name) {
       await execute('browserstack_executor: {"action":"saveFile"}').catch(() => {});
       for (let attempt = 0; attempt < 10; attempt++) {

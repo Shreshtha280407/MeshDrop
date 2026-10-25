@@ -200,8 +200,9 @@ try {
             'TURN_SHARED_SECRET',
             'CLOUDFLARE_TURN_KEY_ID',
             'CLOUDFLARE_TURN_API_TOKEN',
+            'METERED_SECRET_KEY',
+            'CLOUDFLARE_ANALYTICS_API_TOKEN',
           ]
-            .filter((key) => Boolean(values[key]?.trim()))
             .map((key) => `${key}=${JSON.stringify(values[key] ?? '')}`)
             .join('\n') + '\n',
           { mode: 0o600 },

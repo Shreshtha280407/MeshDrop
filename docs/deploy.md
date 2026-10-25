@@ -1,20 +1,21 @@
 # Cloudflare deployment
 
-P9 targets Cloudflare Pages plus a separate Worker with SQLite Durable Objects.
-Once published, the laptop is not the host and can be switched off, unless it is
-one of the devices transferring a file. No tunnel or always-on local server is
-required. The public preview is [available here](https://meshdrop-8ab9cb08-preview.pages.dev).
-Its physical Oppo Wi-Fi recovery/mobile-data checks, public Worker rollback and
-the separate six-case local full-size benchmark matrix pass. The separate
-[Pages rollback/restoration drill](runbook.md#rollback) now passes too. Production release
-is pending relay, account alerts and remaining physical-platform acceptance;
-see the [P9 report](reports/phase-9.md) for measured scope.
+P9 runs on Cloudflare Pages plus separate private Workers with SQLite Durable
+Objects. [Production](https://meshdrop-7ce2dc2e-production.pages.dev) and
+[preview](https://meshdrop-8ab9cb08-preview.pages.dev) are live. The laptop can be
+switched off unless it is transferring a file; no tunnel or local server hosts
+the deployed site. Hosted control-plane and UDP/TCP/TLS relay checks, real HTTPS
+alert-journal delivery, request analytics and environment isolation pass. Physical
+production Android receive/export and Wi-Fi outage/recovery pass. The compatible
+v2 paired rollback drill passed in preview. See the [latest audit](reports/continuation-2026-10-25.md)
+for actual scope and limits.
 
-The owner requires free services only. No billing activation or paid plan is
-authorized. The current preview uses direct connections and free STUN; a relay
-allowance must not be described as a guaranteed spending cap. The Cloudflare
-TURN adapter is implemented but remains disabled pending account access and a
-verified no-charge setup. See [TURN operations](../infrastructure/turn/README.md).
+The owner requires free services only. No billing activation, paid plan or payment
+method is authorized. Both environments use Metered Free with a shared 0.5 GB
+monthly service hard stop; the latest provider check reports zero Cloudflare
+subscriptions and zero relay overage. The Cloudflare Realtime TURN adapter is
+implemented but disabled because an included allowance alone is not a hard
+spending cap. See [TURN operations](../infrastructure/turn/README.md).
 
 ## Environments and request path
 
@@ -110,13 +111,21 @@ defaults to `https://PAGES_PROJECT.pages.dev`; a custom origin requires its doma
 binding and TLS to be configured before changing `PUBLIC_ORIGIN`. Changing origin
 changes browser storage scope: files saved under the old origin do not migrate.
 
-The runtime secret upload is additive. When deliberately disabling an existing
-relay, remove its `TURN_SHARED_SECRET` or `CLOUDFLARE_TURN_KEY_ID` and
-`CLOUDFLARE_TURN_API_TOKEN` secrets with `wrangler secret delete` against that
-environment's generated `worker.json`, set `TURN_PROVIDER=direct`, clear all
-provider fields in its `.env`, then
-prepare/dry-run/publish. Do not assume omitted secrets are automatically deleted.
-Never copy production TURN/operator secrets to preview.
+The publisher explicitly uploads every supported provider secret, including empty
+values for unused providers, so a provider switch clears stale bindings. Set
+`TURN_PROVIDER=direct` and clear all provider settings in the target `.env` to
+remove relay availability; then prepare/dry-run/publish. Verify `/ready` and the
+operator relay status after switching. API-side secret deletion remains available
+for leaked keys; revoke or rotate the provider credential as well.
+
+The free Metered adapter requires `METERED_DOMAIN`, `METERED_SECRET_KEY` and
+`METERED_FREE_ONLY=true`, with other providers' fields empty. Migration v2 adds
+`RelayPool` and `OperationsMonitor`; its cron warms the pool once per minute.
+Follow the [relay lifecycle and quota policy](../infrastructure/turn/README.md#metered-free-relay-pool)
+and [operator commands](runbook.md#free-operational-counters-and-webhook-journal).
+A cold pool deliberately offers direct connectivity until keys have propagated.
+Keep a compatible v2 Worker baseline for rollback before enabling the provider.
+Do not deploy an old v1-only version after applying the new actor migration.
 
 ## Release checks
 
@@ -181,3 +190,18 @@ Official references: [Pages advanced mode](https://developers.cloudflare.com/pag
 [Durable Object environments](https://developers.cloudflare.com/durable-objects/reference/environments/),
 [Worker pricing](https://developers.cloudflare.com/workers/platform/pricing/),
 [Durable Object pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/).
+
+## Current deployed environments — 25–26 October 2026
+
+- Production: <https://meshdrop-7ce2dc2e-production.pages.dev>
+- Preview: <https://meshdrop-8ab9cb08-preview.pages.dev>
+
+Both use the verified Workers Free account and the Metered Free quota hard stop.
+They have independent room/rate namespaces and operator proofs; they share the
+provider account quotas. File bytes remain on peers or the separately managed
+relay. Actual hosted UDP/TCP/TLS, two simultaneous small transfer pairs, HTTPS/WSS
+control denial/revocation, failed-join webhook delivery and provider request
+monitoring passed. Actual preview/production room and operator crossover is denied.
+The preview v2 rollback/restore passes with persisted-room and real transfer
+checks at each stage. GitHub deployment workflows still require the owner's
+manual push and environment configuration; no repository push was performed.

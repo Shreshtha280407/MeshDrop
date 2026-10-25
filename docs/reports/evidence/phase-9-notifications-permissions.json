@@ -1,0 +1,26 @@
+{
+  "phase": "P9",
+  "scope": "account-scoped Notifications Edit user token created through the account owner’s connected browser; private value saved to an ignored 0600 env file",
+  "tokenActive": true,
+  "results": [
+    {
+      "check": "available-alerts",
+      "status": 200
+    },
+    {
+      "check": "policies",
+      "status": 200
+    },
+    {
+      "check": "email-destination-eligibility",
+      "status": 200
+    }
+  ],
+  "emailEligible": true,
+  "emailReady": true,
+  "recipient": "signup email authorized by the account owner; omitted from reviewed evidence",
+  "configuredPoliciesAtPermissionCheck": 0,
+  "deliveryVerified": false,
+  "releaseGatePassed": false,
+  "nativeBillingAlertConstraint": "Cloudflare documentation lists Usage Based Billing notifications for Professional plans or higher; no paid plan was activated."
+}

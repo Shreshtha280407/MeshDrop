@@ -1,0 +1,112 @@
+{
+  "reviewedAt": "2026-10-26",
+  "scope": "previously completed real cloud iPhone checks; further iPhone work deferred at user request",
+  "cases": [
+    {
+      "rawLogSha256": "9ad0eea2af917150a9677e5c99474ea9cd0d6aeb1af92862dafe439029d31fff",
+      "result": {
+        "scope": "real cloud iPhone Safari receiving from local laptop Chromium over public HTTPS/WSS",
+        "direction": "laptop-to-iphone",
+        "profile": "iphone",
+        "peerScope": "separate devices over public signaling",
+        "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+        "plan": "Free",
+        "relayOnly": true,
+        "clientVersion": "1.63.0",
+        "pass": true,
+        "stage": "complete",
+        "checks": [
+          "real cloud iPhone Safari loads public shell and usable checkpoint storage",
+          "public admission, real WebRTC, independently compared codes and signed ping",
+          "receiver commits the entire fixture and completes final SHA-256 verification",
+          "actual exported download independently hashes to the source digest",
+          "both actual selected candidate pairs use relay on both ends"
+        ],
+        "nativeExportVerified": true,
+        "recoveryVerified": false,
+        "error": "",
+        "platform": {
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+          "platform": "iPhone",
+          "secureContext": true,
+          "maxTouchPoints": 5
+        },
+        "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+        "bytes": 8388608,
+        "sha256": "d6da60c0eddd93a5c447f65a7e12dc629ec32618609c9c39674722f7ece241db",
+        "exportUiResult": [
+          "Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data."
+        ],
+        "nativeExportRoute": "real cloud iPhone Safari download returned by the provider download stream",
+        "relayProof": [
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay"
+          },
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay"
+          }
+        ],
+        "recordedAt": "2026-10-25T17:05:49.385Z"
+      }
+    },
+    {
+      "rawLogSha256": "dae146223e309743ab86afc29a45e3b75ebec11675732241acd45eefae745fcd",
+      "result": {
+        "scope": "real cloud iPhone Safari receiving from local laptop Chromium over public HTTPS/WSS",
+        "direction": "laptop-to-iphone",
+        "profile": "iphone",
+        "peerScope": "separate devices over public signaling",
+        "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+        "plan": "Free",
+        "relayOnly": true,
+        "clientVersion": "1.63.0",
+        "pass": true,
+        "stage": "complete",
+        "checks": [
+          "real cloud iPhone Safari loads public shell and usable checkpoint storage",
+          "public admission, real WebRTC, independently compared codes and signed ping",
+          "real iPhone reload rehashes its checkpoint; fresh admission/comparison and exact-source resume send only missing bytes",
+          "receiver commits the entire fixture and completes final SHA-256 verification",
+          "actual exported download independently hashes to the source digest",
+          "both actual selected candidate pairs use relay on both ends"
+        ],
+        "nativeExportVerified": true,
+        "recoveryVerified": true,
+        "error": "",
+        "platform": {
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+          "platform": "iPhone",
+          "secureContext": true,
+          "maxTouchPoints": 5
+        },
+        "receiveStrategy": "Receive strategy: verified browser files with local checkpoints. Export: browser download or system share / Save to Files.",
+        "reusedBytes": 1048576,
+        "bytes": 2097152,
+        "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+        "exportUiResult": [
+          "Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data."
+        ],
+        "nativeExportRoute": "real cloud iPhone Safari download returned by the provider download stream",
+        "relayProof": [
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay"
+          },
+          {
+            "localCandidateType": "relay",
+            "remoteCandidateType": "relay"
+          }
+        ],
+        "recordedAt": "2026-10-25T17:05:58.182Z"
+      }
+    }
+  ],
+  "limitations": [
+    "Earlier incomplete 8 MiB exports remain historical failures; these new forced-relay 8 MiB and 2 MiB recovery downloads were actually retrieved and hashed.",
+    "Native app-background recovery subchecks passed, but that native run could not retrieve exported bytes and remains overall incomplete.",
+    "Native lock command was rejected; picker/share/home-screen and further iOS lifecycle coverage remain deferred.",
+    "A successful provider-returned download does not certify every native Save to Files or share workflow."
+  ]
+}

@@ -14,6 +14,24 @@ export async function iceCredentials(env: Env, roomExpiresAt: number): Promise<I
       Math.min(roomExpiresAt, Date.now() + duration(env.TURN_TTL_SECONDS, 300, 600)) / 1000,
     ) * 1000;
   const iceServers: IceConfiguration['iceServers'] = stun.length ? [{ urls: stun }] : [];
+  if (provider === 'metered') {
+    if (!env.RELAY_POOLS) return { iceServers, relayAvailable: false, expiresAt };
+    try {
+      const response = await env.RELAY_POOLS.get(env.RELAY_POOLS.idFromName('deployment')).fetch(
+        new Request('https://relay.internal/credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomExpiresAt }),
+        }),
+      );
+      if (!response.ok) throw new Error('Relay unavailable.');
+      const { iceConfigurationSchema } = await import('@meshdrop/protocol');
+      const relay = iceConfigurationSchema.parse(await response.json());
+      return { ...relay, iceServers: [...iceServers, ...relay.iceServers] };
+    } catch {
+      return { iceServers, relayAvailable: false, expiresAt };
+    }
+  }
   if (provider === 'cloudflare') {
     const credentials = await cloudflareTurn(env, expiresAt);
     return { ...credentials, iceServers: [...iceServers, ...credentials.iceServers] };

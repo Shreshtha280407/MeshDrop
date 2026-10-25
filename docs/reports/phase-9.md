@@ -1,16 +1,37 @@
 # MeshDrop Phase 9 report — deployment and benchmark release
 
+Latest work: [25–26 October audit](continuation-2026-10-25.md) and
+[managed relay integration evidence](evidence/phase-9-free-relay-integration.json).
+The new Metered pool and private monitoring actors use additive migration v2;
+historical v1 rollback results below must not certify a v2 rollback target.
+
 Original report: 2026-10-19, implementation baseline P8 commit `e108e7a`.
 Continuation: 2026-10-21, baseline P9 commit `2426b4e`. Requirements: P9.1–P9.6
 and the strict exit gate in the supplied phase-wise implementation plan.
 Continuation changes remain local and uncommitted. No Git staging, commit or push
 was performed by the agent.
 
-**The public preview and available-device verification are delivered. Phase 9's
-full release gate remains open** for a verified free-only relay, account quota
-alerts, production rollout and the remaining required physical platforms. The
-public multi-device transfer/disconnect/resume demonstration passed on the Oppo
-and laptop; it is no longer a pending gate.
+**Current status:** production and preview, verified Metered Free relay,
+provider request monitoring, actual HTTPS alert delivery, environment isolation
+and compatible paired v2 rollback are delivered. Physical production Android
+8 MiB relay export and 32 MiB real Wi-Fi outage/recovery/export passed. The
+latest complete suite passed 642 tests. See the current audit for native Android
+results and measured limits; further iPhone work is deferred at the user's request.
+
+The original open-gate statements and counts below are historical. They describe
+the earlier deployments and do not override the latest evidence.
+
+Continuation, 22 October 2026, baseline `2cfc05c`: coordinated public preview
+Pages/Worker rollback now passes with real 1 MiB transfer, independently verified
+saved bytes, receipt and diagnostics at all three stages, plus preserved approved
+room access and exact asset hashes. Both original deployment IDs were restored.
+See [product rollback evidence](evidence/phase-9-product-rollback.json). The selected
+component IDs were previously recorded separately; their compatibility was proved
+together here, without claiming a historical source-matched release. Fourteen new
+unit cases pass (589 distinct baseline plus focused cases in aggregate). Production
+bundle preparation and Worker dry run pass without remote production publication;
+see [preparation evidence](evidence/phase-9-production-preparation.json). Historical
+component-only results below retain their original scope.
 
 Continuation, 21 October 2026: the
 [full implementation audit](implementation-audit-2026-10-21.md) checks both supplied
@@ -18,7 +39,8 @@ plans against code and evidence. A new `pnpm verify:pages-rollback preview` dril
 passed against the real public preview, verified changed assets and preserved
 approved-room access, then restored the original deployment and exact client
 SHA-256. See [Pages evidence](evidence/phase-9-pages-rollback.json). The Worker
-was unchanged; coordinated product rollback and production acceptance remain open.
+was unchanged in that separate drill; the later coordinated drill above closes the
+preview product rollback gate. Production acceptance remains open.
 Fresh component gates total 575 distinct passing automated cases, including 11
 new deployment/recovery tests. The initial full run needed a WebKit library-path
 correction and separate focused/PWA runs; the audit records the precise scope.
@@ -194,8 +216,9 @@ The room was then closed. See
 **Pages assets were unchanged:** this is Worker rollback/restore evidence, not
 Pages rollback or SQLite backup restoration. Protocol v1 and SQLite migration v1
 remain unchanged. Rate limits, TTL/alarm cleanup, operator revocation, drain and
-gateway outage behavior pass automated local tests; remote quota notifications
-and a full paired-product rollback remain unverified.
+gateway outage behavior pass automated local tests. The later coordinated preview
+drill above closes paired-product rollback verification; remote quota notifications
+and production acceptance remain separate gates.
 
 ## Free-only constraint and open release gates
 

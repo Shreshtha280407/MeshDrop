@@ -1,0 +1,134 @@
+{
+  "phase": "P9",
+  "provider": "Metered",
+  "accountCreated": true,
+  "activePlan": "TURN TRIAL GLOBAL 500MB",
+  "monthlyPriceUsd": 0,
+  "quotaInGB": 0.5,
+  "observedUsageInGB": 0,
+  "observedOverageInGB": 0,
+  "paymentDetailsAdded": false,
+  "automaticPaymentsEnabled": false,
+  "noChargeBoundary": "The active free-plan dashboard states service stops above the monthly limit; the selected $0 plan states No Overages. No limit-exhaustion test was performed.",
+  "temporaryCredentialSeconds": 300,
+  "attempts": [
+    {
+      "scope": "isolated public provider transport probe; not MeshDrop admission/transfer acceptance or an OS firewall test",
+      "createdAt": "2026-10-22T15:33:25.062Z",
+      "credentialAgeSeconds": 72,
+      "results": [
+        {
+          "mode": "udp",
+          "pass": true,
+          "bytes": 262144,
+          "sha256": "31a1f9dea0169551092d05e8bf4a446228c8c3eb4c9b713c66adcb7fd53c89be",
+          "paths": [
+            {
+              "local": "relay",
+              "remote": "relay",
+              "relayProtocol": "udp"
+            },
+            {
+              "local": "relay",
+              "remote": "relay",
+              "relayProtocol": "udp"
+            }
+          ],
+          "relayErrors": 8
+        },
+        {
+          "mode": "tcp",
+          "pass": true,
+          "bytes": 262144,
+          "sha256": "31a1f9dea0169551092d05e8bf4a446228c8c3eb4c9b713c66adcb7fd53c89be",
+          "paths": [
+            {
+              "local": "relay",
+              "remote": "relay",
+              "relayProtocol": "tcp"
+            },
+            {
+              "local": "relay",
+              "remote": "relay",
+              "relayProtocol": "tcp"
+            }
+          ],
+          "relayErrors": 0
+        },
+        {
+          "mode": "tls",
+          "pass": true,
+          "bytes": 262144,
+          "sha256": "31a1f9dea0169551092d05e8bf4a446228c8c3eb4c9b713c66adcb7fd53c89be",
+          "paths": [
+            {
+              "local": "relay",
+              "remote": "relay",
+              "relayProtocol": "tls"
+            },
+            {
+              "local": "relay",
+              "remote": "relay",
+              "relayProtocol": "tls"
+            }
+          ],
+          "relayErrors": 0
+        }
+      ],
+      "provenance": "reviewed from the captured successful command output before the private runner report was overwritten by a separate subsequent attempt"
+    },
+    {
+      "scope": "isolated public provider transport probe; not MeshDrop admission/transfer acceptance or an OS firewall test",
+      "createdAt": "2026-10-22T15:35:28.526Z",
+      "credentialAgeSeconds": 48,
+      "results": [
+        {
+          "mode": "udp",
+          "pass": false,
+          "bytes": 0,
+          "error": "RELAY_PROBE_FAILED",
+          "relayErrors": 12
+        },
+        {
+          "mode": "tcp",
+          "pass": false,
+          "bytes": 212992,
+          "error": "RELAY_PROBE_FAILED",
+          "relayErrors": 0
+        },
+        {
+          "mode": "tls",
+          "pass": true,
+          "bytes": 262144,
+          "sha256": "31a1f9dea0169551092d05e8bf4a446228c8c3eb4c9b713c66adcb7fd53c89be",
+          "paths": [
+            {
+              "local": "relay",
+              "remote": "relay",
+              "relayProtocol": "tls"
+            },
+            {
+              "local": "relay",
+              "remote": "relay",
+              "relayProtocol": "tls"
+            }
+          ],
+          "relayErrors": 0
+        }
+      ]
+    }
+  ],
+  "applicationRelayEnabled": false,
+  "releaseGatePassed": false,
+  "limitations": [
+    "These are isolated provider probes with two peer connections in one Linux Chromium page, not the MeshDrop authorization/transfer flow.",
+    "The second attempt failed UDP and full TCP payload completion; TLS completed. No cause is asserted.",
+    "The provider documents up to two minutes of new-credential propagation; cold-start integration remains unresolved.",
+    "Usage counters still reported zero after these small transfers; metering reconciliation is not verified.",
+    "No UDP-blocking OS firewall, capacity, cross-device relay or production acceptance is certified."
+  ],
+  "references": [
+    "https://www.metered.ca/docs/turn-rest-api/post-create-credential/",
+    "https://www.metered.ca/docs/turnserver-guides/expiring-turn-credentials/"
+  ]
+}

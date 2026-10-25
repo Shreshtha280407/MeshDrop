@@ -1,0 +1,18 @@
+{
+  "phase": "P9",
+  "scope": "local production bundle preparation and Wrangler dry run; no remote production deployment",
+  "origin": "https://meshdrop-7ce2dc2e-production.pages.dev",
+  "worker": "meshdrop-7ce2dc2e-production-signaling",
+  "prepared": true,
+  "workerDryRunPassed": true,
+  "published": false,
+  "manifestSha256": "32ebc6997897a37faac5f39e7971c435b8dccdd1197a07b59c6ae21185e77c5f",
+  "webArtifactCount": 22,
+  "workerArtifactCount": 1,
+  "remainingGates": [
+    "Free public relay verified with forced relay and UDP-blocked TCP/TLS",
+    "Account alert permissions, destination and delivery verification",
+    "Remaining physical OS acceptance where required",
+    "Production go/no-go and public acceptance after prerequisites"
+  ]
+}

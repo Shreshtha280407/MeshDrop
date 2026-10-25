@@ -53,6 +53,8 @@ export function pagesClient(
     throw new Error('PAGES_INVALID_CONFIGURATION');
   const base = `https://api.cloudflare.com/client/v4/accounts/${account}/pages/projects/${project}`;
   async function request(path = '', method = 'GET'): Promise<unknown> {
+    let status = 0;
+    let codes: number[] = [];
     try {
       const response = await transport(`${base}${path}`, {
         method,
@@ -60,11 +62,19 @@ export function pagesClient(
         headers: { Authorization: `Bearer ${token}` },
         signal: AbortSignal.timeout(20000),
       });
-      const result = (await response.json()) as { success?: boolean; result?: unknown };
+      status = response.status;
+      const result = (await response.json()) as {
+        errors?: { code?: unknown }[];
+        success?: boolean;
+        result?: unknown;
+      };
+      codes = (result.errors ?? [])
+        .map((item) => item.code)
+        .filter((code): code is number => Number.isSafeInteger(code));
       if (!response.ok || result.success !== true) throw new Error();
       return result.result;
     } catch {
-      throw new Error('PAGES_PROVIDER_OPERATION_FAILED');
+      throw new Error('PAGES_PROVIDER_OPERATION_FAILED', { cause: { status, codes } });
     }
   }
   return {

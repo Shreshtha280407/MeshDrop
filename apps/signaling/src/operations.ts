@@ -3,6 +3,7 @@ import { allowedOrigins, duration } from './env';
 import type { Env } from './env';
 import { HttpError } from './errors';
 import { iceUrls, turnProvider } from './turn-config';
+import { accountAnalyticsConfigured } from './account-usage-config';
 
 export async function operatorAuthorized(request: Request, env: Env): Promise<void> {
   if (!env.OPS_REVOKE_SECRET || !/^[A-Za-z0-9_-]{43}$/.test(env.OPS_REVOKE_SECRET))
@@ -31,7 +32,8 @@ export async function readiness(env: Env): Promise<boolean> {
     duration(env.WS_TICKET_TTL_SECONDS, 30, 60);
     duration(env.TURN_TTL_SECONDS, 300, 600);
     iceUrls(env.STUN_URLS, false);
-    turnProvider(env);
+    if (turnProvider(env) === 'metered' && !env.RELAY_POOLS) return false;
+    if (env.CLOUDFLARE_ANALYTICS_API_TOKEN && !accountAnalyticsConfigured(env)) return false;
     return env.ADMISSION_PAUSED !== 'true';
   } catch {
     return false;

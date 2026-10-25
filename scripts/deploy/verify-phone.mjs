@@ -11,6 +11,10 @@ import { observeRtc, rtcObservations } from '../local-dev/observe-rtc.mjs';
 const serial = process.env.MESHDROP_ANDROID_SERIAL;
 if (!serial) throw new Error('Set the authorized Android serial.');
 const mobile = process.env.MESHDROP_PHONE_NETWORK === 'mobile';
+const relayOnly = process.env.MESHDROP_PHONE_RELAY_ONLY === 'true';
+const debugPort = process.env.MESHDROP_ANDROID_DEBUG_PORT ?? '9223';
+if (!/^\d{4,5}$/.test(debugPort) || Number(debugPort) > 65535)
+  throw new Error('Use the authorized local debugging port.');
 const base = process.env.MESHDROP_TEST_URL;
 if (!base || new URL(base).protocol !== 'https:') throw new Error('Use a deployed HTTPS origin.');
 const stamp = Date.now();
@@ -28,11 +32,14 @@ const desktop = await chromium.launch();
 const context = await desktop.newContext({ acceptDownloads: true, baseURL: base });
 const owner = await context.newPage();
 adb('shell', 'am', 'start', '-n', 'com.android.chrome/com.google.android.apps.chrome.Main');
-const version = await (await fetch('http://127.0.0.1:9223/json/version')).json();
+const version = await (await fetch(`http://127.0.0.1:${debugPort}/json/version`)).json();
 const debuggerPath = new URL(version.webSocketDebuggerUrl).pathname;
 if (!/^\/devtools\/browser(?:\/[A-Za-z0-9-]+)?$/.test(debuggerPath))
   throw new Error('Unexpected Android debugging endpoint.');
-const connection = await connectOwnAndroidChrome(chromium, `ws://127.0.0.1:9223${debuggerPath}`);
+const connection = await connectOwnAndroidChrome(
+  chromium,
+  `ws://127.0.0.1:${debugPort}${debuggerPath}`,
+);
 const phone = await connection.browser.contexts()[0].newPage();
 // Only this newly-created target is attached; personal tabs remain untouched.
 const report = {
@@ -44,11 +51,23 @@ const report = {
   desktopBrowser: desktop.version(),
   phoneBrowser: connection.browser.version(),
   pass: false,
+  relayOnly,
   checks: [],
 };
 report.transport = { cspErrors: 0, failedHttpStatuses: [] };
 for (const page of [owner, phone]) {
   await page.addInitScript(observeRtc);
+  if (relayOnly)
+    await page.addInitScript(() => {
+      const Native = globalThis.RTCPeerConnection;
+      globalThis.__meshdropPhoneRelayPeers = [];
+      globalThis.RTCPeerConnection = class extends Native {
+        constructor(configuration) {
+          super({ ...configuration, iceTransportPolicy: 'relay' });
+          globalThis.__meshdropPhoneRelayPeers.push(this);
+        }
+      };
+    });
   page.on('console', (message) => {
     if (/content security policy|connect-src/i.test(message.text())) report.transport.cspErrors++;
   });
@@ -215,6 +234,31 @@ try {
       await expect(owner.getByTestId('reused-bytes')).toHaveText(String(retainedBytes));
       await expect(owner.getByTestId('attempt-bytes')).toHaveText(String(size - retainedBytes));
     }
+    if (relayOnly)
+      for (const page of [owner, phone]) {
+        const proof = await page.evaluate(async () => {
+          const pc = globalThis.__meshdropPhoneRelayPeers.find(
+            (peer) => peer.connectionState === 'connected',
+          );
+          if (!pc) throw new Error('No connected peer.');
+          const stats = await pc.getStats();
+          let pair;
+          stats.forEach((row) => {
+            if (row.type === 'transport' && row.selectedCandidatePairId)
+              pair = stats.get(row.selectedCandidatePairId);
+          });
+          if (!pair)
+            stats.forEach((row) => {
+              if (row.type === 'candidate-pair' && row.state === 'succeeded' && row.nominated)
+                pair = row;
+            });
+          return {
+            local: stats.get(pair?.localCandidateId)?.candidateType,
+            remote: stats.get(pair?.remoteCandidateId)?.candidateType,
+          };
+        });
+        expect(proof).toEqual({ local: 'relay', remote: 'relay' });
+      }
     checkpoint('native-export');
     await exportPhone(name, buffer);
     const receipt = await exportJson('Save transfer receipt', `${size}-receipt.json`);

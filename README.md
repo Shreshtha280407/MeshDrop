@@ -2,7 +2,21 @@
 
 Account-free browser-to-browser file transfer. Cloudflare coordinates short-lived rooms; devices own file transport, verification, storage, recovery, and diagnostics.
 
-**Current work: Phase 9 — production deployment and benchmark release.** The [full audit against both supplied plans](docs/reports/implementation-audit-2026-10-21.md) finds implementation through P9 with physical-device and release gates still open. The [public preview](https://meshdrop-8ab9cb08-preview.pages.dev), recorded Oppo Wi-Fi recovery/mobile-data delivery, separate Worker/Pages rollback drills and six local 100 MiB/1 GiB/2 GiB benchmarks pass. Fresh component checks total 575 distinct passing automated cases; the audit records the WebKit environment correction. Production rollout, verified free relay, account alerts, coordinated product rollback and remaining physical-device gates are pending. See the [Phase 9 report](docs/reports/phase-9.md), [deployment guide](docs/deploy.md), [operations runbook](docs/runbook.md), [user guide](docs/user-guide.md), [privacy notice](docs/privacy-notice.md) and [measured support matrix](docs/support-matrix.md). Real cloud iPhone and iPad receive/export tests now pass, including iPhone reload recovery and OPPO ↔ iPhone transfers. Native Windows Chrome and Mac Safari public 1 MiB receive/export also pass; see the [Phase 7 continuation](docs/reports/phase-7.md).
+**Implementation is present through P9; full release acceptance is still being verified.**
+The [25 October audit](docs/reports/continuation-2026-10-25.md) checks both supplied
+MeshDrop PDFs and records the current phase status. It adds a free managed relay
+pool, authenticated operational alerts, provider quota safeguards, real UDP/TCP/TLS
+MeshDrop transfers, and an isolated OS firewall fallback test. Existing physical
+Android/iPhone and large-file results retain their measured scopes.
+
+The [production site](https://meshdrop-7ce2dc2e-production.pages.dev) and
+[public preview](https://meshdrop-8ab9cb08-preview.pages.dev) run on separate
+Cloudflare Pages/Worker environments. Hosted relay, operational alert delivery,
+provider request monitoring and namespace/operator isolation pass. See [deployment](docs/deploy.md), [operations](docs/runbook.md),
+[relay policy](infrastructure/turn/README.md), [support matrix](docs/support-matrix.md),
+[user guide](docs/user-guide.md) and [privacy notice](docs/privacy-notice.md).
+No paid plan, payment method or billing activation is authorized. Git commit and
+push are left to the owner.
 
 ## Tech stack and architecture
 
@@ -60,7 +74,7 @@ Optional tool settings: `CI=true`, `WRANGLER_SEND_METRICS=false`, and `PLAYWRIGH
 
 ## Deployment
 
-The [public preview](https://meshdrop-8ab9cb08-preview.pages.dev) is deployed and its HTTPS/WSS admission/revocation checks pass. Production release is pending the remaining gates. Follow the [deployment guide](docs/deploy.md) to prepare, dry-run, provision and publish isolated Cloudflare Pages + Worker environments. `pnpm deploy:cloud init preview` creates a private ignored `.env` with a random operator secret. `prepare` creates frozen bundles and a hash manifest; it makes no cloud changes. The stable public address will run independently of the developer's laptop. TURN requires a separately configured [relay and bandwidth budget](infrastructure/turn/README.md). A manual CI deployment workflow is included; no code is committed or pushed automatically.
+The [production site](https://meshdrop-7ce2dc2e-production.pages.dev) and [public preview](https://meshdrop-8ab9cb08-preview.pages.dev) are deployed. Hosted HTTPS/WSS, UDP/TCP/TLS relay, physical Android relay recovery, alert delivery, environment isolation and paired v2 rollback checks pass within the [recorded scope](docs/reports/continuation-2026-10-25.md). Follow the [deployment guide](docs/deploy.md) for isolated Cloudflare Pages + Worker environments. Deployment preparation creates frozen bundles and hashes before publishing. The sites run independently of the developer's laptop. Metered Free provides a shared 0.5 GB monthly relay hard stop; see the [relay policy](infrastructure/turn/README.md). Manual CI deployment is included; commit and push remain manual.
 
 ## Workspace
 
@@ -77,8 +91,8 @@ The [public preview](https://meshdrop-8ab9cb08-preview.pages.dev) is deployed an
 | `packages/network-intelligence` | Measured stats, rolling rates, local history and report exports     |
 | `packages/platform`             | Usable browser capability probes, quota policy and lifecycle events |
 
-Unimplemented later-phase features remain outside the delivered scope. File engines remain independent of React lifecycle and server persistence. ESLint prevents protocol/shared types from importing React, Node, or Cloudflare APIs.
+Post-MVP ideas remain outside the supplied P0–P9 plan. File engines remain independent of React lifecycle and server persistence. ESLint prevents protocol/shared types from importing React, Node, or Cloudflare APIs.
 
 Read the [protocol specification](docs/protocol/v1.md), [state machines](docs/protocol/states.md), [ADRs](docs/adr/001-control-data-planes.md), [threat model](docs/threat-model.md), [runbook](docs/runbooks/local-development.md), [Phase 0 report](docs/reports/phase-0.md), [Phase 1 report](docs/reports/phase-1.md), [peer protocol](docs/protocol/peer-p2.md), [Phase 2 report](docs/reports/phase-2.md), [file protocol](docs/protocol/transfer-p3.md), [Phase 3 report](docs/reports/phase-3.md), [storage contract](docs/protocol/storage-p4.md) [Phase 4 report](docs/reports/phase-4.md), [resume protocol](docs/protocol/resume-p5.md) [Phase 5 report](docs/reports/phase-5.md), [diagnostics contract](docs/protocol/diagnostics-p6.md), [Phase 6 report](docs/reports/phase-6.md) and [mobile contract](docs/protocol/mobile-p7.md).
 
-Source requirements: the supplied **MeshDrop Backend Architecture & MVP Master Plan** and **MeshDrop Phase-Wise Implementation Plan**, October 2026. The phase plan is the implementation source of truth. See the [Phase 9 report](docs/reports/phase-9.md) for deployed preview, verification and remaining release gates. Services must remain free; no billing activation or paid plan is authorized. The preview remains direct-only until a no-charge relay setup is verified. No GitHub push is performed automatically.
+Source requirements: the supplied **MeshDrop Backend Architecture & MVP Master Plan** and **MeshDrop Phase-Wise Implementation Plan**, October 2026. The phase plan is the implementation source of truth. See the [Phase 9 report](docs/reports/phase-9.md) for deployed preview, verification and remaining release gates. Services must remain free; no billing activation or paid plan is authorized. Both deployments use the verified Metered Free relay; direct connectivity remains available when relay issuance is unavailable. No GitHub push is performed automatically.

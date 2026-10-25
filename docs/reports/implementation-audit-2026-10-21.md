@@ -1,5 +1,15 @@
 # MeshDrop implementation audit — 21 October 2026
 
+Latest continuation: [25 October implementation and relay audit](continuation-2026-10-25.md).
+The dated findings below remain historical. Previous continuation: [23 October checkpoint](continuation-2026-10-23.md), baseline
+`2cfc05c`. Coordinated public preview Pages/Worker rollback and real transfer checks
+now pass, with both original versions restored. Production bundles/dry run are
+prepared, a free Metered account has isolated transport probe evidence, and the
+Cloudflare Notifications permission blocker is resolved. Actual alert delivery,
+reliable MeshDrop managed relay and production acceptance remain open. Fourteen
+new unit cases bring aggregate baseline plus focused checks to 589 distinct cases.
+The dated findings below retain their original scope.
+
 Baseline: `2426b4e` on `main`, with a clean working tree before this audit.
 Both supplied PDFs were read in full. The phase-wise plan controls execution
 and acceptance; the architecture plan defines the trust boundaries. The plan

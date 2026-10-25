@@ -7,6 +7,13 @@ export interface Env {
   TURN_URLS?: string;
   TURN_SHARED_SECRET?: string;
   TURN_PROVIDER?: string;
+  RELAY_POOLS?: DurableObjectNamespace;
+  METERED_DOMAIN?: string;
+  METERED_SECRET_KEY?: string;
+  METERED_FREE_ONLY?: string;
+  OPERATIONS_MONITOR?: DurableObjectNamespace;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  CLOUDFLARE_ANALYTICS_API_TOKEN?: string;
   CLOUDFLARE_TURN_KEY_ID?: string;
   CLOUDFLARE_TURN_API_TOKEN?: string;
   TURN_TTL_SECONDS?: string;

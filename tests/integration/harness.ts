@@ -1,5 +1,6 @@
 import { build } from 'esbuild';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
+import type { V4WorkerOptions } from 'miniflare';
 import { randomBytes, randomUUID } from 'node:crypto';
 import NetworkWebSocket from 'ws';
 import {
@@ -22,6 +23,7 @@ export async function runtime(
     persist?: string;
     gateway?: boolean;
     script?: string;
+    outboundService?: V4WorkerOptions['outboundService'];
   } = {},
 ): Promise<Miniflare> {
   if (!bundle && !options.script) {
@@ -45,6 +47,7 @@ export async function runtime(
     name: 'meshdrop-p1-test',
     modules: true,
     script,
+    ...(options.outboundService ? { outboundService: options.outboundService } : {}),
     compatibilityDate: '2026-07-01',
     bindings: {
       ALLOWED_ORIGINS: `${ORIGIN},http://localhost:5173`,
@@ -54,7 +57,11 @@ export async function runtime(
       CLOSED_TOMBSTONE_SECONDS: '60',
       ...options.bindings,
     },
-    durableObjects: { SESSION_ROOMS: { className: 'SessionRoom', useSQLite: true } },
+    durableObjects: {
+      SESSION_ROOMS: { className: 'SessionRoom', useSQLite: true },
+      RELAY_POOLS: { className: 'RelayPool', useSQLite: true },
+      OPERATIONS_MONITOR: { className: 'OperationsMonitor', useSQLite: true },
+    },
     ratelimits: {
       CREATE_LIMITER: {
         namespace_id: '1001',

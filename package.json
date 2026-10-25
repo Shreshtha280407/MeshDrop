@@ -40,6 +40,13 @@
     "verify:phone": "node --import tsx scripts/deploy/verify-phone.mjs",
     "verify:public-rollback": "tsx scripts/deploy/verify-public-rollback.ts",
     "verify:pages-rollback": "tsx scripts/deploy/verify-pages-rollback.ts",
+    "verify:product-rollback": "tsx scripts/deploy/verify-product-rollback.ts",
+    "ops:status": "tsx scripts/deploy/operations.ts status",
+    "ops:warm-relay": "tsx scripts/deploy/operations.ts warm",
+    "ops:evaluate": "tsx scripts/deploy/operations.ts evaluate",
+    "ops:test-alert": "tsx scripts/deploy/operations.ts test-alert",
+    "verify:operations": "tsx scripts/deploy/operations.ts verify",
+    "verify:free-relay": "tsx scripts/local-dev/verify-free-relay.ts",
     "verify:ios": "node scripts/local-dev/verify-ios.mjs",
     "verify:device-cloud": "node scripts/local-dev/verify-ios.mjs"
   },
@@ -56,12 +63,13 @@
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.2",
-    "vitest": "4.1.11",
+    "vitest": "4.1.12",
     "ws": "8.21.0"
   },
   "pnpm": {
     "overrides": {
-      "esbuild@<0.28.1": "0.28.1"
+      "esbuild@<0.28.1": "0.28.1",
+      "undici@>=7.0.0 <7.30.1": "7.30.1"
     }
   }
 }

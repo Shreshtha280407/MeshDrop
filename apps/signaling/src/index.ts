@@ -13,14 +13,23 @@ import { socketCredential } from './auth/tickets';
 import { operatorAuthorized, readiness } from './operations';
 import { audit } from './audit';
 import { uuidSchema } from '@meshdrop/protocol';
+import { monitorRequest, recordOperation } from './monitoring';
+import { readJson } from './limits';
 export { SessionRoom } from './durable/SessionRoom';
+export { RelayPool } from './durable/RelayPool';
+export { OperationsMonitor } from './durable/OperationsMonitor';
 
 /** Public control plane. No file bodies or credentials in URLs. */
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, context?: ExecutionContext): Promise<Response> {
     const requestId = crypto.randomUUID();
     let origin: string | undefined;
     let operation = 'other';
+    const observe = (name: string, status: number) => {
+      audit(env, name, status);
+      if (context && env.OPERATIONS_MONITOR)
+        context.waitUntil(recordOperation(env, name, status).catch(() => {}));
+    };
     try {
       const url = new URL(request.url);
       const path = url.pathname;
@@ -47,6 +56,48 @@ export default {
           }),
           requestId,
         );
+      if (
+        [
+          '/ops/metrics',
+          '/ops/alerts',
+          '/ops/alerts/evaluate',
+          '/ops/alerts/test',
+          '/ops/alerts/receive',
+        ].includes(path)
+      ) {
+        const read = path === '/ops/metrics' || path === '/ops/alerts';
+        if (url.protocol !== 'https:' || url.search || request.method !== (read ? 'GET' : 'POST'))
+          throw new HttpError(403, 'FORBIDDEN', 'Operator request denied.');
+        await throttle(request, env, false);
+        await operatorAuthorized(request, env);
+        const response =
+          path === '/ops/metrics'
+            ? await monitorRequest(env, '/summary')
+            : path === '/ops/alerts'
+              ? await monitorRequest(env, '/journal', undefined, true)
+              : path === '/ops/alerts/receive'
+                ? await monitorRequest(env, '/deliver', await readJson(request), true)
+                : await monitorRequest(env, path.endsWith('/test') ? '/test' : '/evaluate', {});
+        return secureResponse(response, requestId);
+      }
+      if (path === '/ops/relay' || path === '/ops/relay/warm') {
+        if (
+          url.protocol !== 'https:' ||
+          url.search ||
+          (path.endsWith('/warm') ? request.method !== 'POST' : request.method !== 'GET')
+        )
+          throw new HttpError(403, 'FORBIDDEN', 'Operator request denied.');
+        await throttle(request, env, false);
+        await operatorAuthorized(request, env);
+        if (!env.RELAY_POOLS)
+          throw new HttpError(503, 'SERVICE_UNAVAILABLE', 'Relay pool is not configured.');
+        const response = await env.RELAY_POOLS.get(env.RELAY_POOLS.idFromName('deployment')).fetch(
+          new Request(`https://relay.internal/${path.endsWith('/warm') ? 'warm' : 'status'}`, {
+            method: request.method,
+          }),
+        );
+        return secureResponse(response, requestId);
+      }
       if (path.startsWith('/ops/rooms/')) {
         operation = 'revoke';
         if (url.protocol !== 'https:' || url.search || request.method !== 'POST')
@@ -65,7 +116,7 @@ export default {
             },
           }),
         );
-        audit(env, operation, response.status);
+        observe(operation, response.status);
         return secureResponse(response, requestId);
       }
       const route = path === '/v1/sessions' ? null : roomRoute(path);
@@ -155,12 +206,20 @@ export default {
           internal,
         );
       }
-      audit(env, operation, response.status);
+      observe(operation, response.status);
       return secureResponse(response, requestId, origin);
     } catch (error) {
       const response = errorResponse(error, requestId);
-      audit(env, operation, response.status);
+      observe(operation, response.status);
       return secureResponse(response, requestId, origin);
     }
+  },
+  async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+    if (env.TURN_PROVIDER === 'metered' && env.RELAY_POOLS)
+      await env.RELAY_POOLS.get(env.RELAY_POOLS.idFromName('deployment')).fetch(
+        new Request('https://relay.internal/warm', { method: 'POST' }),
+      );
+    if (env.OPERATIONS_MONITOR && env.CLOUDFLARE_ANALYTICS_API_TOKEN)
+      await monitorRequest(env, '/evaluate', {});
   },
 } satisfies ExportedHandler<Env>;

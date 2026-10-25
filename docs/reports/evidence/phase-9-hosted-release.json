@@ -1,0 +1,498 @@
+{
+  "reviewedAt": "2026-10-26",
+  "scope": "actual hosted preview and production; synthetic data only; no billing changes",
+  "hostedRelay": {
+    "preview": {
+      "rawSha256": "494932c4964ccdd0bf013704af9c71aae295de8e332b1540a477e1396eb95ea2",
+      "result": {
+        "checkedAt": "2026-10-25T16:51:55.699Z",
+        "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+        "scope": "actual hosted Pages/Worker/SQLite control; two Linux Chromium contexts per pair; real remote Metered relay; independently hashed saved files, receipts and diagnostics",
+        "billingChanges": false,
+        "results": [
+          {
+            "transport": "udp",
+            "pass": true,
+            "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+            "bytes": 1048576,
+            "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+            "exportedFileVerified": true,
+            "receiptVerified": true,
+            "diagnosticsExported": true,
+            "relayProof": [
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "udp"
+              },
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "udp"
+              }
+            ],
+            "relayOnly": true,
+            "udpDisabledByBrowserPolicy": false
+          },
+          {
+            "transport": "tcp",
+            "pass": true,
+            "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+            "bytes": 1048576,
+            "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+            "exportedFileVerified": true,
+            "receiptVerified": true,
+            "diagnosticsExported": true,
+            "relayProof": [
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "tcp"
+              },
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "tcp"
+              }
+            ],
+            "relayOnly": true,
+            "udpDisabledByBrowserPolicy": true
+          },
+          {
+            "transport": "tls",
+            "pass": true,
+            "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+            "bytes": 1048576,
+            "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+            "exportedFileVerified": true,
+            "receiptVerified": true,
+            "diagnosticsExported": true,
+            "relayProof": [
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "tls"
+              },
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "tls"
+              }
+            ],
+            "relayOnly": true,
+            "udpDisabledByBrowserPolicy": true
+          },
+          {
+            "scope": "two concurrent rooms/four peers; 1 MiB each; measured small-file load only",
+            "pass": true,
+            "elapsedMs": 11337,
+            "pairs": [
+              {
+                "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+                "bytes": 1048576,
+                "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+                "exportedFileVerified": true,
+                "receiptVerified": true,
+                "diagnosticsExported": true,
+                "relayProof": [
+                  {
+                    "localCandidateType": "relay",
+                    "remoteCandidateType": "relay",
+                    "relayProtocol": "tls"
+                  },
+                  {
+                    "localCandidateType": "relay",
+                    "remoteCandidateType": "relay",
+                    "relayProtocol": "tls"
+                  }
+                ],
+                "relayOnly": true,
+                "udpDisabledByBrowserPolicy": false
+              },
+              {
+                "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+                "bytes": 1048576,
+                "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+                "exportedFileVerified": true,
+                "receiptVerified": true,
+                "diagnosticsExported": true,
+                "relayProof": [
+                  {
+                    "localCandidateType": "relay",
+                    "remoteCandidateType": "relay",
+                    "relayProtocol": "tls"
+                  },
+                  {
+                    "localCandidateType": "relay",
+                    "remoteCandidateType": "relay",
+                    "relayProtocol": "tls"
+                  }
+                ],
+                "relayOnly": true,
+                "udpDisabledByBrowserPolicy": false
+              }
+            ]
+          }
+        ],
+        "pass": true,
+        "relay": {
+          "provider": "metered",
+          "ready": true,
+          "freeOnly": true,
+          "checkedAt": 1792947061638,
+          "usage": {
+            "quotaInGB": 0.5,
+            "usageInGB": 0.02,
+            "overageInGB": 0
+          },
+          "expiresAt": 1792947540737,
+          "nextReadyAt": null
+        },
+        "monitoring": {
+          "source": "Cloudflare account Workers/Pages/DO request analytics; may be sampled or delayed; not an invoice",
+          "available": true,
+          "lastCheckAt": 1792946891564,
+          "measured": {
+            "checkedAt": 1792946891564,
+            "dayStart": 1792886400000,
+            "requestsToday": 329,
+            "workerRequestsToday": 24,
+            "pagesRequestsToday": 305,
+            "durableRequestsToday": 192,
+            "errorsToday": 0
+          }
+        }
+      }
+    },
+    "production": {
+      "rawSha256": "8f3afb5feb49db3b7e1ff6bd4d8d617cb491f9d9398e093efe47860a4e24d77b",
+      "result": {
+        "checkedAt": "2026-10-25T17:18:04.821Z",
+        "origin": "https://meshdrop-7ce2dc2e-production.pages.dev",
+        "scope": "actual hosted Pages/Worker/SQLite control; two Linux Chromium contexts per pair; real remote Metered relay; independently hashed saved files, receipts and diagnostics",
+        "billingChanges": false,
+        "results": [
+          {
+            "transport": "udp",
+            "pass": true,
+            "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+            "bytes": 1048576,
+            "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+            "exportedFileVerified": true,
+            "receiptVerified": true,
+            "diagnosticsExported": true,
+            "relayProof": [
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "udp"
+              },
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "udp"
+              }
+            ],
+            "relayOnly": true,
+            "udpDisabledByBrowserPolicy": false
+          },
+          {
+            "transport": "tcp",
+            "pass": true,
+            "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+            "bytes": 1048576,
+            "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+            "exportedFileVerified": true,
+            "receiptVerified": true,
+            "diagnosticsExported": true,
+            "relayProof": [
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "tcp"
+              },
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "tcp"
+              }
+            ],
+            "relayOnly": true,
+            "udpDisabledByBrowserPolicy": true
+          },
+          {
+            "transport": "tls",
+            "pass": true,
+            "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+            "bytes": 1048576,
+            "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+            "exportedFileVerified": true,
+            "receiptVerified": true,
+            "diagnosticsExported": true,
+            "relayProof": [
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "tls"
+              },
+              {
+                "localCandidateType": "relay",
+                "remoteCandidateType": "relay",
+                "relayProtocol": "tls"
+              }
+            ],
+            "relayOnly": true,
+            "udpDisabledByBrowserPolicy": true
+          },
+          {
+            "scope": "two concurrent rooms/four peers; 1 MiB each; measured small-file load only",
+            "pass": true,
+            "elapsedMs": 13931,
+            "pairs": [
+              {
+                "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+                "bytes": 1048576,
+                "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+                "exportedFileVerified": true,
+                "receiptVerified": true,
+                "diagnosticsExported": true,
+                "relayProof": [
+                  {
+                    "localCandidateType": "relay",
+                    "remoteCandidateType": "relay",
+                    "relayProtocol": "tls"
+                  },
+                  {
+                    "localCandidateType": "relay",
+                    "remoteCandidateType": "relay",
+                    "relayProtocol": "tls"
+                  }
+                ],
+                "relayOnly": true,
+                "udpDisabledByBrowserPolicy": false
+              },
+              {
+                "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+                "bytes": 1048576,
+                "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+                "exportedFileVerified": true,
+                "receiptVerified": true,
+                "diagnosticsExported": true,
+                "relayProof": [
+                  {
+                    "localCandidateType": "relay",
+                    "remoteCandidateType": "relay",
+                    "relayProtocol": "tls"
+                  },
+                  {
+                    "localCandidateType": "relay",
+                    "remoteCandidateType": "relay",
+                    "relayProtocol": "tls"
+                  }
+                ],
+                "relayOnly": true,
+                "udpDisabledByBrowserPolicy": false
+              }
+            ]
+          }
+        ],
+        "pass": true,
+        "relay": {
+          "provider": "metered",
+          "ready": true,
+          "freeOnly": true,
+          "checkedAt": 1792948673518,
+          "usage": {
+            "quotaInGB": 0.5,
+            "usageInGB": 0.06,
+            "overageInGB": 0
+          },
+          "expiresAt": 1792949032919,
+          "nextReadyAt": null
+        },
+        "monitoring": {
+          "source": "Cloudflare account Workers/Pages/DO request analytics; may be sampled or delayed; not an invoice",
+          "available": true,
+          "lastCheckAt": 1792948133282,
+          "measured": {
+            "checkedAt": 1792948133282,
+            "dayStart": 1792886400000,
+            "requestsToday": 1913,
+            "workerRequestsToday": 467,
+            "pagesRequestsToday": 1446,
+            "durableRequestsToday": 1348,
+            "errorsToday": 0
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "preview": {
+      "rawSha256": "e42dd55b88cb08b836c71366b3decd58fb1e96d58fac3462d972178a387ff722",
+      "result": {
+        "pass": true,
+        "environment": "preview",
+        "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+        "scope": "actual failed-join control requests \u2192 aggregate monitor \u2192 HTTPS webhook \u2192 independent journal actor",
+        "attemptedFailedJoins": 10,
+        "deliveryVerified": true,
+        "emailSent": false,
+        "billingChanges": false
+      }
+    },
+    "production": {
+      "rawSha256": "232a69e77e1f25a87b42919a238071312c835255344578ea18ab5e9a9f69c9a3",
+      "result": {
+        "pass": true,
+        "environment": "production",
+        "origin": "https://meshdrop-7ce2dc2e-production.pages.dev",
+        "scope": "actual failed-join control requests \u2192 aggregate monitor \u2192 HTTPS webhook \u2192 independent journal actor",
+        "attemptedFailedJoins": 10,
+        "deliveryVerified": true,
+        "emailSent": false,
+        "billingChanges": false
+      }
+    }
+  },
+  "isolation": {
+    "rawSha256": "c9625bbd248c74608ba6d67037e7ce71294b22fe8ee6d2bd3be06d3e4485bcde",
+    "result": {
+      "checkedAt": "2026-10-25T18:21:54.270Z",
+      "pass": true,
+      "scope": "real deployed room namespace and operator authorization isolation; synthetic rooms only",
+      "results": [
+        {
+          "environment": "preview",
+          "otherRoomDenied": 404,
+          "otherOperatorDenied": 403,
+          "ownRoomAccessible": true
+        },
+        {
+          "environment": "production",
+          "otherRoomDenied": 404,
+          "otherOperatorDenied": 403,
+          "ownRoomAccessible": true
+        }
+      ]
+    }
+  },
+  "freeStatus": {
+    "rawSha256": "5d0d3fe9ef3ddb935484f264ac730a3a5f6d23da303e2e0d65c237c583c8963b",
+    "result": {
+      "checkedAt": "2026-10-25T18:35:06.489Z",
+      "billingMutations": false,
+      "cloudflare": [
+        {
+          "route": "billable-usage/info",
+          "status": 200,
+          "covered": false,
+          "subscriptionCount": 0
+        },
+        {
+          "route": "subscriptions",
+          "status": 200,
+          "subscriptionCount": 0
+        }
+      ],
+      "metered": {
+        "status": 200,
+        "quotaInGB": 0.5,
+        "usageInGB": 0.17,
+        "overageInGB": 0
+      }
+    }
+  },
+  "pairedV2Rollback": {
+    "rawSha256": "a275a9b54db9dc60492df1ce72ddff5f1cf1f773bd378cbac45352558551cb0a",
+    "result": {
+      "phase": "P9",
+      "scope": "coordinated public preview Pages/Worker rollback, persisted room and real browser transfer/receipt checks",
+      "origin": "https://meshdrop-8ab9cb08-preview.pages.dev",
+      "pass": true,
+      "error": "",
+      "transfers": {
+        "before": {
+          "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+          "bytes": 1048576,
+          "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+          "exportedFileVerified": true,
+          "receiptVerified": true,
+          "diagnosticsExported": true
+        },
+        "rollback": {
+          "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+          "bytes": 1048576,
+          "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+          "exportedFileVerified": true,
+          "receiptVerified": true,
+          "diagnosticsExported": true
+        },
+        "restored": {
+          "scope": "two Chromium contexts; public HTTPS/WSS; real WebRTC; synthetic file",
+          "bytes": 1048576,
+          "sha256": "628bbe4711817d96749ffe1999f6f579d2813dfd8146e6eae96b9df906ca756b",
+          "exportedFileVerified": true,
+          "receiptVerified": true,
+          "diagnosticsExported": true
+        }
+      },
+      "stage": "restored",
+      "preflight": [
+        {
+          "check": "active-pages",
+          "ok": true
+        },
+        {
+          "check": "active-worker",
+          "ok": true
+        },
+        {
+          "check": "pages-history",
+          "ok": true
+        },
+        {
+          "check": "public-assets",
+          "ok": true
+        }
+      ],
+      "rollbackAssets": {
+        "module": "/assets/index-BisTmpzy.js",
+        "sha256": "15dcbc4392afaee9432219ff1f5a072a440dd4f4e852382d0dfc098515236868"
+      },
+      "restoredAssets": {
+        "module": "/assets/index-BisTmpzy.js",
+        "sha256": "15dcbc4392afaee9432219ff1f5a072a440dd4f4e852382d0dfc098515236868"
+      },
+      "latest": {
+        "workerVersion": "22123cc8-ffec-4c74-9701-8372d3b65824",
+        "pagesDeployment": "1f255d69-70a1-4b74-91a7-e4941cf937b1"
+      },
+      "rollback": {
+        "workerVersion": "3e0f1c63-9035-4d05-b10c-9efe1da54a99",
+        "pagesDeployment": "1a0439f5-42c8-462c-a463-a1380862a4df"
+      },
+      "restored": true,
+      "checks": [
+        "previous compatible pair serves the recorded client and passes persisted-room plus fresh transfer/receipt gates",
+        "original pair and exact assets restored; persisted-room and fresh transfer/receipt gates pass"
+      ],
+      "candidateProvenance": "explicit previously verified component IDs; compatibility verified together in this drill, not inferred from timestamps or claimed as a historical source-matched release",
+      "originalAssets": {
+        "module": "/assets/index-BisTmpzy.js",
+        "sha256": "15dcbc4392afaee9432219ff1f5a072a440dd4f4e852382d0dfc098515236868"
+      },
+      "roomClosed": true,
+      "recordedAt": "2026-10-25T17:03:08.304Z"
+    }
+  },
+  "limitations": [
+    "The two concurrent pairs use 1 MiB files; this is measured small-file load, not a maximum concurrency guarantee.",
+    "Preview and production have separate actor namespaces/operator proofs but share provider account quotas.",
+    "Cloudflare request analytics can be sampled or delayed; duration and storage quotas require separate provider inspection.",
+    "The alert destination is an authenticated private polling journal; no email or human-recipient message was sent.",
+    "Both v2 rollback targets serve the same client asset digest; the drill verifies backend/configuration switching, not changed frontend code.",
+    "Earlier 10220 secret-change rollback attempts failed safely and restored the current pair. The passing drill allowed only the two explicitly reviewed provider-secret names.",
+    "Metered Free has a 0.5 GB shared monthly hard stop; new credential issuance stops at 0.45 GB. No deliberate quota exhaustion or billing activation."
+  ]
+}
