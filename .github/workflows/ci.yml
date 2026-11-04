@@ -8,8 +8,8 @@ permissions:
   contents: read
 
 jobs:
-  foundation:
-    runs-on: ubuntu-latest
+  core:
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     env:
       CI: 'true'
@@ -32,8 +32,40 @@ jobs:
       - run: pnpm test:integration
       - run: pnpm test:faults
       - run: pnpm build
+
+  browser:
+    runs-on: ubuntu-26.04
+    # The observed slow Linux dependency install took 13m45s. Give browser
+    # setup, the full suite and PWA checks their own budget, without core work.
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
       - run: pnpm test:pwa
       # Raw failure reports can contain short-lived invitation values.
       # Share only reviewed, sanitized evidence from docs/reports/evidence.
+
+  foundation:
+    # Keep the existing check name and require both independent jobs to pass.
+    if: always()
+    needs: [core, browser]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every phase gate
+        env:
+          CORE_RESULT: ${{ needs.core.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          test "$CORE_RESULT" = success
+          test "$BROWSER_RESULT" = success
