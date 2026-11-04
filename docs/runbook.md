@@ -68,16 +68,23 @@ logs. No human notification or paid alert subscription was created.
 
 ## Rollback
 
+Use the [production rollback and release recovery policy](production-rollback.md)
+before selecting any target. It defines the offline fail-closed validator,
+required archives, actor/migration restrictions, draining, and the separate
+hosted authorization gates. Historical preview drills below are scoped evidence
+and do not certify a current production target.
+
 Before each production publish, record the current successful Worker version and
 Pages **production** deployment ID in a private release record, along with the
 artifact manifest, origin, configuration and timestamp. Keep the prior successful
 static bundle until acceptance. Do not record secrets in the release record.
-Pause new rooms when practical, then use Wrangler `rollback VERSION_ID --config
-.meshdrop-artifacts/deploy/production/worker.json` and roll back Pages to its
-recorded production deployment in Cloudflare's dashboard. Choose the matching
-frontend/backend pair, verify `/ready` and protocol compatibility, and execute a
-new-room/pair/transfer/receipt smoke test before reopening admission. Each action
-is separate; rollback is not atomic across products.
+Validate both frozen release archives with `pnpm verify:rollback-target` before
+considering a separately authorized hosted operation. Do not infer compatibility
+from previous-version order or migration tag alone. If no accepted compatible
+target can be established, follow the forward-fix/maintenance recovery path in
+the policy. Each component change is separate; rollback is not atomic across
+products. Preserve admission controls and verify the matching frontend/backend
+pair before reopening admission.
 
 Reproduce the local persisted-state drill with `pnpm verify:rollback` (requires the
 P8 baseline commit in local Git history). It reads the old source into ignored

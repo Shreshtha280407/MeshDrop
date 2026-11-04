@@ -36,6 +36,7 @@
     "deploy:cloud": "tsx scripts/deploy/cloudflare.ts",
     "bench:p9": "node scripts/benchmarks/release.mjs",
     "verify:rollback": "tsx scripts/deploy/verify-rollback.ts",
+    "verify:rollback-target": "tsx scripts/deploy/verify-rollback-target.ts",
     "verify:public": "tsx scripts/deploy/public-smoke.ts",
     "verify:phone": "node --import tsx scripts/deploy/verify-phone.mjs",
     "verify:public-rollback": "tsx scripts/deploy/verify-public-rollback.ts",
