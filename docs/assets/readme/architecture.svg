@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="820" viewBox="0 0 1600 820" fill="none">
+  <title>MeshDrop architecture: cloud coordination, device-owned files</title>
+  <desc>Cloudflare Pages serves the web application. A same-origin gateway connects to a private Worker and SQLite-backed Durable Objects for admission and signaling. Browsers exchange encrypted file data directly or through an optional TURN relay; file storage and verification stay on devices.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" stroke="#43694B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+  <rect width="1600" height="820" rx="24" fill="#F1F4EB"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="64" y="70" fill="#183B35" font-size="29" font-weight="650">Cloud coordination. Device-owned files.</text>
+    <text x="64" y="105" fill="#5E7065" font-size="19">Control messages and file bytes follow different paths.</text>
+    <rect x="546" y="146" width="508" height="164" rx="18" fill="#E4EBD9" stroke="#A0B597"/>
+    <text x="800" y="181" fill="#52734E" font-size="14" font-weight="600" letter-spacing="2" text-anchor="middle">CONTROL PLANE · CLOUDFLARE</text>
+    <text x="800" y="218" fill="#183B35" font-size="23" font-weight="600" text-anchor="middle">Pages → private Worker → room actors</text>
+    <text x="800" y="252" fill="#5A6E59" font-size="18" text-anchor="middle">Admission · capabilities · signaling · expiry</text>
+    <text x="800" y="282" fill="#5A6E59" font-size="17" text-anchor="middle">SQLite-backed Durable Objects</text>
+    <path d="M546 240H266V352M1054 240H1334V352" stroke="#88A079" stroke-width="2" stroke-dasharray="6 7" marker-end="url(#arrow)"/>
+    <text x="298" y="226" fill="#667F5C" font-size="16">HTTPS / WSS</text>
+    <text x="1177" y="226" fill="#667F5C" font-size="16">HTTPS / WSS</text>
+    <rect x="64" y="352" width="420" height="202" rx="18" fill="#FFF" stroke="#B8C9AB"/>
+    <text x="96" y="388" fill="#6B825E" font-size="14" font-weight="600" letter-spacing="2">SENDER BROWSER</text>
+    <text x="96" y="430" fill="#183B35" font-size="26" font-weight="600">Source → hash → stream</text>
+    <text x="96" y="466" fill="#5E7065" font-size="19">Bounded buffers · flow control</text>
+    <text x="96" y="499" fill="#5E7065" font-size="19">Original source for recovery</text>
+    <text x="96" y="532" fill="#5E7065" font-size="19">Signed controls and receipt</text>
+    <rect x="1116" y="352" width="420" height="202" rx="18" fill="#FFF" stroke="#B8C9AB"/>
+    <text x="1148" y="388" fill="#6B825E" font-size="14" font-weight="600" letter-spacing="2">RECEIVER BROWSER</text>
+    <text x="1148" y="430" fill="#183B35" font-size="26" font-weight="600">Verify → store → save</text>
+    <text x="1148" y="466" fill="#5E7065" font-size="19">OPFS bytes · IndexedDB ledger</text>
+    <text x="1148" y="499" fill="#5E7065" font-size="19">Committed-storage acknowledgments</text>
+    <text x="1148" y="532" fill="#5E7065" font-size="19">Rehash checkpoints on reopen</text>
+    <path d="M502 423H1095" stroke="#43694B" stroke-width="3" marker-end="url(#arrow)"/>
+    <text x="800" y="386" fill="#183B35" font-size="21" font-weight="600" text-anchor="middle">Encrypted WebRTC data channels</text>
+    <text x="800" y="458" fill="#5E7065" font-size="18" text-anchor="middle">Files · manifests · block hashes</text>
+    <path d="M1095 490H502" stroke="#7B9868" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="800" y="520" fill="#5E7065" font-size="17" text-anchor="middle">Storage ACKs · verification · receipt</text>
+    <rect x="546" y="598" width="508" height="106" rx="16" fill="#E6EDDC" stroke="#A0B597"/>
+    <text x="800" y="637" fill="#183B35" font-size="23" font-weight="600" text-anchor="middle">TURN relay when a direct path fails</text>
+    <text x="800" y="674" fill="#5E7065" font-size="18" text-anchor="middle">Forwards encrypted traffic · provider quota applies</text>
+    <path d="M274 572V650H526M1074 650H1326V572" stroke="#88A079" stroke-width="2" stroke-dasharray="6 7" marker-end="url(#arrow)"/>
+    <text x="800" y="768" fill="#42624A" font-size="19" text-anchor="middle">File bodies and manifests have no signaling-server upload API. Local diagnostics stay on devices.</text>
+  </g>
+</svg>

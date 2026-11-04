@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" fill="none">
+  <title>MeshDrop — your files, your devices, your control.</title>
+  <desc>Two browsers exchange encrypted file blocks after room approval and independent code comparison. The receiver verifies and saves the file locally.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="760" gradientUnits="userSpaceOnUse"><stop stop-color="#102E28"/><stop offset="1" stop-color="#193D33"/></linearGradient>
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse"><path d="M44 0H0V44" stroke="#C5E6BE" stroke-opacity=".055"/></pattern>
+    <linearGradient id="line" x1="944" x2="1398" y1="390" y2="390" gradientUnits="userSpaceOnUse"><stop stop-color="#7FAD76"/><stop offset=".5" stop-color="#D9F6A7"/><stop offset="1" stop-color="#7FAD76"/></linearGradient>
+  </defs>
+  <rect width="1600" height="760" rx="28" fill="url(#bg)"/>
+  <rect width="1600" height="760" rx="28" fill="url(#grid)"/>
+  <circle cx="1320" cy="300" r="238" stroke="#C5E6BE" stroke-opacity=".07"/>
+  <circle cx="1320" cy="300" r="302" stroke="#C5E6BE" stroke-opacity=".04"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <rect x="76" y="62" width="48" height="48" rx="12" fill="#D9F6A7"/>
+    <path d="M88 96V78L100 88L112 78V96" stroke="#173D33" stroke-width="3.5" stroke-linejoin="round"/>
+    <text x="140" y="97" fill="#F2F7EB" font-size="32" font-weight="650" letter-spacing="-1">MeshDrop</text>
+    <rect x="1327" y="69" width="197" height="34" rx="17" stroke="#648567"/>
+    <circle cx="1347" cy="86" r="4" fill="#D9F6A7"/>
+    <text x="1360" y="91" fill="#C8D8BF" font-size="12">BUILT FOR THE BROWSER</text>
+    <text x="76" y="191" fill="#B7D49F" font-size="15" font-weight="600" letter-spacing="3">PRIVATE SHARING STARTS WITH PERMISSION.</text>
+    <g font-size="86" font-weight="600" letter-spacing="-4">
+      <text x="70" y="303" fill="#F3F6EB">Your files.</text>
+      <text x="70" y="400" fill="#F3F6EB">Your devices.</text>
+      <text x="70" y="497" fill="#D9F6A7">Your control.</text>
+    </g>
+    <text x="76" y="555" fill="#B9CCBB" font-size="23">Approve a peer. Verify the bytes. Keep a local copy.</text>
+    <g transform="translate(818 183)">
+      <rect x="151" y="0" width="362" height="90" rx="16" fill="#24493C" stroke="#50765B"/>
+      <circle cx="181" cy="30" r="5" fill="#D9F6A7"/>
+      <text x="198" y="36" fill="#DFECCD" font-size="17" font-weight="600">ONE SHORT-LIVED ROOM</text>
+      <text x="178" y="65" fill="#B6CCB6" font-size="17">Invite → approve → compare codes</text>
+      <path d="M181 90V125H116V165M483 90V125H548V165" stroke="#789D74" stroke-width="2" stroke-dasharray="5 7"/>
+      <rect x="0" y="165" width="228" height="216" rx="20" fill="#183A31" stroke="#638367"/>
+      <rect x="27" y="191" width="174" height="104" rx="9" fill="#102B25" stroke="#86A17B"/>
+      <path d="M45 213H132M45 232H105" stroke="#769A70" stroke-width="5" stroke-linecap="round"/>
+      <rect x="45" y="254" width="27" height="21" rx="3" fill="#D9F6A7"/>
+      <rect x="80" y="254" width="27" height="21" rx="3" fill="#D9F6A7" opacity=".65"/>
+      <rect x="115" y="254" width="27" height="21" rx="3" fill="#D9F6A7" opacity=".3"/>
+      <text x="114" y="330" fill="#F1F6E8" font-size="23" font-weight="600" text-anchor="middle">Your browser</text>
+      <text x="114" y="357" fill="#B5CBB0" font-size="16" text-anchor="middle">Original file stays with you</text>
+      <rect x="436" y="165" width="228" height="216" rx="20" fill="#183A31" stroke="#638367"/>
+      <rect x="503" y="188" width="94" height="112" rx="13" fill="#102B25" stroke="#86A17B"/>
+      <path d="M534 243L546 255L568 228" stroke="#D9F6A7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="550" y="330" fill="#F1F6E8" font-size="23" font-weight="600" text-anchor="middle">Their browser</text>
+      <text x="550" y="357" fill="#B5CBB0" font-size="16" text-anchor="middle">Verified, stored, ready to save</text>
+      <path d="M232 235H428" stroke="url(#line)" stroke-width="2"/>
+      <path d="M419 228L429 235L419 242" stroke="#D9F6A7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="281" y="217" width="36" height="36" rx="9" fill="#D9F6A7"/>
+      <path d="M293 237V232C293 225 305 225 305 232V237M291 236H307V245H291Z" stroke="#173D33" stroke-width="2" stroke-linejoin="round"/>
+      <text x="330" y="279" text-anchor="middle" fill="#D5E7C1" font-size="16">Encrypted WebRTC</text>
+      <text x="330" y="304" text-anchor="middle" fill="#A9C2A5" font-size="14">Direct or via TURN</text>
+    </g>
+    <path d="M76 620H1524" stroke="#46664D"/>
+    <g fill="#C1D3B5" font-size="17">
+      <text x="76" y="678">01 / No account</text>
+      <text x="427" y="678">02 / Explicit approval</text>
+      <text x="824" y="678">03 / SHA-256 verification</text>
+      <text x="1263" y="678">04 / Missing-only resume</text>
+    </g>
+  </g>
+</svg>

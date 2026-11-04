@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "applicationRevision": "1f5af258a639651fdc8b588637920ca31bd88986",
+  "capturedDate": "2026-11-04",
+  "desktop": {
+    "capturedAt": "2026-11-04T12:57:30.753Z",
+    "scope": "Real local Worker/SQLite/WebSocket and WebRTC between two isolated Chromium profiles; synthetic files; no cloud or physical-device certification.",
+    "viewport": {
+      "width": 760,
+      "height": 820
+    },
+    "results": [
+      {
+        "name": "transfer",
+        "bytes": 16777216,
+        "sourceSha256": "cd878be47867e47b54047d1b63fe3de06669e16415fb639b866f9688e66c5bef",
+        "exportedSha256": "cd878be47867e47b54047d1b63fe3de06669e16415fb639b866f9688e66c5bef",
+        "savedFileVerified": true,
+        "receiptVerified": true,
+        "diagnosticsVerified": true,
+        "pageErrors": 0,
+        "reusedVerifiedBytes": 0,
+        "payloadBytesAfterRestart": 16777216,
+        "connectionRestart": null,
+        "durationSeconds": 23.395
+      },
+      {
+        "name": "recovery",
+        "bytes": 33554432,
+        "sourceSha256": "51a189237546c8958612a6b6bcb32b6ad55f2f11ece796a637101a9626f4a88f",
+        "exportedSha256": "51a189237546c8958612a6b6bcb32b6ad55f2f11ece796a637101a9626f4a88f",
+        "savedFileVerified": true,
+        "receiptVerified": true,
+        "diagnosticsVerified": true,
+        "pageErrors": 0,
+        "reusedVerifiedBytes": 12582912,
+        "payloadBytesAfterRestart": 20971520,
+        "connectionRestart": "Explicit ICE restart; epoch 1 to 2; fresh comparison; no physical outage claim.",
+        "durationSeconds": 34.773
+      }
+    ]
+  },
+  "physicalAndroid": {
+    "capturedAt": "2026-11-04T13:15:36.490Z",
+    "device": "OPPO F19 Pro / CPH2285 / Android 13",
+    "developerOptionsEnabled": true,
+    "usbDebuggingEnabled": true,
+    "phoneBrowser": "156.0.8078.73",
+    "desktopBrowser": "156.0.8078.4",
+    "scope": "Physical Android Chrome and desktop Chromium; local Worker/SQLite/WebSocket via ADB reverse; real WebRTC file transfer; synthetic file; timed live Chrome CDP frames plus native ADB screenshots. This does not certify a public network or a USB-independent path.",
+    "bytes": 8388608,
+    "sourceSha256": "1e59e06b265fa060b0ff267c0fa000a62a68c3d3aef89c4b77b7834864eba214",
+    "exportedSha256": "1e59e06b265fa060b0ff267c0fa000a62a68c3d3aef89c4b77b7834864eba214",
+    "nativeAndroidDownloadVerified": true,
+    "receiptVerified": true,
+    "pageErrors": 0,
+    "captureMethod": "Timed live CDP screenshots of the owned real-handset browser tab assembled into video; native ADB screencap stills; system screenrecord is absent on this firmware.",
+    "phoneRecordingOffsetSeconds": 1.799,
+    "phoneSettingsChanged": false,
+    "recordedFrames": 76
+  },
+  "presentation": {
+    "mp4": "Two real views composed with external title bars; original timing. Desktop Android-demo setup trimmed by the recorded handset start offset.",
+    "gif": "7 fps; 1.35x playback; lower-resolution preview.",
+    "stills": "Captured screenshots encoded to WebP; native ADB screenshots on the handset.",
+    "illustrations": "Original code-drawn SVG diagrams; not application screenshots."
+  },
+  "media": [
+    {
+      "file": "android-desktop.webp",
+      "bytes": 39754,
+      "sha256": "dd82836930c7cbb67a35408ee2deae1e398eba6ca23f94e8c50cdb4db6144e2b",
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "file": "android-home.webp",
+      "bytes": 81568,
+      "sha256": "2a18cd627782309f9d43a6df2d872e44b7dfeaf4ffed53473fa23b6326601718",
+      "width": 1080,
+      "height": 2400
+    },
+    {
+      "file": "android-insights.webp",
+      "bytes": 107282,
+      "sha256": "84c028a3606ab1f6214803834c0f7def5d00989efdc0ce6d04c252d86057f70f",
+      "width": 1080,
+      "height": 2400
+    },
+    {
+      "file": "android-pairing.webp",
+      "bytes": 114080,
+      "sha256": "60de2d5dd9640a6b71b8fd3367d0f68dfad46217deaac9420cde46577cd2fc9e",
+      "width": 1080,
+      "height": 2400
+    },
+    {
+      "file": "android-phone.webp",
+      "bytes": 106270,
+      "sha256": "53464792961a5d5a58ee03f6bb8aee2823321302969882d18d275b5d8822ee1a",
+      "width": 1080,
+      "height": 2400
+    },
+    {
+      "file": "android-transfer.gif",
+      "bytes": 2675605,
+      "sha256": "3c4a55bda9f0fb20c23cd1980df10f3154e9999de5319885cd7a6345adeef3a8",
+      "width": 1100,
+      "height": 715,
+      "frames": 192
+    },
+    {
+      "file": "android-transfer.mp4",
+      "bytes": 910638,
+      "sha256": "50bf6592f0a26f3776d2a76761a2f4640ff64fcaa4cadfe9bf608b3ce0c1bffa",
+      "durationSeconds": 37.04,
+      "width": 1400,
+      "height": 910
+    },
+    {
+      "file": "architecture.svg",
+      "bytes": 4457,
+      "sha256": "e8605b6aaa947ffdecfc45b01819aef4fd3ddb3532e1d0f0ec637164dd380b0a"
+    },
+    {
+      "file": "browser-insights.webp",
+      "bytes": 45620,
+      "sha256": "6d637ea3d3978b2bc1d1afe2096fd6beea18f78a40e959e7f86ce2db00378407",
+      "width": 760,
+      "height": 820
+    },
+    {
+      "file": "browser-recovery.gif",
+      "bytes": 4137499,
+      "sha256": "8111576f79086d16419f5531bced9e5b6ee5da118f1b23c787873fb672d9f0c2",
+      "width": 1100,
+      "height": 669,
+      "frames": 190
+    },
+    {
+      "file": "browser-recovery.mp4",
+      "bytes": 1388778,
+      "sha256": "3c992430e285068cb1aa789a8d7c14bba11ee349cc1812c8994fd79b1b0145fd",
+      "durationSeconds": 36.72,
+      "width": 1400,
+      "height": 852
+    },
+    {
+      "file": "browser-transfer.gif",
+      "bytes": 2886871,
+      "sha256": "ab90a84257b7828dec7ac31a275cec0a82b1c64407ccc57c690cec18c3507394",
+      "width": 1100,
+      "height": 669,
+      "frames": 120
+    },
+    {
+      "file": "browser-transfer.mp4",
+      "bytes": 936601,
+      "sha256": "e7ebf49be30e90906fe55c6d438dca8b99fa43d0139ff2e86a5c08a141b3011f",
+      "durationSeconds": 23.2,
+      "width": 1400,
+      "height": 852
+    },
+    {
+      "file": "desktop-home.webp",
+      "bytes": 41382,
+      "sha256": "c1b995a705f5a9da90f8baaa3383506dbe0cb4a538c7aee4612c18e6cb8f8036",
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "file": "desktop-insights.webp",
+      "bytes": 66412,
+      "sha256": "bb116bb1fa16f8e0f221b4850d015d8e0c67906d5725bc42f42efb426b60d35a",
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "file": "hero.svg",
+      "bytes": 5028,
+      "sha256": "a68564796a383843e8f2da8ab5286000e243b345e85ee82dd8a81cb440f01ed2"
+    },
+    {
+      "file": "pairing.webp",
+      "bytes": 54100,
+      "sha256": "cddb3f8f9a781a11f7dec4342ed7b23be775703efb52764a45769662586b8b6e",
+      "width": 712,
+      "height": 1248
+    },
+    {
+      "file": "recovery.webp",
+      "bytes": 42610,
+      "sha256": "8c55f4fd103ab479dd3ca50c9b59549992a0b1a90ade3a8240bb4527c89b5f04",
+      "width": 712,
+      "height": 960
+    },
+    {
+      "file": "verified.webp",
+      "bytes": 33514,
+      "sha256": "93953fa1e99facaf97cc2a39c434294de498ae79e8fbd55ba52c83115e7e0589",
+      "width": 712,
+      "height": 757
+    }
+  ]
+}
