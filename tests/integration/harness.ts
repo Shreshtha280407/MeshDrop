@@ -23,6 +23,7 @@ export async function runtime(
     persist?: string;
     gateway?: boolean;
     script?: string;
+    durableObjects?: V4WorkerOptions['durableObjects'];
     outboundService?: V4WorkerOptions['outboundService'];
   } = {},
 ): Promise<Miniflare> {
@@ -57,7 +58,7 @@ export async function runtime(
       CLOSED_TOMBSTONE_SECONDS: '60',
       ...options.bindings,
     },
-    durableObjects: {
+    durableObjects: options.durableObjects ?? {
       SESSION_ROOMS: { className: 'SessionRoom', useSQLite: true },
       RELAY_POOLS: { className: 'RelayPool', useSQLite: true },
       OPERATIONS_MONITOR: { className: 'OperationsMonitor', useSQLite: true },
