@@ -8,6 +8,14 @@ import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import ts from 'typescript';
 import { deploymentConfig } from './config';
+import {
+  bytesHash,
+  fingerprint,
+  parseManifest,
+  parseRecord,
+  requireAccepted,
+} from './release-record';
+import type { Manifest, ReleaseRecord } from './release-record';
 
 const INPUTS = [
   'apps',
@@ -310,8 +318,10 @@ export type Archive = {
   environment: 'preview' | 'production';
   origin: string;
   worker: string;
-  workerVersion: string;
-  pagesDeployment: string;
+  workerVersion: string | null;
+  pagesDeployment: string | null;
+  manifest?: Manifest;
+  record?: ReleaseRecord;
   workerConfig: unknown;
   pagesConfig: unknown;
 };
@@ -329,18 +339,31 @@ export async function validateArchive(
   web: Record<string, string>,
 ): Promise<Archive> {
   const record = object(await json(join(directory, 'manifest.json')));
+  const versioned = record.schemaVersion === 2 ? parseManifest(record) : undefined;
+  if (!versioned) {
+    requireValue(
+      record.schemaVersion === 1 &&
+        record.sourceCommit === snapshot.commit &&
+        ['preview', 'production'].includes(String(record.environment)) &&
+        typeof record.origin === 'string' &&
+        typeof record.worker === 'string' &&
+        typeof record.workerVersion === 'string' &&
+        uuid.test(record.workerVersion) &&
+        typeof record.pagesDeployment === 'string' &&
+        uuid.test(record.pagesDeployment),
+      'INCOMPLETE_RELEASE_RECORD',
+      'Require schemaVersion 1, exact sourceCommit, scope and recorded Worker/Pages IDs. Legacy manifests are insufficient.',
+    );
+  }
   requireValue(
-    record.schemaVersion === 1 &&
-      record.sourceCommit === snapshot.commit &&
-      ['preview', 'production'].includes(String(record.environment)) &&
-      typeof record.origin === 'string' &&
-      typeof record.worker === 'string' &&
-      typeof record.workerVersion === 'string' &&
-      uuid.test(record.workerVersion) &&
-      typeof record.pagesDeployment === 'string' &&
-      uuid.test(record.pagesDeployment),
-    'INCOMPLETE_RELEASE_RECORD',
-    'Require schemaVersion 1, exact sourceCommit, scope and recorded Worker/Pages IDs. Legacy manifests are insufficient.',
+    record.sourceCommit === snapshot.commit,
+    'SOURCE_IDENTITY_MISMATCH',
+    'Archive source does not match the exact target commit.',
+  );
+  requireValue(
+    typeof record.origin === 'string' && typeof record.worker === 'string',
+    'INVALID_RELEASE_SCOPE',
+    'Release origin and Worker identity are required.',
   );
   requireValue(
     record.protocolVersion === snapshot.protocol,
@@ -408,17 +431,64 @@ export async function validateArchive(
     'ARTIFACT_MISMATCH',
     'Missing, extra or changed artifacts; archived Worker, gateway and client must match the frozen sources and local rebuild.',
   );
+  let release: ReleaseRecord | undefined;
+  if (versioned) {
+    const rootPackage = JSON.parse(source(snapshot.commit, 'package.json')) as {
+      packageManager: string;
+      devDependencies: { esbuild: string };
+    };
+    const webPackage = JSON.parse(source(snapshot.commit, 'apps/web/package.json')) as {
+      devDependencies: { vite: string };
+    };
+    requireValue(
+      versioned.sourceTreeSha256 === bytesHash(git(['ls-tree', '-r', snapshot.commit])) &&
+        versioned.configurationSha256 === fingerprint({ worker, pages }) &&
+        versioned.migrationsSha256 ===
+          fingerprint({
+            bindings: expected.worker.durable_objects.bindings,
+            migrations: expected.worker.migrations,
+          }) &&
+        versioned.toolchain.lockSha256 === bytesHash(source(snapshot.commit, 'pnpm-lock.yaml')) &&
+        `pnpm@${versioned.toolchain.pnpm}` === rootPackage.packageManager &&
+        versioned.toolchain.esbuild === rootPackage.devDependencies.esbuild &&
+        versioned.toolchain.vite === webPackage.devDependencies.vite,
+      'PROVENANCE_CONTENT_MISMATCH',
+      'Source/configuration/migration/toolchain fingerprints differ from the release record.',
+    );
+    try {
+      release = parseRecord(await json(join(directory, 'release.json')), versioned);
+    } catch {
+      throw new CompatibilityError(
+        'RELEASE_STATE_REQUIRED',
+        'A complete versioned lifecycle record is required.',
+      );
+    }
+  }
   return {
     environment,
     origin: record.origin,
     worker: record.worker,
-    workerVersion: record.workerVersion,
-    pagesDeployment: record.pagesDeployment,
+    workerVersion: versioned
+      ? (release?.provider.workerVersion ?? null)
+      : (record.workerVersion as string),
+    pagesDeployment: versioned
+      ? (release?.provider.pagesDeployment ?? null)
+      : (record.pagesDeployment as string),
+    ...(versioned ? { manifest: versioned } : {}),
+    ...(release ? { record: release } : {}),
     workerConfig: worker,
     pagesConfig: pages,
   };
 }
 export function compareArchives(current: Archive, target: Archive): void {
+  requireValue(
+    current.workerVersion &&
+      target.workerVersion &&
+      current.pagesDeployment &&
+      target.pagesDeployment,
+    'RELEASE_IDENTITIES_UNVERIFIED',
+    'Both provider identity fields are required; this content check does not authenticate them.',
+  );
   requireValue(
     current.environment === target.environment &&
       current.origin === target.origin &&
@@ -435,10 +505,72 @@ export function compareArchives(current: Archive, target: Archive): void {
   );
 }
 
+/** Content integrity only. Eligibility additionally requires authenticated accepted provenance. */
+export async function verifyArchivePair(
+  latest: CommitSnapshot,
+  previous: CommitSnapshot,
+  archives: { current: string; target: string },
+): Promise<{ current: Archive; target: Archive }> {
+  const temporary = await mkdtemp(join(tmpdir(), 'meshdrop-rollback-client-'));
+  try {
+    // Fixed local build only; never run deployment scripts or historical commands.
+    execFileSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '--eval',
+        `import { build } from ${JSON.stringify(pathToFileURL(resolve('apps/web/node_modules/vite/dist/node/index.js')).href)};
+          await build(${JSON.stringify({ root: resolve('apps/web'), configFile: resolve('apps/web/vite.config.ts'), envFile: false, logLevel: 'silent', build: { outDir: join(temporary, 'web'), emptyOutDir: true } })});`,
+      ],
+      {
+        cwd: resolve('apps/web'),
+        stdio: ['ignore', 'pipe', 'pipe'],
+        // No .env loading, VITE_* injection, provider credentials or NODE_OPTIONS.
+        env: { PATH: process.env.PATH, NODE_ENV: 'production' },
+      },
+    );
+    const web = await artifactHashes(join(temporary, 'web'));
+    const pair = {
+      current: await validateArchive(resolve(archives.current), latest, web),
+      target: await validateArchive(resolve(archives.target), previous, web),
+    };
+    compareArchives(pair.current, pair.target);
+    return pair;
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+}
+export async function verifyPairProvenance(
+  pair: { current: Archive; target: Archive },
+  authenticate?: (manifest: Manifest, record: ReleaseRecord) => Promise<boolean>,
+): Promise<void> {
+  for (const archive of [pair.current, pair.target]) {
+    requireValue(
+      archive.manifest && archive.record,
+      'RELEASE_PROVENANCE_REQUIRED',
+      'Legacy hashes and UUID-shaped fields do not establish accepted release provenance.',
+    );
+    try {
+      requireAccepted(archive.manifest, archive.record);
+    } catch {
+      throw new CompatibilityError(
+        'UNVERIFIED_RELEASE_PROVENANCE',
+        'Prepared, rejected, incomplete and offline-fixture releases are not eligible.',
+      );
+    }
+    requireValue(
+      authenticate && (await authenticate(archive.manifest, archive.record)),
+      'PROVIDER_AUTHENTICATION_REQUIRED',
+      'Independent authorized provider/journal authentication is required; unsigned JSON is not proof.',
+    );
+  }
+}
+
 export async function verifyRollbackTarget(
   current: string,
   target: string,
   archives?: { current: string; target: string },
+  authenticate?: (manifest: Manifest, record: ReleaseRecord) => Promise<boolean>,
 ) {
   const report = {
     scope: 'offline source/artifact compatibility; no deployment authorization',
@@ -446,6 +578,8 @@ export async function verifyRollbackTarget(
     productionApproved: false,
     sourceCompatible: false,
     artifactsVerified: false,
+    provenanceVerified: false,
+    workingTreeVerified: false,
     current,
     target,
     issues: [] as Issue[],
@@ -460,15 +594,6 @@ export async function verifyRollbackTarget(
       git(['rev-parse', 'HEAD']).trim() === current,
       'CURRENT_HEAD_MISMATCH',
       'Current commit must equal this checkout HEAD.',
-    );
-    requireValue(
-      !git(['status', '--porcelain', '--untracked-files=normal', '--', ...INPUTS]) &&
-        isDeepStrictEqual(
-          toolchain(await readFile('package.json', 'utf8')),
-          toolchain(source(current, 'package.json')),
-        ),
-      'DIRTY_RELEASE_INPUTS',
-      'Preserve and separately review local release-input changes before validation.',
     );
     const latest = await inspectCommit(current),
       previous = await inspectCommit(target);
@@ -504,33 +629,20 @@ export async function verifyRollbackTarget(
       'RELEASE_ARCHIVES_REQUIRED',
       'Supply both frozen current and target release directories with complete reviewed metadata.',
     );
-    const temporary = await mkdtemp(join(tmpdir(), 'meshdrop-rollback-client-'));
-    try {
-      // Fixed local build only; never run deployment scripts or historical commands.
-      execFileSync(
-        process.execPath,
-        [
-          '--input-type=module',
-          '--eval',
-          `import { build } from ${JSON.stringify(pathToFileURL(resolve('apps/web/node_modules/vite/dist/node/index.js')).href)};
-          await build(${JSON.stringify({ root: resolve('apps/web'), configFile: resolve('apps/web/vite.config.ts'), envFile: false, logLevel: 'silent', build: { outDir: join(temporary, 'web'), emptyOutDir: true } })});`,
-        ],
-        {
-          cwd: resolve('apps/web'),
-          stdio: ['ignore', 'pipe', 'pipe'],
-          // No .env loading, VITE_* injection, provider credentials or NODE_OPTIONS.
-          env: { PATH: process.env.PATH, NODE_ENV: 'production' },
-        },
-      );
-      const web = await artifactHashes(join(temporary, 'web'));
-      compareArchives(
-        await validateArchive(resolve(archives.current), latest, web),
-        await validateArchive(resolve(archives.target), previous, web),
-      );
-      report.artifactsVerified = true;
-    } finally {
-      await rm(temporary, { recursive: true, force: true });
-    }
+    requireValue(
+      !git(['status', '--porcelain', '--untracked-files=normal', '--', ...INPUTS]) &&
+        isDeepStrictEqual(
+          toolchain(await readFile('package.json', 'utf8')),
+          toolchain(source(current, 'package.json')),
+        ),
+      'DIRTY_RELEASE_INPUTS',
+      'Preserve and separately review local release-input changes before validation.',
+    );
+    report.workingTreeVerified = true;
+    const pair = await verifyArchivePair(latest, previous, archives);
+    report.artifactsVerified = true;
+    await verifyPairProvenance(pair, authenticate);
+    report.provenanceVerified = true;
     report.pass = true;
   } catch (error) {
     report.pass = false;

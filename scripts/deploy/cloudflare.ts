@@ -1,13 +1,16 @@
 import { execFile, spawn } from 'node:child_process';
-import { randomBytes, createHash } from 'node:crypto';
-import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { randomBytes } from 'node:crypto';
+import { lstat, mkdir, mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
+import { resolve, join, relative, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import { parseEnv, promisify } from 'node:util';
-import { build } from 'esbuild';
 import { deploymentConfig, environment } from './config';
 import { ensureWorkersSubdomain } from './bootstrap';
+import { collectSource, prepareRelease, verifyPreparedArtifacts } from './release-preparation';
+import { parseManifest, requireRelease, ReleaseError } from './release-record';
+import { writeBlockedPublication } from './release-lifecycle';
 
-const [command, targetValue] = process.argv.slice(2);
+const [command, targetValue, directoryValue] = process.argv.slice(2);
 const target = environment(targetValue);
 const root = process.cwd();
 const envPath = resolve(root, 'infrastructure/cloudflare', target, '.env');
@@ -24,21 +27,33 @@ async function run(binary: string, args: string[], cwd: string, env: NodeJS.Proc
   if (result)
     throw new Error('Deployment command failed; do not proceed to the next release step.');
 }
-async function files(directory: string, prefix = ''): Promise<Record<string, string>> {
-  const hashes: Record<string, string> = {};
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const path = join(directory, entry.name);
-    const name = `${prefix}${entry.name}`;
-    if (entry.isDirectory()) Object.assign(hashes, await files(path, `${name}/`));
-    else
-      hashes[name] = createHash('sha256')
-        .update(await readFile(path))
-        .digest('hex');
-  }
-  return hashes;
+async function releaseDirectory() {
+  requireRelease(directoryValue, 'EXPLICIT_RELEASE_DIRECTORY_REQUIRED');
+  const base = await realpath(resolve(root, '.meshdrop-artifacts/deploy', target));
+  const directory = await realpath(resolve(root, directoryValue));
+  requireRelease(
+    directory.startsWith(base + sep) &&
+      !(await lstat(resolve(root, directoryValue))).isSymbolicLink(),
+    'RELEASE_DIRECTORY_SCOPE_MISMATCH',
+  );
+  const manifest = parseManifest(
+    JSON.parse(await readFile(join(directory, 'manifest.json'), 'utf8')),
+  );
+  requireRelease(manifest.environment === target, 'RELEASE_ENVIRONMENT_MISMATCH');
+  await verifyPreparedArtifacts(directory, manifest);
+  return { directory, manifest };
 }
+
 try {
-  if (command === 'init') {
+  if (command === 'publish') {
+    // Deliberately before private .env/auth access. Never fall back to the old
+    // exit-code-only publication path without independent hosted readback.
+    const { manifest } = await releaseDirectory();
+    await writeBlockedPublication(
+      resolve(root, '.meshdrop-artifacts/releases', target, manifest.id),
+      manifest,
+    );
+  } else if (command === 'init') {
     await mkdir(resolve(envPath, '..'), { recursive: true });
     const example = await readFile(resolve(root, 'infrastructure/cloudflare/.env.example'), 'utf8');
     await writeFile(
@@ -67,71 +82,49 @@ try {
       ...(values.CLOUDFLARE_API_TOKEN ? { CLOUDFLARE_API_TOKEN: values.CLOUDFLARE_API_TOKEN } : {}),
     };
     if (command === 'prepare') {
-      await run(process.execPath, [pnpm, '--filter', '@meshdrop/web', 'build'], root, env);
-      await mkdir(config.directory, { recursive: true });
-      await rm(join(config.directory, 'web'), { recursive: true, force: true });
-      await cp(resolve(root, 'apps/web/dist'), join(config.directory, 'web'), { recursive: true });
-      await build({
-        entryPoints: [resolve(root, 'infrastructure/cloudflare/pages-worker.ts')],
-        outfile: join(config.directory, 'web/_worker.js'),
-        bundle: true,
-        format: 'esm',
-        platform: 'browser',
-        target: 'es2022',
-      });
-      await build({
-        entryPoints: [resolve(root, 'apps/signaling/src/index.ts')],
-        outfile: join(config.directory, 'worker/index.js'),
-        bundle: true,
-        format: 'esm',
-        platform: 'browser',
-        target: 'es2022',
-        external: ['cloudflare:workers'],
-      });
-      // Run the gateway for every request, including unknown/API routes. It adds
-      // CSP itself because Pages _headers rules do not cover Function responses.
-      await writeFile(
-        join(config.directory, 'web/_routes.json'),
-        JSON.stringify({ version: 1, include: ['/*'], exclude: [] }),
+      const release = await prepareRelease(root, target, values);
+      const directory = relative(root, release.directory);
+      const journal = relative(root, release.journalDirectory);
+      console.log(
+        JSON.stringify({
+          state: 'PREPARED',
+          manifestId: release.manifest.id,
+          directory,
+          journal,
+          providerConfirmed: false,
+        }),
       );
-      await writeFile(
-        join(config.directory, 'worker.json'),
-        JSON.stringify(config.worker, null, 2),
-      );
-      await writeFile(
-        join(config.directory, 'wrangler.json'),
-        JSON.stringify(config.pages, null, 2),
-      );
-      await writeFile(
-        join(config.directory, 'manifest.json'),
-        JSON.stringify(
-          {
-            environment: target,
-            origin: config.origin,
-            worker: config.workerName,
-            files: await files(join(config.directory, 'web')),
-            workerFiles: await files(join(config.directory, 'worker')),
-          },
-          null,
-          2,
-        ),
-      );
-      console.log(`Prepared ${target}: ${config.origin}. No remote changes.`);
+      if (process.env.GITHUB_OUTPUT)
+        await writeFile(
+          process.env.GITHUB_OUTPUT,
+          `release-directory=${directory}\njournal-directory=${journal}\nmanifest-id=${release.manifest.id}\n`,
+          { flag: 'a' },
+        );
     } else if (command === 'dry-run') {
-      await run(
-        process.execPath,
-        [
-          wrangler,
-          'deploy',
-          '--config',
-          join(config.directory, 'worker.json'),
-          '--dry-run',
-          '--outdir',
-          join(config.directory, 'worker-bundle'),
-        ],
-        root,
-        env,
+      const { directory, manifest } = await releaseDirectory();
+      requireRelease(
+        manifest.sourceCommit === collectSource(root).sourceCommit,
+        'SOURCE_IDENTITY_MISMATCH',
       );
+      const output = await mkdtemp(join(tmpdir(), 'meshdrop-release-dry-run-'));
+      try {
+        await run(
+          process.execPath,
+          [
+            wrangler,
+            'deploy',
+            '--config',
+            join(directory, 'worker.json'),
+            '--dry-run',
+            '--outdir',
+            output,
+          ],
+          root,
+          env,
+        );
+      } finally {
+        await rm(output, { recursive: true, force: true });
+      }
     } else if (command === 'bootstrap') {
       let token = values.CLOUDFLARE_API_TOKEN;
       if (!token) {
@@ -153,97 +146,24 @@ try {
       console.log(
         `Workers account initialized: ${subdomain}.workers.dev (signaling public route remains disabled).`,
       );
-    } else if (command === 'provision' || command === 'publish') {
+    } else if (command === 'provision') {
       if (!/^[a-f0-9]{32}$/.test(values.CLOUDFLARE_ACCOUNT_ID ?? ''))
-        throw new Error('Set CLOUDFLARE_ACCOUNT_ID in the private .env before remote changes.');
-      if (command === 'provision') {
-        await run(
-          process.execPath,
-          [
-            wrangler,
-            'pages',
-            'project',
-            'create',
-            config.project,
-            // Current Wrangler otherwise delegates first-time Pages creation to
-            // Workers Assets. Pin the Pages product required by this architecture.
-            '--force',
-            '--production-branch',
-            'release',
-          ],
-          config.directory,
-          env,
-        );
-      } else {
-        const manifest = JSON.parse(
-          await readFile(join(config.directory, 'manifest.json'), 'utf8'),
-        );
-        if (
-          manifest.environment !== target ||
-          manifest.origin !== config.origin ||
-          manifest.worker !== config.workerName ||
-          JSON.stringify(manifest.files) !==
-            JSON.stringify(await files(join(config.directory, 'web'))) ||
-          JSON.stringify(manifest.workerFiles) !==
-            JSON.stringify(await files(join(config.directory, 'worker'))) ||
-          (await readFile(join(config.directory, 'worker.json'), 'utf8')) !==
-            JSON.stringify(config.worker, null, 2) ||
-          (await readFile(join(config.directory, 'wrangler.json'), 'utf8')) !==
-            JSON.stringify(config.pages, null, 2)
-        )
-          throw new Error('Configuration/artifacts changed. Run prepare and dry-run again.');
-        const secretFile = join(config.directory, '.env');
-        await writeFile(
-          secretFile,
-          [
-            'OPS_REVOKE_SECRET',
-            'TURN_SHARED_SECRET',
-            'CLOUDFLARE_TURN_KEY_ID',
-            'CLOUDFLARE_TURN_API_TOKEN',
-            'METERED_SECRET_KEY',
-            'CLOUDFLARE_ANALYTICS_API_TOKEN',
-          ]
-            .map((key) => `${key}=${JSON.stringify(values[key] ?? '')}`)
-            .join('\n') + '\n',
-          { mode: 0o600 },
-        );
-        await run(
-          process.execPath,
-          [
-            wrangler,
-            'deploy',
-            '--config',
-            join(config.directory, 'worker.json'),
-            '--secrets-file',
-            secretFile,
-            '--no-bundle',
-          ],
-          root,
-          env,
-        );
-        await run(
-          process.execPath,
-          [
-            wrangler,
-            'pages',
-            'deploy',
-            'web',
-            '--project-name',
-            config.project,
-            '--branch',
-            'release',
-            '--commit-dirty=true',
-          ],
-          config.directory,
-          env,
-        );
-        const health = await fetch(`${config.origin}/ready`);
-        if (!health.ok || !((await health.json()) as { ready?: boolean }).ready)
-          throw new Error('Public readiness failed. Follow docs/runbook.md.');
-        console.log(
-          `Published ${config.origin}. Device/relay release gates still require evidence.`,
-        );
-      }
+        throw new ReleaseError('EXPLICIT_ACCOUNT_ID_REQUIRED');
+      await run(
+        process.execPath,
+        [
+          wrangler,
+          'pages',
+          'project',
+          'create',
+          config.project,
+          '--force',
+          '--production-branch',
+          'release',
+        ],
+        config.directory,
+        env,
+      );
     } else if (command === 'revoke') {
       const roomId = process.argv[4];
       if (!roomId || !/^[a-f0-9-]{36}$/.test(roomId))
@@ -261,6 +181,10 @@ try {
   }
 } catch (error) {
   // Errors constructed here contain configuration field names, never values.
-  console.error(error instanceof Error ? error.message : 'Deployment failed.');
+  console.error(
+    error instanceof ReleaseError
+      ? error.code
+      : 'DEPLOYMENT_STEP_FAILED; review configuration and local release records.',
+  );
   process.exitCode = 1;
 }

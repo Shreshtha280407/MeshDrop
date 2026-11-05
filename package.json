@@ -37,6 +37,7 @@
     "bench:p9": "node scripts/benchmarks/release.mjs",
     "verify:rollback": "tsx scripts/deploy/verify-rollback.ts",
     "verify:rollback-target": "tsx scripts/deploy/verify-rollback-target.ts",
+    "inspect:release-record": "tsx scripts/deploy/inspect-release-record.ts",
     "verify:public": "tsx scripts/deploy/public-smoke.ts",
     "verify:phone": "node --import tsx scripts/deploy/verify-phone.mjs",
     "verify:public-rollback": "tsx scripts/deploy/verify-public-rollback.ts",

@@ -1,5 +1,12 @@
 # Cloudflare deployment
 
+**Task 04 safety update:** use the [release provenance and admission procedure](release-provenance.md).
+Preparation now produces versioned, secret-free manifests and journals in unique
+run directories. Dry-run requires the exact directory. Publication intentionally
+fails closed until a separately authorized hosted preflight/readback adapter is
+implemented and reviewed; the historical publication examples below do not bypass
+that gate. No hosted deployment or acceptance was performed in Task 04.
+
 P9 runs on Cloudflare Pages plus separate private Workers with SQLite Durable
 Objects. [Production](https://meshdrop-7ce2dc2e-production.pages.dev) and
 [preview](https://meshdrop-8ab9cb08-preview.pages.dev) are live. The laptop can be
@@ -66,7 +73,7 @@ online and MeshDrop open. See [ADR 005](adr/005-production-hosting.md).
 
    ```sh
    pnpm deploy:cloud prepare preview
-   pnpm deploy:cloud dry-run preview
+   pnpm deploy:cloud dry-run preview .meshdrop-artifacts/deploy/preview/run-EXACT_DIRECTORY
    ```
 
    `.meshdrop-artifacts/deploy/preview/` contains a frozen Worker bundle, static

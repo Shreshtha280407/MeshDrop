@@ -8,6 +8,22 @@ on:
         options: [preview, production]
         default: preview
         required: true
+      admission_paused:
+        description: Explicit desired state; hosted preflight must confirm preservation
+        type: choice
+        options: ['true', 'false']
+        default: 'true'
+        required: true
+      admission_action:
+        description: Reopening also requires a release-bound confirmation
+        type: choice
+        options: [preserve, pause, reopen]
+        default: preserve
+        required: true
+      reopen_confirmation:
+        description: REOPEN:environment:current-worker-version:manifest-id
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -37,12 +53,16 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Write private environment configuration
+        id: configuration
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PAGES_PROJECT: ${{ vars.PAGES_PROJECT }}
           PUBLIC_ORIGIN: ${{ vars.PUBLIC_ORIGIN }}
           OPS_REVOKE_SECRET: ${{ secrets.OPS_REVOKE_SECRET }}
+          ADMISSION_PAUSED: ${{ inputs.admission_paused }}
+          ADMISSION_ACTION: ${{ inputs.admission_action }}
+          ADMISSION_REOPEN_CONFIRMATION: ${{ inputs.reopen_confirmation }}
           TURN_URLS: ${{ vars.TURN_URLS }}
           TURN_SHARED_SECRET: ${{ secrets.TURN_SHARED_SECRET }}
           TURN_PROVIDER: ${{ vars.TURN_PROVIDER }}
@@ -52,25 +72,33 @@ jobs:
           METERED_FREE_ONLY: ${{ vars.METERED_FREE_ONLY }}
           METERED_SECRET_KEY: ${{ secrets.METERED_SECRET_KEY }}
           CLOUDFLARE_ANALYTICS_API_TOKEN: ${{ secrets.CLOUDFLARE_ANALYTICS_API_TOKEN }}
-        run: |
-          node --input-type=module <<'JS'
-          import { mkdir, writeFile } from 'node:fs/promises';
-          const directory = `infrastructure/cloudflare/${process.env.TARGET}`;
-          const names = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'PAGES_PROJECT', 'PUBLIC_ORIGIN', 'OPS_REVOKE_SECRET', 'TURN_PROVIDER', 'TURN_URLS', 'TURN_SHARED_SECRET', 'CLOUDFLARE_TURN_KEY_ID', 'CLOUDFLARE_TURN_API_TOKEN', 'METERED_DOMAIN', 'METERED_FREE_ONLY', 'METERED_SECRET_KEY', 'CLOUDFLARE_ANALYTICS_API_TOKEN'];
-          await mkdir(directory, { recursive: true, mode: 0o700 });
-          await writeFile(`${directory}/.env`, names.map(name => `${name}=${JSON.stringify(process.env[name] ?? '')}`).join('\n') + '\n', { mode: 0o600 });
-          JS
-      - run: pnpm deploy:cloud prepare "$TARGET"
-      - run: pnpm deploy:cloud dry-run "$TARGET"
+        run: pnpm exec tsx scripts/deploy/workflow-environment.ts
+      - id: prepare
+        run: pnpm deploy:cloud prepare "$TARGET"
+      - run: pnpm deploy:cloud dry-run "$TARGET" "$RELEASE_DIRECTORY"
+        env:
+          RELEASE_DIRECTORY: ${{ steps.prepare.outputs.release-directory }}
       # Create each Pages project once locally before enabling this workflow.
-      - run: pnpm deploy:cloud publish "$TARGET"
+      # Fails closed until the separately reviewed hosted preflight/readback
+      # adapter exists. A local fixture can never satisfy this publication gate.
+      - run: pnpm deploy:cloud publish "$TARGET" "$RELEASE_DIRECTORY"
+        env:
+          RELEASE_DIRECTORY: ${{ steps.prepare.outputs.release-directory }}
+      - name: Retain strictly typed secret-free lifecycle records
+        if: always() && steps.prepare.outputs.journal-directory != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-record-${{ inputs.environment }}-${{ steps.prepare.outputs.manifest-id }}
+          path: ${{ steps.prepare.outputs.journal-directory }}/*.json
+          retention-days: 30
+          if-no-files-found: error
       - name: Remove ephemeral deployment secrets
-        if: always()
+        if: always() && steps.configuration.outputs.created == 'true'
         run: |
           node --input-type=module <<'JS'
           import { rm } from 'node:fs/promises';
           await rm(`infrastructure/cloudflare/${process.env.TARGET}/.env`, { force: true });
-          await rm('.meshdrop-artifacts/deploy', { recursive: true, force: true });
+          // Frozen artifacts and secret-free journals are retained for recovery.
           JS
       # Public device and TURN acceptance remain a separate human release gate.
       # Never upload browser traces, environment files or raw failure artifacts.

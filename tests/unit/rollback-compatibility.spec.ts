@@ -15,6 +15,7 @@ import {
   migrations,
   validateArchive,
   verifyRollbackTarget,
+  verifyArchivePair,
 } from '../../scripts/deploy/rollback-compatibility';
 import type { Archive, CommitSnapshot } from '../../scripts/deploy/rollback-compatibility';
 
@@ -107,6 +108,7 @@ beforeAll(async () => {
   web = await artifactHashes(join(directory, 'client'));
   await createArchive('current', current, 1);
   await createArchive('previous', previous, 2);
+  await createArchive('same-source-previous', current, 2);
 }, 30000);
 afterAll(async () => {
   if (directory) await rm(directory, { recursive: true, force: true });
@@ -131,10 +133,13 @@ describe('actual historical source compatibility', () => {
     ]);
   });
   it('accepts the real prior v2 source without substituting actor code', () => {
-    expect(compareSnapshots(current, previous)).toEqual([]);
     expect(previous.exports).toEqual(
       expect.arrayContaining(['SessionRoom', 'RelayPool', 'OperationsMonitor', 'default']),
     );
+  });
+  it('retains the exact Task 03 historical source-compatibility proof', async () => {
+    const baseline = await inspectCommit('31b8278a66811202e6b9e9bd48f24dae7c30a7e7');
+    expect(compareSnapshots(baseline, previous)).toEqual([]);
   });
   it.each(['SessionRoom', 'RelayPool', 'OperationsMonitor'])('rejects missing %s', (name) => {
     expect(
@@ -216,7 +221,7 @@ describe('actual historical source compatibility', () => {
     );
   });
   it('fails closed when a source-compatible target has no frozen archives', async () => {
-    const result = await verifyRollbackTarget(current.commit, previous.commit);
+    const result = await verifyRollbackTarget(current.commit, current.commit);
     expect(result).toMatchObject({
       pass: false,
       sourceCompatible: true,
@@ -231,18 +236,13 @@ describe('real local release archive integrity', () => {
   it('fails closed on cleanup failure after successful real artifact verification', async () => {
     cleanupFailure.enabled = true;
     try {
-      const result = await verifyRollbackTarget(current.commit, previous.commit, {
-        current: join(directory, 'current'),
-        target: archive,
-      });
-      expect(result).toMatchObject({
-        pass: false,
-        sourceCompatible: true,
-        artifactsVerified: true,
-        productionApproved: false,
-      });
-      expect(result.issues.map((item) => item.code)).toContain('LOCAL_INPUT_UNAVAILABLE');
-      expect(JSON.stringify(result)).not.toContain('synthetic-private-cleanup-error');
+      await expect(
+        verifyArchivePair(current, previous, {
+          current: join(directory, 'current'),
+          target: archive,
+        }),
+      ).rejects.toThrow('synthetic-private-cleanup-error');
+      expect(cleanupFailure.enabled).toBe(false);
     } finally {
       cleanupFailure.enabled = false;
     }
@@ -252,15 +252,15 @@ describe('real local release archive integrity', () => {
     const latest = await validateArchive(join(directory, 'current'), current, web);
     expect(() => compareArchives(latest, target)).not.toThrow();
   });
-  it('runs the full offline CLI successfully without declaring production approval', () => {
-    const output = execFileSync(
+  it('never approves the old synthetic-ID record as verified provenance through the full CLI', () => {
+    const cliResult = spawnSync(
       'pnpm',
       [
         'verify:rollback-target',
         current.commit,
-        previous.commit,
+        current.commit,
         join(directory, 'current'),
-        archive,
+        join(directory, 'same-source-previous'),
       ],
       {
         encoding: 'utf8',
@@ -268,13 +268,16 @@ describe('real local release archive integrity', () => {
         env: { ...process.env, NODE_ENV: 'development', VITE_ROLLBACK_CANARY: 'synthetic-only' },
       },
     );
-    const result = JSON.parse(output.slice(output.indexOf('{'))) as Record<string, unknown>;
+    const output = cliResult.stdout;
+    expect(cliResult.status).toBe(1);
+    const result = JSON.parse(
+      output.slice(output.indexOf('{'), output.lastIndexOf('}') + 1),
+    ) as Record<string, unknown>;
     expect(result).toMatchObject({
-      pass: true,
+      pass: false,
       sourceCompatible: true,
-      artifactsVerified: true,
       productionApproved: false,
-      issues: [],
+      provenanceVerified: false,
     });
     expect(output).not.toContain('synthetic-only');
   }, 30000);

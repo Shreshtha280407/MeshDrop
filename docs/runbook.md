@@ -1,5 +1,11 @@
 # Production operations
 
+For new releases, follow the [Task 04 provenance and admission procedure](release-provenance.md).
+The publisher now requires an independently verified hosted preflight/readback
+adapter and currently fails closed before credential access. Preparation,
+publication and explicit acceptance are separate; historical examples below
+must not be treated as instructions to bypass the new gate.
+
 Use the exact stable origin and generated configuration for the selected
 environment. Keep provider, operator and relay secrets in its ignored `.env`.
 Never paste invitations, Authorization headers, WebSocket tickets, SDP/ICE,

@@ -68,33 +68,17 @@ credentials or `NODE_OPTIONS`.
 pnpm verify:rollback-target CURRENT_40_CHARACTER_SHA TARGET_40_CHARACTER_SHA CURRENT_ARCHIVE TARGET_ARCHIVE
 ```
 
-Each read-only archive contains `worker/index.js`, `web/`, `worker.json`,
-`wrangler.json` and `manifest.json`, matching the existing prepared-release
-layout. `manifest.json` contains:
+Use the [versioned release provenance procedure](release-provenance.md) for
+preparation, independent publication confirmation, acceptance and journal recovery.
+Schema-2 manifests and recordVersion-1 lifecycle records replace manual enrichment
+of Task 03's legacy schema-1 examples. Legacy records remain unverified. Never
+invent provider IDs or infer acceptance from timestamps or artifact hashes.
 
-```json
-{
-  "schemaVersion": 1,
-  "sourceCommit": "EXACT_40_CHARACTER_SOURCE_COMMIT",
-  "protocolVersion": 1,
-  "environment": "production",
-  "origin": "https://YOUR_PROJECT-production.pages.dev",
-  "worker": "YOUR_PROJECT-production-signaling",
-  "workerVersion": "RECORDED_WORKER_VERSION_UUID",
-  "pagesDeployment": "RECORDED_PAGES_DEPLOYMENT_UUID",
-  "files": { "RELATIVE_WEB_FILE": "SHA256_FOR_EVERY_WEB_FILE" },
-  "workerFiles": { "index.js": "SHA256_FOR_THE_FROZEN_WORKER" }
-}
-```
-
-The placeholders above are documentation, not accepted fixture values. Preserve
-the actual file maps emitted by preparation. The existing preparation manifest
-does not contain source/protocol/provider IDs and therefore **fails this gate**.
-Keep a private copy enriched from independently reviewed build/deployment records
-after acceptance. Do not invent IDs, infer source from timestamps, or retrofit
-unproven historical evidence. This task leaves preparation/publishing unchanged.
-There is currently no authenticated automated provenance recorder; establishing
-a trusted accepted release archive remains an operator/hosted validation gate.
+The new publishing entry point fails closed before credential access until a
+separately reviewed hosted preflight/readback adapter is available. Simulator
+records are explicitly tagged and cannot satisfy production eligibility. The
+validator's content-integrity helpers are separate from accepted-provenance
+verification; unsigned JSON still requires an independent trusted authenticator.
 
 The validator reports `pass`, `sourceCompatible`, `artifactsVerified`, fixed issue
 codes/messages, and always `productionApproved: false`. It exits nonzero for
@@ -133,7 +117,9 @@ inconsistency; unsigned records alone do not authenticate provider provenance.
 
 ## During deployment
 
-The existing publisher deploys Worker/secrets, then Pages, then checks `/ready`.
+The modeled publication order is Worker, independent Worker confirmation, Pages,
+independent Pages confirmation, then readiness. The CLI currently blocks live
+publication until the required hosted adapter is reviewed and available.
 These are separate operations and partial success is possible. A lost response
 is not proof that no change occurred. The workflow serializes its own selected
 environment; it cannot lock out dashboard or local CLI operators.
@@ -152,12 +138,12 @@ intentionally 503 during a pause; the current publisher's final readiness check
 therefore reports failure after applying a paused release. Do not mistake that
 expected condition for a failed upload or automatically revert the pause.
 
-The current manual GitHub deployment workflow does not copy `ADMISSION_PAUSED`
-into its generated environment file and therefore defaults to false. Do not use
-that workflow for paused recovery or while a pause must be preserved. Use only a
-separately reviewed and authorized path with an explicit pause value; never
-assume a GitHub variable is honored when it is absent from the workflow mapping.
-This task does not change the workflow or any hosted environment variables.
+The manual workflow now carries explicit admission state/action inputs and
+requires owned-file cleanup. Inputs describe desired state; they do not prove
+currently deployed state. The new preflight contract verifies preservation and
+requires a manifest/current-version-bound acknowledgement before reopening.
+Publication remains blocked without hosted observations. See the
+[admission and provenance procedure](release-provenance.md).
 
 Monitor bounded aggregate 5xx/429/join counters, alert outbox/journal delivery,
 account/DO quotas, readiness outside a pause, and relay state. Readiness validates
