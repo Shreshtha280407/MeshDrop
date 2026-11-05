@@ -9,3 +9,4 @@ coverage
 apps/web/public/vendor
 # Preserve byte-for-byte upstream signed test material and its pinned hashes.
 tests/fixtures/sigstore/*.json
+tests/fixtures/sigstore/*.jsonl

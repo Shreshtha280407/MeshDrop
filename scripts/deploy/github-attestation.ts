@@ -8,7 +8,8 @@ import { bytesHash, requireRelease, ReleaseError } from './release-record';
 
 /** Protected operator configuration, never supplied by an artifact or bundle. */
 export type AttestationPolicy = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
+  signerRef?: string;
   repository: string;
   repositoryId: string;
   ownerId: string;
@@ -36,11 +37,17 @@ export function parseAttestationPolicy(value: unknown): AttestationPolicy {
   const p = value as AttestationPolicy;
   requireRelease(
     Object.keys(p).sort().join(',') ===
-      'schemaVersion,repository,repositoryId,ownerId,signerWorkflow,signerCommit,sourceCommit,sourceRef,sourceWorkflow,runId,runAttempt,artifactSha256,trustedRootSha256,rootReviewedAt,rootValidUntil,ghPath,ghSha256'
+      (
+        'schemaVersion,repository,repositoryId,ownerId,signerWorkflow,signerCommit,sourceCommit,sourceRef,sourceWorkflow,runId,runAttempt,artifactSha256,trustedRootSha256,rootReviewedAt,rootValidUntil,ghPath,ghSha256' +
+        (p.schemaVersion === 2 ? ',signerRef' : '')
+      )
         .split(',')
         .sort()
         .join(',') &&
-      p.schemaVersion === 1 &&
+      (p.schemaVersion === 1 ||
+        (p.schemaVersion === 2 &&
+          typeof p.signerRef === 'string' &&
+          /^refs\/(heads|tags)\/[A-Za-z0-9_./-]+$/.test(p.signerRef))) &&
       REPO.test(p.repository) &&
       ID.test(p.repositoryId) &&
       ID.test(p.ownerId) &&
@@ -69,6 +76,47 @@ export function parseAttestationPolicy(value: unknown): AttestationPolicy {
     'INVALID_ATTESTATION_POLICY',
   );
   return structuredClone(p);
+}
+/** Structural policy guard for output of the trusted verifier. Calling this
+ * function on JSON does not verify a signature or mint a verification receipt. */
+export function enforceAttestationIdentity(result: unknown, p: AttestationPolicy): void {
+  const san = `https://github.com/${p.signerWorkflow}@${p.schemaVersion === 2 ? p.signerRef : p.signerCommit}`;
+  requireRelease(Array.isArray(result) && result.length === 1, 'AMBIGUOUS_ATTESTATION');
+  const verified = result[0]?.verificationResult;
+  const cert = verified?.signature?.certificate;
+  requireRelease(
+    cert &&
+      cert.issuer === 'https://token.actions.githubusercontent.com' &&
+      cert.subjectAlternativeName === san &&
+      cert.buildSignerURI === san &&
+      cert.buildSignerDigest === p.signerCommit &&
+      cert.sourceRepositoryURI === `https://github.com/${p.repository}` &&
+      cert.sourceRepositoryIdentifier === p.repositoryId &&
+      cert.sourceRepositoryOwnerIdentifier === p.ownerId &&
+      cert.sourceRepositoryDigest === p.sourceCommit &&
+      cert.sourceRepositoryRef === p.sourceRef &&
+      cert.runnerEnvironment === 'github-hosted' &&
+      cert.buildConfigURI ===
+        `https://github.com/${p.repository}/${p.sourceWorkflow}@${p.sourceRef}` &&
+      cert.buildConfigDigest === p.sourceCommit &&
+      cert.runInvocationURI ===
+        `https://github.com/${p.repository}/actions/runs/${p.runId}/attempts/${p.runAttempt}`,
+    'ATTESTATION_IDENTITY_MISMATCH',
+  );
+  const subject = verified.statement?.subject;
+  requireRelease(
+    verified.statement?.predicateType === 'https://slsa.dev/provenance/v1' &&
+      Array.isArray(subject) &&
+      subject.length === 1 &&
+      subject[0]?.digest?.sha256 === p.artifactSha256 &&
+      Array.isArray(verified.verifiedTimestamps) &&
+      verified.verifiedTimestamps.length > 0 &&
+      verified.verifiedTimestamps.every(
+        (t: { timestamp?: string }) =>
+          typeof t.timestamp === 'string' && Number.isFinite(Date.parse(t.timestamp)),
+      ),
+    'UNVERIFIED_ATTESTATION_STATEMENT',
+  );
 }
 async function executableDigest(path: string) {
   const stat = await lstat(path);
@@ -116,7 +164,7 @@ export async function verifyAttestation(
       writeFile(join(directory, 'bundle.json'), bundle, { mode: 0o600, flag: 'wx' }),
       writeFile(join(directory, 'roots.jsonl'), roots, { mode: 0o600, flag: 'wx' }),
     ]);
-    const san = `https://github.com/${p.signerWorkflow}@${p.signerCommit}`;
+    const san = `https://github.com/${p.signerWorkflow}@${p.schemaVersion === 2 ? p.signerRef : p.signerCommit}`;
     const args = [
       'attestation',
       'verify',
@@ -168,43 +216,7 @@ export async function verifyAttestation(
       (await executableDigest(p.ghPath)) === p.ghSha256,
       'UNTRUSTED_VERIFIER_EXECUTABLE',
     );
-    const result = JSON.parse(stdout);
-    requireRelease(Array.isArray(result) && result.length === 1, 'AMBIGUOUS_ATTESTATION');
-    const verified = result[0]?.verificationResult;
-    const cert = verified?.signature?.certificate;
-    requireRelease(
-      cert &&
-        cert.issuer === 'https://token.actions.githubusercontent.com' &&
-        cert.subjectAlternativeName === san &&
-        cert.buildSignerURI === san &&
-        cert.buildSignerDigest === p.signerCommit &&
-        cert.sourceRepositoryURI === `https://github.com/${p.repository}` &&
-        cert.sourceRepositoryIdentifier === p.repositoryId &&
-        cert.sourceRepositoryOwnerIdentifier === p.ownerId &&
-        cert.sourceRepositoryDigest === p.sourceCommit &&
-        cert.sourceRepositoryRef === p.sourceRef &&
-        cert.runnerEnvironment === 'github-hosted' &&
-        cert.buildConfigURI ===
-          `https://github.com/${p.repository}/${p.sourceWorkflow}@${p.sourceRef}` &&
-        cert.buildConfigDigest === p.sourceCommit &&
-        cert.runInvocationURI ===
-          `https://github.com/${p.repository}/actions/runs/${p.runId}/attempts/${p.runAttempt}`,
-      'ATTESTATION_IDENTITY_MISMATCH',
-    );
-    const subject = verified.statement?.subject;
-    requireRelease(
-      verified.statement?.predicateType === 'https://slsa.dev/provenance/v1' &&
-        Array.isArray(subject) &&
-        subject.length === 1 &&
-        subject[0]?.digest?.sha256 === p.artifactSha256 &&
-        Array.isArray(verified.verifiedTimestamps) &&
-        verified.verifiedTimestamps.length > 0 &&
-        verified.verifiedTimestamps.every(
-          (t: { timestamp?: string }) =>
-            typeof t.timestamp === 'string' && Number.isFinite(Date.parse(t.timestamp)),
-        ),
-      'UNVERIFIED_ATTESTATION_STATEMENT',
-    );
+    enforceAttestationIdentity(JSON.parse(stdout), p);
     return {
       signatureVerified: true as const,
       repository: p.repository,

@@ -22,11 +22,12 @@ const STORE = '60000000-0000-4000-8000-000000000001';
 let container: string | undefined;
 let dockerConfig: string | undefined;
 function docker(args: string[], input?: string) {
-  if (!dockerConfig) throw new Error('No isolated Docker configuration.');
+  const isolatedConfig = dockerConfig;
+  if (!isolatedConfig) throw new Error('No isolated Docker configuration.');
   return new Promise<string>((resolve, reject) => {
     const child = execFile(
       'docker',
-      ['--config', dockerConfig, '--host', 'unix:///var/run/docker.sock', ...args],
+      ['--config', isolatedConfig, '--host', 'unix:///var/run/docker.sock', ...args],
       { timeout: 20000, maxBuffer: 4 * 1024 * 1024, env: { PATH: process.env.PATH! } },
       (error, out) =>
         error ? reject(new Error('Isolated PostgreSQL fixture operation failed.')) : resolve(out),
