@@ -537,9 +537,11 @@ export class RoomClient {
                   await this.handleSignal(envelope);
               })
               .catch(() => {
-                if (generation === this.generation) {
+                if (socket === this.socket && generation === this.generation) {
                   this.peerSession?.fail('Peer negotiation failed. Request a new connection.');
                   this.update({ error: 'Peer negotiation failed. Request a new connection.' });
+                  // Initialization may fail before the peer reaches the admitted epoch.
+                  this.scheduleRecovery();
                 }
               })
               .finally(() => {
@@ -569,6 +571,7 @@ export class RoomClient {
       if (epoch.epoch !== envelope.epoch || epoch.epoch <= (this.peerSession?.epoch ?? 0)) return;
       this.clearRetry();
       this.update({ status: { ...status, epoch: epoch.epoch } });
+      const socket = this.socket;
       const credentials = this.credentials!;
       const configuration = iceConfigurationSchema.parse(
         await this.api(
@@ -578,6 +581,7 @@ export class RoomClient {
           {},
         ),
       );
+      if (socket !== this.socket) return;
       if (!this.peerSession)
         this.peerSession = new PeerSession({
           roomId: credentials.roomId,
@@ -696,7 +700,12 @@ export class RoomClient {
     } else if (peer.verification === 'mismatch') {
       this.retrySuppressed = true;
       this.clearRetry();
-    } else if (peer.epoch > 0 && (peer.state === 'reconnecting' || peer.state === 'closed'))
+    } else if (
+      peer.epoch > 0 &&
+      // Retiring transports can close while the next epoch awaits ICE credentials.
+      peer.epoch === this.view.status?.epoch &&
+      (peer.state === 'reconnecting' || peer.state === 'closed')
+    )
       this.scheduleRecovery();
     this.ensureTransfer();
   }

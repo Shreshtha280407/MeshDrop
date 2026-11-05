@@ -86,75 +86,123 @@ test('a slow replacement connection cancels the previous pending recovery retry'
   }
 });
 
-test('signed peer hello, independent comparison, epoch restart and fresh connection', async ({
-  browser,
-}, testInfo) => {
-  const ownerContext = await browser.newContext();
-  const receiverContext = await browser.newContext();
-  const owner = await ownerContext.newPage();
-  const receiver = await receiverContext.newPage();
-  const errors: string[] = [];
-  for (const page of [owner, receiver]) page.on('pageerror', (error) => errors.push(error.message));
-  try {
-    await owner.goto('/');
-    await owner.getByRole('button', { name: 'Create invitation', exact: true }).click();
-    await expect(owner.getByTestId('connection-state')).toHaveText('connected');
-    await receiver.goto(
-      await owner.getByLabel('Private invitation link', { exact: true }).inputValue(),
-    );
-    await receiver.getByRole('button', { name: 'Request to join', exact: true }).click();
-    await expect(receiver.getByTestId('peer-state')).toHaveText('idle');
-    await owner.getByRole('button', { name: 'Approve receiver', exact: true }).click();
+for (const [scenario, delayedReplacement] of [
+  ['signed peer hello, independent comparison, epoch restart and fresh connection', false],
+  ['a delayed admitted epoch ignores the retiring data channel close', true],
+] as const) {
+  test(scenario, async ({ browser }, testInfo) => {
+    const ownerContext = await browser.newContext();
+    const receiverContext = await browser.newContext();
+    const owner = await ownerContext.newPage();
+    const receiver = await receiverContext.newPage();
+    const errors: string[] = [];
     for (const page of [owner, receiver])
-      await expect(page.getByTestId('peer-state')).toHaveText('connected', { timeout: 30000 });
-    const first = await owner.getByTestId('pairing-code').textContent();
-    expect(await receiver.getByTestId('pairing-code').textContent()).toBe(first);
-    for (const page of [owner, receiver]) {
-      await expect(page.getByTestId('verification-state')).toHaveText('unverified');
-      await expect(page.getByTestId('negotiated-capabilities')).toContainText('Resume: persistent');
-      await page.getByLabel('Code shown on the other device', { exact: true }).fill(first!);
-      await expect(
-        page.getByRole('button', { name: 'Confirm comparison', exact: true }),
-      ).toBeDisabled();
-      await page.getByLabel('I compared using a separate trusted channel', { exact: true }).check();
-      await page.getByRole('button', { name: 'Confirm comparison', exact: true }).click();
-      await expect(page.getByTestId('verification-state')).toHaveText('verified');
-    }
-    await owner.getByRole('button', { name: 'Send signed ping', exact: true }).click();
-    await expect(receiver.getByTestId('received-pings')).toHaveText('1');
-    await expect(owner.getByTestId('received-pongs')).toHaveText('1');
-    await owner.screenshot({
-      path: testInfo.outputPath('phase-2-paired.png'),
-      fullPage: true,
-      mask: [owner.getByLabel('Private invitation link', { exact: true })],
+      page.on('pageerror', (error) => errors.push(error.message));
+    const requests: { expectedEpoch: number; mode: string }[] = [];
+    owner.on('request', (request) => {
+      if (new URL(request.url()).pathname.endsWith('/connection'))
+        requests.push(request.postDataJSON() as (typeof requests)[number]);
     });
-    await owner.getByRole('button', { name: 'Restart ICE', exact: true }).click();
-    for (const page of [owner, receiver]) {
-      await expect(page.getByTestId('peer-epoch')).toHaveText('2');
-      await expect(page.getByTestId('peer-state')).toHaveText('connected', { timeout: 30000 });
-      await expect(page.getByTestId('verification-state')).toHaveText('unverified');
+    let unblock = () => {};
+    let blocked = () => {};
+    const held = new Promise<void>((resolve) => {
+      blocked = resolve;
+    });
+    const release = new Promise<void>((resolve) => {
+      unblock = resolve;
+    });
+    if (delayedReplacement) {
+      let configurations = 0;
+      await owner.route('**/v1/sessions/*/ice-credentials', async (route) => {
+        if (++configurations !== 3) return route.continue();
+        const response = await route.fetch();
+        blocked();
+        await release;
+        await route.fulfill({ response });
+      });
     }
-    const second = await owner.getByTestId('pairing-code').textContent();
-    expect(second).not.toBe(first);
-    expect(await receiver.getByTestId('pairing-code').textContent()).toBe(second);
-    await receiver.getByRole('button', { name: 'New peer connection', exact: true }).click();
-    for (const page of [owner, receiver]) {
-      await expect(page.getByTestId('peer-epoch')).toHaveText('3');
-      await expect(page.getByTestId('peer-state')).toHaveText('connected', { timeout: 30000 });
+    try {
+      await owner.goto('/');
+      await owner.getByRole('button', { name: 'Create invitation', exact: true }).click();
+      await expect(owner.getByTestId('connection-state')).toHaveText('connected');
+      await receiver.goto(
+        await owner.getByLabel('Private invitation link', { exact: true }).inputValue(),
+      );
+      await receiver.getByRole('button', { name: 'Request to join', exact: true }).click();
+      await expect(receiver.getByTestId('peer-state')).toHaveText('idle');
+      await owner.getByRole('button', { name: 'Approve receiver', exact: true }).click();
+      for (const page of [owner, receiver])
+        await expect(page.getByTestId('peer-state')).toHaveText('connected', { timeout: 30000 });
+      const first = await owner.getByTestId('pairing-code').textContent();
+      expect(await receiver.getByTestId('pairing-code').textContent()).toBe(first);
+      for (const page of [owner, receiver]) {
+        await expect(page.getByTestId('verification-state')).toHaveText('unverified');
+        await expect(page.getByTestId('negotiated-capabilities')).toContainText(
+          'Resume: persistent',
+        );
+        await page.getByLabel('Code shown on the other device', { exact: true }).fill(first!);
+        await expect(
+          page.getByRole('button', { name: 'Confirm comparison', exact: true }),
+        ).toBeDisabled();
+        await page
+          .getByLabel('I compared using a separate trusted channel', { exact: true })
+          .check();
+        await page.getByRole('button', { name: 'Confirm comparison', exact: true }).click();
+        await expect(page.getByTestId('verification-state')).toHaveText('verified');
+      }
+      await owner.getByRole('button', { name: 'Send signed ping', exact: true }).click();
+      await expect(receiver.getByTestId('received-pings')).toHaveText('1');
+      await expect(owner.getByTestId('received-pongs')).toHaveText('1');
+      await owner.screenshot({
+        path: testInfo.outputPath('phase-2-paired.png'),
+        fullPage: true,
+        mask: [owner.getByLabel('Private invitation link', { exact: true })],
+      });
+      await owner.getByRole('button', { name: 'Restart ICE', exact: true }).click();
+      for (const page of [owner, receiver]) {
+        await expect(page.getByTestId('peer-epoch')).toHaveText('2');
+        await expect(page.getByTestId('peer-state')).toHaveText('connected', { timeout: 30000 });
+        await expect(page.getByTestId('verification-state')).toHaveText('unverified');
+      }
+      const second = await owner.getByTestId('pairing-code').textContent();
+      expect(second).not.toBe(first);
+      expect(await receiver.getByTestId('pairing-code').textContent()).toBe(second);
+      await receiver.getByRole('button', { name: 'New peer connection', exact: true }).click();
+      if (delayedReplacement) {
+        await held;
+        // The receiver has retired epoch 2 while the owner is still preparing 3.
+        await expect(owner.getByTestId('peer-state')).toHaveText('closed');
+        const viewport = owner.viewportSize()!;
+        await owner.setViewportSize({ ...viewport, height: viewport.height - 20 });
+        // Cross the real 1s retry boundary without releasing the replacement.
+        await new Promise((resolve) => setTimeout(resolve, 1100));
+        expect(requests).toHaveLength(3);
+        unblock();
+      }
+      for (const page of [owner, receiver]) {
+        await expect(page.getByTestId('peer-epoch')).toHaveText('3');
+        await expect(page.getByTestId('peer-state')).toHaveText('connected', { timeout: 30000 });
+      }
+      expect(await owner.getByTestId('pairing-code').textContent()).not.toBe(second);
+      await receiver.getByRole('button', { name: 'Send signed ping', exact: true }).click();
+      await expect(owner.getByTestId('received-pings')).toHaveText('1');
+      await expect(receiver.getByTestId('received-pongs')).toHaveText('1');
+      expect(requests).toEqual([
+        { expectedEpoch: 0, mode: 'new-connection' },
+        { expectedEpoch: 1, mode: 'ice-restart' },
+        { expectedEpoch: 2, mode: 'new-connection' },
+      ]);
+      await owner.getByRole('button', { name: 'Revoke room', exact: true }).click();
+      for (const page of [owner, receiver])
+        await expect(page.getByTestId('peer-state')).toHaveText('closed');
+      expect(errors).toEqual([]);
+    } finally {
+      unblock();
+      await ownerContext.close();
+      await receiverContext.close();
     }
-    expect(await owner.getByTestId('pairing-code').textContent()).not.toBe(second);
-    await receiver.getByRole('button', { name: 'Send signed ping', exact: true }).click();
-    await expect(owner.getByTestId('received-pings')).toHaveText('1');
-    await expect(receiver.getByTestId('received-pongs')).toHaveText('1');
-    await owner.getByRole('button', { name: 'Revoke room', exact: true }).click();
-    for (const page of [owner, receiver])
-      await expect(page.getByTestId('peer-state')).toHaveText('closed');
-    expect(errors).toEqual([]);
-  } finally {
-    await ownerContext.close();
-    await receiverContext.close();
-  }
-});
+  });
+}
 
 test('a mismatched independently entered code closes the transport and stays unverified', async ({
   browser,
