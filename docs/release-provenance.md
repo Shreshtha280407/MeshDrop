@@ -17,6 +17,14 @@ It inspects pinned control-plane identities only when separately authorized and
 cannot establish prepared artifact provenance or accept a release. Publication
 remains blocked; the deployment workflow does not invoke the new diagnostic.
 
+Task 07 adds [approval and recovery verification contracts](release-approval.md).
+The authority and independent storage remain unconfigured. Hosted publication
+and acceptance are blocked even in the library; the old callback lifecycle is
+restricted to offline simulations. Optional evidence sinks persist write-ahead
+checkpoints, and a shared-root environment lock rejects overlapping local
+attempts. Local hashes and CI artifacts do not prove independent authentication
+or off-run durability.
+
 ## Lifecycle and trust
 
 | State        | Meaning                                                                             | Provider IDs / acceptance                                        |

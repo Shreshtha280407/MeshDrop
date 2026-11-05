@@ -9,6 +9,12 @@ Task 05's [read-only preflight](cloudflare-preflight.md) can check pinned provid
 identities when separately authorized. It cannot authenticate artifact provenance,
 accept a historical release or authorize rollback. Publication remains blocked.
 
+Task 07's [approval and recovery contracts](release-approval.md) add purpose-bound
+review and journal integrity checks. They do not authenticate historical archives
+or approve production rollback. The real approval authority and independent
+off-run store remain unconfigured; unsigned artifacts and offline acceptance
+cannot establish a safe production target.
+
 ## Policy and eligibility
 
 Use a previously accepted **matching Worker/Pages release record**, independently

@@ -540,3 +540,17 @@ export function verifyObservedAdmission(
   age(issued.started, now);
   verifyAdmission(manifest, observation.current, intent, now);
 }
+
+/** In-process API issuance is required; labels in downloaded JSON are not proof. */
+export function requireHostedObservation(observation: ReadOnlyObservation, now: Date): void {
+  const issued = observations.get(observation);
+  requireRelease(
+    issued && sameContent(issued.snapshot, observation),
+    'UNTRUSTED_OR_MODIFIED_OBSERVATION',
+  );
+  age(issued.started, now);
+  requireRelease(
+    observation.scope === 'cloudflare-api' && observation.providerConfirmed,
+    'AUTHENTICATED_READBACK_REQUIRED',
+  );
+}

@@ -7,10 +7,10 @@ import {
   initialRecord,
   parseManifest,
   parseRecord,
-  requireAccepted,
   requireRelease,
   ReleaseError,
   validateIdentity,
+  fingerprint,
 } from './release-record';
 import type { Manifest, ProviderIdentity, ReleaseRecord } from './release-record';
 
@@ -107,6 +107,11 @@ export function hostedProvider(): never {
   throw new ReleaseError('HOSTED_PREFLIGHT_AND_IDENTITY_ADAPTER_REQUIRED');
 }
 
+/** An optional write-ahead evidence port; it does not authenticate a store by itself. */
+export interface ReleaseEvidenceSink {
+  checkpoint(record: ReleaseRecord): Promise<void>;
+}
+
 async function syncDirectory(directory: string): Promise<void> {
   const file = await open(directory, 'r');
   try {
@@ -130,16 +135,22 @@ export class ReleaseJournal {
     readonly directory: string,
     readonly manifest: Manifest,
     private record: ReleaseRecord,
+    private readonly evidence: ReleaseEvidenceSink | undefined,
   ) {}
-  static async create(directory: string, manifest: Manifest): Promise<ReleaseJournal> {
+  static async create(
+    directory: string,
+    manifest: Manifest,
+    evidence?: ReleaseEvidenceSink,
+  ): Promise<ReleaseJournal> {
     parseManifest(manifest);
     await mkdir(directory, { mode: 0o700 });
     await syncDirectory(dirname(directory));
     const record = initialRecord(manifest);
+    await evidence?.checkpoint(record);
     await exclusiveFile(join(directory, 'manifest.json'), canonical(manifest));
     await exclusiveFile(join(directory, '000000.json'), canonical(record));
     await exclusiveFile(join(directory, 'release.json'), canonical(record));
-    return new ReleaseJournal(directory, manifest, record);
+    return new ReleaseJournal(directory, manifest, record, evidence);
   }
   current(): ReleaseRecord {
     return structuredClone(this.record);
@@ -152,6 +163,7 @@ export class ReleaseJournal {
         canonical(this.record),
       'CONCURRENT_RELEASE_RECORD_CHANGE',
     );
+    await this.evidence?.checkpoint(next);
     await exclusiveFile(
       join(this.directory, `${String(next.sequence).padStart(6, '0')}.json`),
       canonical(next),
@@ -177,16 +189,29 @@ export class ReleaseJournal {
       signal?: AbortSignal;
     },
   ): Promise<ReleaseRecord> {
+    requireRelease(provider.mode === 'offline-fixture', 'HOSTED_PUBLICATION_DISABLED');
     const lock = join(this.directory, 'publication.lock');
     await exclusiveFile(lock, 'Reconciliation required before retrying publication.\n');
+    await exclusiveFile(
+      join(
+        dirname(this.directory),
+        `environment-${fingerprint({ repository: this.manifest.repository, environment: this.manifest.environment })}.lock`,
+      ),
+      canonical({
+        manifestId: this.manifest.id,
+        environment: this.manifest.environment,
+        instruction: 'Reconcile this attempt before permitting another release.',
+      }),
+    );
     let record = this.current();
     let failure: string | null = null;
     const checkpoint = async (
       phase: ReleaseRecord['phase'],
       update: Partial<ReleaseRecord> = {},
     ) => {
-      record = { ...record, ...update, phase, sequence: record.sequence + 1 };
-      await this.checkpoint(record);
+      const next = { ...record, ...update, phase, sequence: record.sequence + 1 };
+      await this.checkpoint(next);
+      record = next;
     };
     const active = (actual: CurrentDeployment, workerVersion: string, pagesDeployment: string) => {
       for (const key of ['accountId', 'environment', 'worker', 'project', 'origin'] as const)
@@ -210,14 +235,11 @@ export class ReleaseJournal {
           options.previous.manifest[key] === this.manifest[key],
           'PREVIOUS_RELEASE_SCOPE_MISMATCH',
         );
-      if (provider.mode === 'hosted-observation')
-        requireAccepted(options.previous.manifest, options.previous.record);
-      else
-        requireRelease(
-          options.previous.record.state === 'ACCEPTED' &&
-            options.previous.record.scope === 'offline-fixture',
-          'PREVIOUS_ACCEPTED_RELEASE_REQUIRED',
-        );
+      requireRelease(
+        options.previous.record.state === 'ACCEPTED' &&
+          options.previous.record.scope === 'offline-fixture',
+        'PREVIOUS_ACCEPTED_RELEASE_REQUIRED',
+      );
       requireRelease(
         await options.authenticatePrevious(options.previous.manifest, options.previous.record),
         'PREVIOUS_ACCEPTANCE_UNVERIFIED',
@@ -290,7 +312,7 @@ export class ReleaseJournal {
         provider: {
           workerVersion: worker.workerVersion,
           pagesDeployment: pages.pagesDeployment,
-          confirmed: provider.mode === 'hosted-observation',
+          confirmed: false,
           observation,
         },
       });
@@ -332,6 +354,10 @@ export class ReleaseJournal {
       decision: NonNullable<ReleaseRecord['acceptance']>,
     ) => Promise<boolean>,
   ): Promise<ReleaseRecord> {
+    requireRelease(
+      this.record.scope === 'offline-fixture',
+      'HOSTED_ACCEPTANCE_AUTHORITY_NOT_CONFIGURED',
+    );
     const next = acceptRelease(this.manifest, this.current(), decision, expected);
     requireRelease(
       await authorize(this.manifest, this.current(), decision),

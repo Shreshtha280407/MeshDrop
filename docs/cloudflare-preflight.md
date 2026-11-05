@@ -6,6 +6,11 @@ deployment, migration, acceptance, rollback or user-session operation and is not
 wired into the deployment workflow. No authenticated account request was made
 during this task. Tests use explicit offline fixtures, not hosted evidence.
 
+Task 07's [approval and recovery contracts](release-approval.md) consume fresh
+observations without accepting a release. In-process observation provenance is
+required for hosted candidates; fixture responses cannot become hosted evidence.
+Trusted approval authority and independent recovery storage remain unconfigured.
+
 ## Official API contract
 
 Reviewed on 2026-11-05. All implemented paths are relative to
