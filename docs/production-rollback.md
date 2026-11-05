@@ -15,6 +15,10 @@ or approve production rollback. The real approval authority and independent
 off-run store remain unconfigured; unsigned artifacts and offline acceptance
 cannot establish a safe production target.
 
+See Task 08's [trust integration requirements](trusted-release-integration.md) for
+attestation, reviewer evidence and independently anchored database history.
+Neither the new read-only diagnostics nor PostgreSQL adapter approves rollback.
+
 ## Policy and eligibility
 
 Use a previously accepted **matching Worker/Pages release record**, independently

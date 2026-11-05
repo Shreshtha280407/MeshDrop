@@ -25,6 +25,11 @@ checkpoints, and a shared-root environment lock rejects overlapping local
 attempts. Local hashes and CI artifacts do not prove independent authentication
 or off-run durability.
 
+Task 08's [trust integration procedure](trusted-release-integration.md) documents
+actual attestation/reviewer API capabilities, PostgreSQL configuration and external
+trust requirements. Signature verification and store integrity do not authorize
+publication or acceptance; both remain disabled.
+
 ## Lifecycle and trust
 
 | State        | Meaning                                                                             | Provider IDs / acceptance                                        |

@@ -12,6 +12,12 @@ they are not an executable hosted release or approval command. An implementation
 of a TypeScript interface is a trusted dependency, not authentication by itself.
 There is no environment variable that enables publication or approval.
 
+Task 08 adds [concrete trust integrations](trusted-release-integration.md): offline
+GitHub CLI/Sigstore signature verification, scoped GitHub reviewer diagnostics and
+an actual PostgreSQL adapter. Hosted factories remain unconfigured. The documented
+review APIs do not expose all required validity/revocation evidence, and local
+database tests do not certify hosted durability. Publication/acceptance remain blocked.
+
 ## Trust boundaries and documented GitHub guarantees
 
 | Boundary                        | Present evidence                                                                                | What is still required                                                                                             |

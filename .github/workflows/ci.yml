@@ -34,6 +34,9 @@ jobs:
       - run: pnpm test:unit
       - run: pnpm test:integration
       - run: pnpm test:faults
+      - name: Cache the pinned disposable PostgreSQL test image
+        run: docker pull postgres@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+      - run: pnpm test:release-store
       - run: pnpm build
 
   browser:

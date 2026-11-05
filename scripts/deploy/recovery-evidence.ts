@@ -61,7 +61,11 @@ function head(event: RecoveryEvent): RecoveryHead {
     hash: event.hash,
   };
 }
-function parseEvent(value: unknown, manifest: Manifest, attemptId: string): RecoveryEvent {
+export function parseRecoveryEvent(
+  value: unknown,
+  manifest: Manifest,
+  attemptId: string,
+): RecoveryEvent {
   requireRelease(
     value && typeof value === 'object' && !Array.isArray(value),
     'INVALID_RECOVERY_EVENT',
@@ -127,7 +131,7 @@ export function inspectRecovery(
 ) {
   parseManifest(manifest);
   requireRelease(anchor && values.length > 0 && values.length <= 10000, 'RECOVERY_ANCHOR_REQUIRED');
-  const events = values.map((value) => parseEvent(value, manifest, attemptId));
+  const events = values.map((value) => parseRecoveryEvent(value, manifest, attemptId));
   const approvals = new Set<string>();
   for (const [index, event] of events.entries()) {
     requireRelease(
@@ -232,7 +236,7 @@ export class RecoveryLog implements ReleaseEvidenceSink {
       record: structuredClone(record),
       approval,
     };
-    const event = parseEvent(
+    const event = parseRecoveryEvent(
       { ...payload, hash: fingerprint(payload) },
       this.manifest,
       this.attemptId,
