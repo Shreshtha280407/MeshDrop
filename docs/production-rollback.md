@@ -5,6 +5,10 @@ It supersedes timestamp-based target selection in older preview drills.
 Local compatibility checks are necessary gates; they do not authorize deployment
 or establish the current state of a Cloudflare account.
 
+Task 05's [read-only preflight](cloudflare-preflight.md) can check pinned provider
+identities when separately authorized. It cannot authenticate artifact provenance,
+accept a historical release or authorize rollback. Publication remains blocked.
+
 ## Policy and eligibility
 
 Use a previously accepted **matching Worker/Pages release record**, independently

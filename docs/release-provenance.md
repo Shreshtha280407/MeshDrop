@@ -12,6 +12,11 @@ exit-code-only publisher or a fixture. A separately reviewed and authorized
 hosted readback/preflight adapter is required before publication can resume.
 No release or rollback is automatically approved by these changes.
 
+Task 05 adds a separate [read-only provider preflight](cloudflare-preflight.md).
+It inspects pinned control-plane identities only when separately authorized and
+cannot establish prepared artifact provenance or accept a release. Publication
+remains blocked; the deployment workflow does not invoke the new diagnostic.
+
 ## Lifecycle and trust
 
 | State        | Meaning                                                                             | Provider IDs / acceptance                                        |
@@ -112,7 +117,7 @@ acceptance command.
 dependency-injected interface. There is no hidden `fetch`, provider login or
 default transport. A future hosted adapter must be separately reviewed against
 the actual supported provider APIs, credential scopes and independent artifact
-correlation. Do not guess response fields, infer IDs from list order, scrape
+correlation. Do not guess response fields, infer IDs from undocumented list order, scrape
 untrusted CLI text, or treat upload exit codes as confirmation.
 
 Before any publication, the adapter must independently observe:
