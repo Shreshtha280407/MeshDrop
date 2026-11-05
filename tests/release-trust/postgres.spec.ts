@@ -28,7 +28,7 @@ function docker(args: string[], input?: string) {
     const child = execFile(
       'docker',
       ['--config', isolatedConfig, '--host', 'unix:///var/run/docker.sock', ...args],
-      { timeout: 20000, maxBuffer: 4 * 1024 * 1024, env: { PATH: process.env.PATH! } },
+      { timeout: 20000, maxBuffer: 4 * 1024 * 1024, env: { PATH: process.env.PATH ?? '' } },
       (error, out) =>
         error ? reject(new Error('Isolated PostgreSQL fixture operation failed.')) : resolve(out),
     );
