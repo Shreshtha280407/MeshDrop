@@ -6,6 +6,10 @@ export type Runtime = Record<string, string | undefined>;
 export function runtimeExpectation(env: Runtime, rehearsalId: string): RehearsalExpectation {
   assertNoDeployCredentials(env);
   requireRelease(
+    env.REHEARSAL_FAULT_TESTS !== 'true' || env.REHEARSAL_ENVIRONMENT === 'preview',
+    'PRODUCTION_FAULT_TARGET_FORBIDDEN',
+  );
+  requireRelease(
     env.GITHUB_ACTIONS === 'true' &&
       env.GITHUB_EVENT_NAME === 'workflow_dispatch' &&
       env.GITHUB_REPOSITORY === 'Shreshtha280407/MeshDrop' &&

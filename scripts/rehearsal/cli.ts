@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { appendFile, mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative } from 'node:path';
 import { bytesHash, canonical, requireRelease, ReleaseError } from '../deploy/release-record';
-import { readAttestationInput } from '../deploy/github-attestation';
+import { readAttestationInput, verifyAttestation } from '../deploy/github-attestation';
 import type { AttestationPolicy } from '../deploy/github-attestation';
 import {
   assertNoDeployCredentials,
@@ -16,6 +16,17 @@ import type { RehearsalExpectation } from './contract';
 import { inspectEnvironment, runtimeExpectation } from './preflight';
 import { verifyRehearsal } from './verification';
 import { createHostedJournal, inspectHistory } from './recovery';
+import {
+  checkConfiguration,
+  requireConfiguration,
+  faultDatabase,
+  buildFaultTarget,
+} from './configuration';
+import { createHostedFaultHarness } from './faults';
+import { FAULT_MODES, faultMode } from './fault-contract';
+import type { FaultMode } from './fault-contract';
+import { faultReport, inspectFaultReport } from './fault-report';
+import type { FaultResult } from './fault-report';
 
 const PUBLIC = 'rehearsal-evidence';
 function required(key: string): string {
@@ -86,6 +97,9 @@ function escapePass(value: string) {
   return value.replace(/\\/g, '\\\\').replace(/:/g, '\\:');
 }
 async function store() {
+  const readiness = checkConfiguration(process.env, 'normal');
+  if (readiness.status !== 'READY_FOR_HOSTED_REHEARSAL') console.log(canonical(readiness).trim());
+  requireConfiguration(process.env, 'normal');
   const { artifact, verification } = await verified(join(PUBLIC, 'bundle.json'));
   const db = exact(
     JSON.parse(required('REHEARSAL_DB_CONFIGURATION')),
@@ -183,10 +197,165 @@ async function store() {
     }).trim(),
   );
 }
+async function runFaults(selected: string) {
+  const readiness = checkConfiguration(process.env, 'faults');
+  if (readiness.status !== 'READY_FOR_HOSTED_REHEARSAL') console.log(canonical(readiness).trim());
+  requireConfiguration(process.env, 'faults');
+  const modes = selected === 'all' ? [...FAULT_MODES] : [faultMode(selected)];
+  const { artifact, verification } = await verified(join(PUBLIC, 'bundle.json'));
+  const db = faultDatabase(process.env);
+  const temporary = await realpath(required('RUNNER_TEMP')),
+    workspace = await realpath(process.cwd());
+  requireRelease(
+    relative(workspace, temporary).startsWith('..'),
+    'REHEARSAL_PRIVATE_DIRECTORY_REQUIRED',
+  );
+  const directory = await mkdtemp(join(temporary, 'meshdrop-fault-private-'));
+  const results: FaultResult[] = [];
+  let failedMode: FaultMode | null = null,
+    failure: string | null = null;
+  try {
+    const paths = {
+      caFile: join(directory, 'ca.pem'),
+      passwordFile: join(directory, 'writer'),
+      readerPasswordFile: join(directory, 'reader'),
+    };
+    await writeFile(paths.caFile, db.caPem as string, { mode: 0o600, flag: 'wx' });
+    for (const [key, user, path] of [
+      ['REHEARSAL_FAULT_DB_PASSWORD', db.user as string, paths.passwordFile],
+      ['REHEARSAL_FAULT_DB_READER_PASSWORD', db.readerUser as string, paths.readerPasswordFile],
+    ] as const) {
+      const password = required(key!);
+      requireRelease(
+        password.length <= 4096 && !/[\r\n\0]/.test(password),
+        'INVALID_REHEARSAL_CREDENTIAL_MATERIAL',
+      );
+      await writeFile(
+        path!,
+        `${db.host}:${db.port}:${db.database}:${user}:${escapePass(password)}\n`,
+        { mode: 0o600, flag: 'wx' },
+      );
+    }
+    const harness = await createHostedFaultHarness(
+      artifact,
+      verification,
+      buildFaultTarget(process.env, artifact, paths),
+    );
+    for (const mode of modes) {
+      try {
+        results.push(await harness.run(mode));
+      } catch (error) {
+        failedMode = mode;
+        failure = error instanceof ReleaseError ? error.code : 'FAULT_FAILED_RECONCILE';
+        break;
+      }
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+  const report = faultReport(artifact, db.storeId as string, results, failedMode, failure);
+  await writeFile(join(PUBLIC, 'fault-results.json'), canonical(report), {
+    mode: 0o600,
+    flag: 'wx',
+  });
+  await writeFile(
+    join(PUBLIC, 'fault-heads.json'),
+    canonical(results.map((r) => ({ mode: r.mode, storeId: r.storeId, head: r.head }))),
+    { mode: 0o600, flag: 'wx' },
+  );
+  const summary = {
+    ...inspectFaultReport(artifact, report),
+    status: failure ? 'FAIL' : 'PASS',
+    artifactId: artifact.artifactId,
+    rehearsalId: artifact.rehearsalId,
+    storeId: db.storeId,
+    failure,
+  };
+  await writeFile(join(PUBLIC, 'fault-summary.json'), canonical(summary), {
+    mode: 0o600,
+    flag: 'wx',
+  });
+  await output(
+    Object.fromEntries(
+      Object.entries(report.checks).map(([key, value]) => [
+        key.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase()),
+        value,
+      ]),
+    ),
+  );
+  console.log(canonical(summary).trim());
+  if (failure) process.exitCode = 1;
+}
+async function verifyFaultFile(bundlePath?: string, offline?: { files: Buffer[] }) {
+  let artifact,
+    reportBytes: Buffer,
+    rootBytes: Buffer,
+    expected: RehearsalExpectation,
+    pins: AttestationPolicy;
+  if (offline) {
+    const [a, b, r, p, e, f] = offline.files;
+    expected = JSON.parse(e!.toString());
+    pins = JSON.parse(p!.toString());
+    rootBytes = r!;
+    reportBytes = f!;
+    await verifyRehearsal(a!, b!, rootBytes, pins, expected);
+    artifact = parseArtifact(JSON.parse(a!.toString()));
+  } else {
+    ({ artifact } = await verified(join(PUBLIC, 'bundle.json')));
+    reportBytes = await readAttestationInput(join(PUBLIC, 'fault-results.json'));
+    rootBytes = Buffer.from(required('REHEARSAL_ROOTS_BASE64'), 'base64');
+    expected = runtimeExpectation(process.env, required('REHEARSAL_UUID'));
+    pins = policy(expected, reportBytes);
+  }
+  const report = JSON.parse(reportBytes.toString()),
+    checked = inspectFaultReport(artifact, report);
+  requireRelease(Buffer.from(canonical(report)).equals(reportBytes), 'NONCANONICAL_FAULT_REPORT');
+  requireRelease(
+    checked.complete && report.results.every((r: FaultResult) => r.scope === 'github-rehearsal'),
+    'INCOMPLETE_OR_FIXTURE_FAULT_REPORT',
+  );
+  if (bundlePath) {
+    const bundle = await readAttestationInput(bundlePath);
+    await verifyAttestation(reportBytes, bundle, rootBytes, {
+      ...pins,
+      artifactSha256: bytesHash(reportBytes),
+    });
+    if (!offline)
+      await writeFile(join(PUBLIC, 'fault-bundle.json'), bundle, { mode: 0o600, flag: 'wx' });
+    console.log(
+      canonical({
+        ...checked,
+        status: 'SIGNATURE_VERIFIED — RELEASE AUTHORIZATION NOT ESTABLISHED',
+        signatureVerified: true,
+        authorizationVerified: false,
+      }).trim(),
+    );
+  } else
+    console.log(
+      canonical({
+        ...checked,
+        status: 'INTEGRITY_ONLY — AWAITING_FAULT_ATTESTATION',
+        signatureVerified: false,
+      }).trim(),
+    );
+}
 const [command, ...args] = process.argv.slice(2);
 try {
   assertNoDeployCredentials(process.env);
-  if (command === 'preflight' && !args.length) {
+  if (command === 'check-config' && !args.length) {
+    const report = checkConfiguration(process.env);
+    console.log(canonical(report).trim());
+    if (report.status !== 'READY_FOR_HOSTED_REHEARSAL') process.exitCode = 1;
+  } else if (command === 'fault-test' && args.length === 1) {
+    await runFaults(args[0]!);
+  } else if (command === 'inspect-fault-results' && !args.length) {
+    await verifyFaultFile();
+  } else if (command === 'verify-produced-faults' && args.length === 1) {
+    await verifyFaultFile(args[0]!);
+  } else if (command === 'verify-faults' && args.length === 7) {
+    const files = await Promise.all(args.slice(0, 6).map(readAttestationInput));
+    await verifyFaultFile(args[6]!, { files });
+  } else if (command === 'preflight' && !args.length) {
     const checked = await inspectEnvironment(process.env);
     await output({ 'environment-name': checked.environmentName });
     console.log(canonical(checked).trim());

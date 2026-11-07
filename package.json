@@ -53,7 +53,8 @@
     "verify:operations": "tsx scripts/deploy/operations.ts verify",
     "verify:free-relay": "tsx scripts/local-dev/verify-free-relay.ts",
     "verify:ios": "node scripts/local-dev/verify-ios.mjs",
-    "verify:device-cloud": "node scripts/local-dev/verify-ios.mjs"
+    "verify:device-cloud": "node scripts/local-dev/verify-ios.mjs",
+    "rehearsal:check-config": "tsx scripts/rehearsal/cli.ts check-config"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

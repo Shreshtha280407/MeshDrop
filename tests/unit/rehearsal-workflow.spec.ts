@@ -52,6 +52,35 @@ describe('manual rehearsal workflow safety structure', () => {
     if (kind === 'ignore-failure') steps[0]!['continue-on-error'] = true;
     expect(() => enforceWorkflow(w)).toThrow();
   });
+  it.each([
+    'default-on',
+    'production-guard',
+    'fault-permissions',
+    'fault-secret-leak',
+    'fault-deploy',
+    'fault-signing-secret',
+  ] as const)('rejects unsafe %s fault workflow change', async (kind) => {
+    const w = workflowObject(await readFile(file, 'utf8'));
+    const jobs = w.jobs as Record<string, Record<string, unknown>>,
+      faults = jobs.faults!,
+      attest = jobs['attest-faults']!;
+    if (kind === 'default-on')
+      (
+        w.on as Record<string, Record<string, Record<string, Record<string, unknown>>>>
+      ).workflow_dispatch!.inputs!.fault_tests!.default = true;
+    if (kind === 'production-guard') faults.if = '${{ always() }}';
+    if (kind === 'fault-permissions')
+      faults.permissions = { contents: 'read', actions: 'read', 'id-token': 'write' };
+    if (kind === 'fault-secret-leak')
+      faults.env = { BAD: '${{ secrets.REHEARSAL_FAULT_DB_PASSWORD }}' };
+    if (kind === 'fault-deploy')
+      (faults.steps as Record<string, unknown>[]).push({
+        run: 'pnpm deploy:cloud publish preview',
+      });
+    if (kind === 'fault-signing-secret')
+      attest.env = { REHEARSAL_FAULT_DB_PASSWORD: '${{ secrets.REHEARSAL_FAULT_DB_PASSWORD }}' };
+    expect(() => enforceWorkflow(w)).toThrow();
+  });
   it('has no executable import path from rehearsal code to Cloudflare or release publication', async () => {
     const allowed = new Set(
       [
@@ -61,6 +90,10 @@ describe('manual rehearsal workflow safety structure', () => {
         'scripts/rehearsal/recovery.ts',
         'scripts/rehearsal/verification.ts',
         'scripts/rehearsal/witness.ts',
+        'scripts/rehearsal/configuration.ts',
+        'scripts/rehearsal/fault-contract.ts',
+        'scripts/rehearsal/faults.ts',
+        'scripts/rehearsal/fault-report.ts',
         'scripts/deploy/postgres-connection.ts',
         'scripts/deploy/github-attestation.ts',
         'scripts/deploy/release-record.ts',

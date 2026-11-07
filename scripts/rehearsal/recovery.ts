@@ -253,6 +253,9 @@ export class RehearsalJournal {
         tlsValidated: true,
         replayCheck: 'NOT_RUN' as const,
         concurrencyCheck: 'NOT_RUN' as const,
+        lostAckCheck: 'NOT_RUN' as const,
+        reconnectCheck: 'NOT_RUN' as const,
+        historyIntegrityCheck: 'NOT_RUN' as const,
         independentWitnessVerified: false as const,
         authorizationVerified: false as const,
         unresolved: [

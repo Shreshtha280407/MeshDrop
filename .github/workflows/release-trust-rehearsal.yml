@@ -15,6 +15,11 @@ on:
         description: Exact independently reviewed refs/heads/... or refs/tags/...
         required: true
         type: string
+      fault_tests:
+        description: Run isolated preview-only database fault tests
+        required: true
+        type: boolean
+        default: false
       prepared_manifest_sha256:
         description: Optional existing prepared-manifest digest; never fabricated
         required: false
@@ -26,6 +31,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  REHEARSAL_FAULT_TESTS: ${{ inputs.fault_tests }}
   REHEARSAL_ENVIRONMENT: ${{ inputs.environment }}
   REHEARSAL_EXPECTED_SOURCE: ${{ inputs.expected_source_sha }}
   REHEARSAL_EXPECTED_REF: ${{ inputs.expected_ref }}
@@ -165,6 +171,7 @@ jobs:
       # Uses only an operator-provisioned, rehearsal-scoped PostgreSQL login.
       - run: pnpm exec tsx scripts/rehearsal/cli.ts store
         env:
+          REHEARSAL_GITHUB_ENVIRONMENT_NAME: ${{ needs.inspect.outputs.environment-name }}
           REHEARSAL_RUNNER_KIND: ${{ runner.environment }}
           REHEARSAL_DB_CONFIGURATION: ${{ toJSON(fromJSON(vars.REHEARSAL_DATABASES_JSON)[inputs.environment]) }}
           REHEARSAL_DB_PASSWORD: ${{ secrets.REHEARSAL_DB_PASSWORD }}
@@ -175,6 +182,134 @@ jobs:
             rehearsal-evidence/head.json
             rehearsal-evidence/events.json
             rehearsal-evidence/summary.json
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: false
+          include-hidden-files: false
+
+  faults:
+    if: ${{ inputs.fault_tests }}
+    needs: [inspect, produce, recover]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    environment:
+      name: ${{ needs.inspect.outputs.environment-name }}
+    permissions:
+      contents: read
+      actions: read
+    env:
+      REHEARSAL_UUID: ${{ needs.produce.outputs.rehearsal-id }}
+      REHEARSAL_ARTIFACT_ID: ${{ needs.produce.outputs.rehearsal-artifact-id }}
+      REHEARSAL_ARTIFACT_SHA256: ${{ needs.produce.outputs.artifact-sha256 }}
+      REHEARSAL_GITHUB_ENVIRONMENT_NAME: ${{ needs.inspect.outputs.environment-name }}
+      REHEARSAL_FAULT_MODE: rehearsal-only
+      REHEARSAL_FAULT_DATABASE_JSON: ${{ vars.REHEARSAL_FAULT_DATABASE_JSON }}
+      REHEARSAL_DATABASES_JSON: ${{ vars.REHEARSAL_DATABASES_JSON }}
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      replayCheck: ${{ steps.faults.outputs.replay-check }}
+      concurrencyCheck: ${{ steps.faults.outputs.concurrency-check }}
+      lostAckCheck: ${{ steps.faults.outputs.lost-ack-check }}
+      reconnectCheck: ${{ steps.faults.outputs.reconnect-check }}
+      historyIntegrityCheck: ${{ steps.faults.outputs.history-integrity-check }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          clean: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.produce.outputs.artifact-id }}
+          path: rehearsal-evidence
+          merge-multiple: true
+      - id: faults
+        run: pnpm exec tsx scripts/rehearsal/cli.ts fault-test all
+        env:
+          REHEARSAL_RUNNER_KIND: ${{ runner.environment }}
+          REHEARSAL_FAULT_DB_PASSWORD: ${{ secrets.REHEARSAL_FAULT_DB_PASSWORD }}
+          REHEARSAL_FAULT_DB_READER_PASSWORD: ${{ secrets.REHEARSAL_FAULT_DB_READER_PASSWORD }}
+      - id: upload
+        if: ${{ always() && steps.faults.outcome != 'skipped' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: trust-rehearsal-faults-${{ github.run_id }}-${{ github.run_attempt }}-${{ needs.produce.outputs.rehearsal-id }}
+          path: |
+            rehearsal-evidence/fault-results.json
+            rehearsal-evidence/fault-summary.json
+            rehearsal-evidence/fault-heads.json
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: false
+          include-hidden-files: false
+
+  attest-faults:
+    if: ${{ inputs.fault_tests }}
+    needs: [inspect, produce, faults]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    environment:
+      name: ${{ needs.inspect.outputs.environment-name }}
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    env:
+      REHEARSAL_UUID: ${{ needs.produce.outputs.rehearsal-id }}
+      REHEARSAL_ARTIFACT_ID: ${{ needs.produce.outputs.rehearsal-artifact-id }}
+      REHEARSAL_ARTIFACT_SHA256: ${{ needs.produce.outputs.artifact-sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          clean: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.produce.outputs.artifact-id }}
+          path: rehearsal-evidence
+          merge-multiple: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.faults.outputs.artifact-id }}
+          path: rehearsal-evidence
+          merge-multiple: true
+      - run: pnpm exec tsx scripts/rehearsal/cli.ts inspect-fault-results
+        env:
+          REHEARSAL_RUNNER_KIND: ${{ runner.environment }}
+      - id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: rehearsal-evidence/fault-results.json
+          push-to-registry: false
+          create-storage-record: false
+      - run: pnpm exec tsx scripts/rehearsal/cli.ts verify-produced-faults "$BUNDLE_PATH"
+        env:
+          REHEARSAL_RUNNER_KIND: ${{ runner.environment }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: trust-rehearsal-verified-faults-${{ github.run_id }}-${{ github.run_attempt }}-${{ needs.produce.outputs.rehearsal-id }}
+          path: |
+            rehearsal-evidence/fault-results.json
+            rehearsal-evidence/fault-bundle.json
+            rehearsal-evidence/fault-summary.json
+            rehearsal-evidence/fault-heads.json
           if-no-files-found: error
           retention-days: 30
           overwrite: false

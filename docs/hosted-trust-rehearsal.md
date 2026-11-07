@@ -15,7 +15,7 @@ confirmed the local checkout was current. No branch or history was changed.
 
 ## What the rehearsal proves
 
-The three jobs in `.github/workflows/release-trust-rehearsal.yml` are:
+The default path in `.github/workflows/release-trust-rehearsal.yml` has three jobs:
 
 1. `inspect`: read the existing dedicated GitHub environment and compare its ID,
    direct reviewer IDs, self-review prevention and selected-branch policy mode.
@@ -28,6 +28,9 @@ The three jobs in `.github/workflows/release-trust-rehearsal.yml` are:
    repeat signature and identity verification, then reserve the rehearsal scope,
    append evidence, close the rehearsal, and reread the complete history.
 
+An optional, default-off `fault_tests` input adds preview-only `faults` and
+`attest-faults` jobs. Follow [the Task 10 operator runbook](hosted-rehearsal-faults.md)
+for their separate store, permissions, configuration checker and evidence export.
 The only trigger is `workflow_dispatch`. Concurrency is scoped to
 `meshdrop-trust-rehearsal-{preview|production}`, with cancellation disabled.
 Database ownership and compare-and-swap checks remain authoritative for competing
@@ -35,10 +38,12 @@ writers; Actions concurrency is not a distributed lock and may replace pending
 runs. A cancelled or interrupted owner is never automatically removed.
 
 Root permissions are empty. `inspect` and `recover` have `contents: read` and
-`actions: read`. Only `produce` has `contents: read`, `id-token: write` and
-`attestations: write`. No job requests deployment permissions or Cloudflare
-credentials. The database password is mapped only to the final `store` step,
-after the producer has completed. Dependencies install with `--ignore-scripts`.
+`actions: read`. Only the signing jobs (`produce` and optional `attest-faults`) request
+`id-token: write` and `attestations: write`. The optional signing job also needs
+`actions: read` to download the exact fault report. No job requests deployment permissions or Cloudflare
+credentials. The normal database password is mapped only to the `store` step,
+after the producer has completed. Optional fault writer/reader passwords are
+mapped only to the separate `faults` job command, never to either signing job. Dependencies install with `--ignore-scripts`.
 Normal CI runs structural, unit and isolated database tests, never this workflow.
 
 The environment gate is an operational prerequisite, **not** independently
@@ -107,7 +112,7 @@ Do not grant table writes, ownership, superuser or schema creation. Configure
 
 ```ts
 fingerprint({
-  repository: 'Shreshtha280407/MeshDrop',
+  repository: 'https://github.com/Shreshtha280407/MeshDrop',
   environment: 'preview', // or production, explicitly
   purpose: 'trust-rehearsal',
 });

@@ -67,12 +67,29 @@ export function enforceWorkflow(value: unknown): void {
     group: 'meshdrop-trust-rehearsal-${{ inputs.environment }}',
     'cancel-in-progress': false,
   });
+  const dispatch = object(object(w.on).workflow_dispatch);
+  const faultInput = object(object(dispatch.inputs).fault_tests);
+  assert.equal(faultInput.type, 'boolean');
+  assert.equal(faultInput.default, false);
   const jobs = object(w.jobs);
-  assert.deepEqual(Object.keys(jobs).sort(), ['inspect', 'produce', 'recover']);
+  assert.deepEqual(Object.keys(jobs).sort(), [
+    'attest-faults',
+    'faults',
+    'inspect',
+    'produce',
+    'recover',
+  ]);
   const expectedPermissions: Record<string, Map> = {
     inspect: { contents: 'read', actions: 'read' },
     produce: { contents: 'read', 'id-token': 'write', attestations: 'write' },
     recover: { contents: 'read', actions: 'read' },
+    faults: { contents: 'read', actions: 'read' },
+    'attest-faults': {
+      contents: 'read',
+      actions: 'read',
+      'id-token': 'write',
+      attestations: 'write',
+    },
   };
   const commands = new Set([
     'pnpm install --frozen-lockfile --ignore-scripts',
@@ -80,6 +97,9 @@ export function enforceWorkflow(value: unknown): void {
     'pnpm exec tsx scripts/rehearsal/cli.ts prepare',
     'pnpm exec tsx scripts/rehearsal/cli.ts verify-produced "$BUNDLE_PATH"',
     'pnpm exec tsx scripts/rehearsal/cli.ts store',
+    'pnpm exec tsx scripts/rehearsal/cli.ts fault-test all',
+    'pnpm exec tsx scripts/rehearsal/cli.ts inspect-fault-results',
+    'pnpm exec tsx scripts/rehearsal/cli.ts verify-produced-faults "$BUNDLE_PATH"',
   ]);
   let attest = 0,
     download = 0,
@@ -87,7 +107,10 @@ export function enforceWorkflow(value: unknown): void {
   for (const [name, raw] of Object.entries(jobs)) {
     const job = object(raw);
     assert.equal(job['runs-on'], 'ubuntu-26.04');
-    assert.equal(job.if, undefined);
+    assert.equal(
+      job.if,
+      ['faults', 'attest-faults'].includes(name) ? '${{ inputs.fault_tests }}' : undefined,
+    );
     assert.deepEqual(job.permissions, expectedPermissions[name]);
     assert.equal(job['continue-on-error'], undefined);
     if (name === 'inspect') {
@@ -95,13 +118,27 @@ export function enforceWorkflow(value: unknown): void {
       assert.equal(job.needs, undefined);
     } else {
       assert.deepEqual(job.environment, { name: '${{ needs.inspect.outputs.environment-name }}' });
-      assert.deepEqual(job.needs, name === 'produce' ? 'inspect' : ['inspect', 'produce']);
+      assert.deepEqual(
+        job.needs,
+        name === 'produce'
+          ? 'inspect'
+          : name === 'faults'
+            ? ['inspect', 'produce', 'recover']
+            : name === 'attest-faults'
+              ? ['inspect', 'produce', 'faults']
+              : ['inspect', 'produce'],
+      );
     }
     assert(Array.isArray(job.steps));
     for (const rawStep of job.steps) {
       const s = object(rawStep);
       assert.equal(s['continue-on-error'], undefined);
-      assert.equal(s.if, undefined);
+      assert.equal(
+        s.if,
+        name === 'faults' && s.id === 'upload'
+          ? "${{ always() && steps.faults.outcome != 'skipped' }}"
+          : undefined,
+      );
       if (s.run !== undefined) {
         assert.equal(typeof s.run, 'string');
         assert(commands.has(s.run as string));
@@ -118,15 +155,29 @@ export function enforceWorkflow(value: unknown): void {
         }
         if (action === 'actions/attest') {
           attest++;
-          assert.equal(name, 'produce');
-          assert.equal(withValues['subject-path'], 'rehearsal-evidence/rehearsal.json');
+          assert(['produce', 'attest-faults'].includes(name));
+          assert.equal(
+            withValues['subject-path'],
+            name === 'produce'
+              ? 'rehearsal-evidence/rehearsal.json'
+              : 'rehearsal-evidence/fault-results.json',
+          );
           assert.equal(withValues['push-to-registry'], false);
           assert.equal(withValues['create-storage-record'], false);
         }
         if (action === 'actions/download-artifact') {
           download++;
-          assert.equal(name, 'recover');
-          assert.equal(withValues['artifact-ids'], '${{ needs.produce.outputs.artifact-id }}');
+          assert(['recover', 'faults', 'attest-faults'].includes(name));
+          assert(
+            (name === 'attest-faults'
+              ? [
+                  '${{ needs.produce.outputs.artifact-id }}',
+                  '${{ needs.faults.outputs.artifact-id }}',
+                ]
+              : ['${{ needs.produce.outputs.artifact-id }}']
+            ).includes(String(withValues['artifact-ids'])),
+          );
+          assert.equal(withValues['merge-multiple'], true);
           assert.equal(withValues.name, undefined);
           assert.equal(withValues.path, 'rehearsal-evidence');
         }
@@ -138,11 +189,24 @@ export function enforceWorkflow(value: unknown): void {
             String(withValues.path).trim().split(/\s+/).sort(),
             (name === 'produce'
               ? ['rehearsal-evidence/rehearsal.json', 'rehearsal-evidence/bundle.json']
-              : [
-                  'rehearsal-evidence/head.json',
-                  'rehearsal-evidence/events.json',
-                  'rehearsal-evidence/summary.json',
-                ]
+              : name === 'faults'
+                ? [
+                    'rehearsal-evidence/fault-results.json',
+                    'rehearsal-evidence/fault-summary.json',
+                    'rehearsal-evidence/fault-heads.json',
+                  ]
+                : name === 'attest-faults'
+                  ? [
+                      'rehearsal-evidence/fault-results.json',
+                      'rehearsal-evidence/fault-bundle.json',
+                      'rehearsal-evidence/fault-summary.json',
+                      'rehearsal-evidence/fault-heads.json',
+                    ]
+                  : [
+                      'rehearsal-evidence/head.json',
+                      'rehearsal-evidence/events.json',
+                      'rehearsal-evidence/summary.json',
+                    ]
             ).sort(),
           );
         }
@@ -151,17 +215,28 @@ export function enforceWorkflow(value: unknown): void {
       for (const [key, val] of Object.entries(env)) {
         if (String(val).includes('secrets.')) {
           passwords++;
-          assert.equal(name, 'recover');
-          assert.equal(s.run, 'pnpm exec tsx scripts/rehearsal/cli.ts store');
-          assert.equal(key, 'REHEARSAL_DB_PASSWORD');
-          assert.equal(val, '${{ secrets.REHEARSAL_DB_PASSWORD }}');
+          assert(['recover', 'faults'].includes(name));
+          assert.equal(
+            s.run,
+            name === 'recover'
+              ? 'pnpm exec tsx scripts/rehearsal/cli.ts store'
+              : 'pnpm exec tsx scripts/rehearsal/cli.ts fault-test all',
+          );
+          assert(
+            (name === 'recover'
+              ? ['REHEARSAL_DB_PASSWORD']
+              : ['REHEARSAL_FAULT_DB_PASSWORD', 'REHEARSAL_FAULT_DB_READER_PASSWORD']
+            ).includes(key),
+          );
+          assert.equal(val, '${{ secrets.' + key + ' }}');
         }
       }
     }
   }
-  assert.equal(attest, 1);
-  assert.equal(download, 1);
-  assert.equal(passwords, 1);
+  assert.equal(attest, 2);
+  assert.equal(download, 4);
+  assert.equal(passwords, 3);
   const all = JSON.stringify(w);
+  assert.equal((all.match(/secrets\./g) || []).length, 3);
   assert(!/CLOUDFLARE|WRANGLER|OPS_REVOKE|TURN_SHARED|deployments|toJSON\(secrets\)/i.test(all));
 }
