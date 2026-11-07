@@ -1,0 +1,28 @@
+name: Task 10D runner pin capture
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pins:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - name: Capture runner image and tool pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "ImageOS=${ImageOS:-}"
+          echo "ImageVersion=${ImageVersion:-}"
+          GH_PATH="$(command -v gh)"
+          PSQL_PATH="$(command -v psql)"
+          echo "GH_PATH=$GH_PATH"
+          echo "GH_SHA256=$(sha256sum "$GH_PATH" | awk '{print $1}')"
+          echo "GH_VERSION=$(gh --version | head -1)"
+          echo "PSQL_PATH=$PSQL_PATH"
+          echo "PSQL_SHA256=$(sha256sum "$PSQL_PATH" | awk '{print $1}')"
+          echo "PSQL_VERSION=$(psql --version)"
