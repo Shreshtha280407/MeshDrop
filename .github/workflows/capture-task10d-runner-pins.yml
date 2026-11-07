@@ -26,3 +26,15 @@ jobs:
           echo "PSQL_PATH=$PSQL_PATH"
           echo "PSQL_SHA256=$(sha256sum "$PSQL_PATH" | awk '{print $1}')"
           echo "PSQL_VERSION=$(psql --version)"
+      - name: Capture GitHub attestation trusted roots
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh attestation trusted-root > trusted_root.jsonl
+          echo "ROOT_SHA256=$(sha256sum trusted_root.jsonl | awk '{print $1}')"
+          echo "ROOT_REVIEWED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          echo "ROOT_VALID_UNTIL=$(date -u -d '+6 days' +'%Y-%m-%dT%H:%M:%SZ')"
+          echo "ROOT_BASE64_BEGIN"
+          base64 -w0 trusted_root.jsonl
+          echo
+          echo "ROOT_BASE64_END"
