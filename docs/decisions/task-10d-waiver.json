@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "task": "10D",
+  "decision": "SKIPPED",
+  "status": "SKIPPED — HOSTED TRUST EVIDENCE NOT ESTABLISHED",
+  "reason": "HUMAN_OPERATOR_DECLINED_INDEPENDENT_REVIEWER_REQUIREMENT",
+  "runId": "42402338554",
+  "runConclusion": "failure",
+  "failure": "REHEARSAL_ENVIRONMENT_PROTECTION_UNVERIFIED",
+  "sourceCommit": "3429f9160dcbbb8cb7e271e06de3a6801f4c13f3",
+  "hostedTrustVerified": false,
+  "humanAuthorizationVerified": false,
+  "independentWitnessVerified": false,
+  "productionApproved": false,
+  "acceptanceEnabled": false,
+  "authorization": "NONE — ROADMAP ACKNOWLEDGEMENT ONLY"
+}

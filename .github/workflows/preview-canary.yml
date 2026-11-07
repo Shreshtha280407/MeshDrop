@@ -1,0 +1,103 @@
+name: Isolated preview canary — never production authorization
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [preview]
+        default: preview
+        required: true
+        description: Isolated preview only
+      expected_source_sha:
+        type: string
+        required: true
+        description: Exact reviewed source including this workflow
+      expected_ref:
+        type: string
+        default: refs/heads/main
+        required: true
+        description: Exact reviewed main ref
+permissions: {}
+concurrency:
+  group: meshdrop-isolated-preview-canary
+  cancel-in-progress: false
+env:
+  PREVIEW_CANARY_EXPECTED_SHA: ${{ inputs.expected_source_sha }}
+  PREVIEW_CANARY_EXPECTED_REF: ${{ inputs.expected_ref }}
+  PREVIEW_CANARY_TARGET_JSON: ${{ vars.PREVIEW_CANARY_TARGET_JSON }}
+  PREVIEW_CANARY_DENY_JSON: ${{ vars.PREVIEW_CANARY_DENY_JSON }}
+  PREVIEW_CANARY_REPOSITORY_ID: ${{ vars.PREVIEW_CANARY_REPOSITORY_ID }}
+  PREVIEW_CANARY_OWNER_ID: ${{ vars.PREVIEW_CANARY_OWNER_ID }}
+jobs:
+  inspect:
+    if: ${{ inputs.environment == 'preview' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      environment-name: ${{ steps.inspect.outputs.environment-name }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - id: inspect
+        run: pnpm preview:canary inspect
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+  candidate:
+    needs: inspect
+    runs-on: ubuntu-26.04
+    timeout-minutes: 25
+    environment:
+      name: ${{ needs.inspect.outputs.environment-name }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - id: prepare
+        run: pnpm preview:canary prepare
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm preview:canary dry-run "$PACKAGE_DIRECTORY"
+        env:
+          PACKAGE_DIRECTORY: ${{ steps.prepare.outputs.directory }}
+          PREVIEW_CANARY_MANIFEST_ID: ${{ steps.prepare.outputs.manifest-id }}
+      - run: pnpm preview:canary publish "$PACKAGE_DIRECTORY"
+        env:
+          PACKAGE_DIRECTORY: ${{ steps.prepare.outputs.directory }}
+          PREVIEW_CANARY_MANIFEST_ID: ${{ steps.prepare.outputs.manifest-id }}
+          PREVIEW_CANARY_API_TOKEN: ${{ secrets.PREVIEW_CANARY_API_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        with:
+          name: isolated-preview-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .meshdrop-artifacts/preview-canary/public/package.tar
+            .meshdrop-artifacts/preview-canary/public/manifest.json
+            .meshdrop-artifacts/preview-canary/public/preparation.json
+            .meshdrop-artifacts/preview-canary/public/publication.json
+            .meshdrop-artifacts/preview-canary/public/canary.json
+            .meshdrop-artifacts/preview-canary/public/browser.json
+            .meshdrop-artifacts/preview-canary/public/rollback.json
+            .meshdrop-artifacts/preview-canary/public/coverage.json
+          include-hidden-files: true
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 30
