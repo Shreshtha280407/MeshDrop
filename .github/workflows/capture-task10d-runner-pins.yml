@@ -38,3 +38,19 @@ jobs:
           base64 -w0 trusted_root.jsonl
           echo
           echo "ROOT_BASE64_END"
+
+      - name: Inspect Task 10D environment metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/Shreshtha280407/MeshDrop/environments/trust-rehearsal-preview \
+            --jq '{
+              id: .id,
+              name: .name,
+              prevent_self_review: ([.protection_rules[]? | select(.type=="required_reviewers")][0].prevent_self_review // null),
+              reviewer_ids: ([.protection_rules[]? | select(.type=="required_reviewers")][0].reviewers // [] | map(.reviewer.id)),
+              custom_branch_policies: .deployment_branch_policy.custom_branch_policies,
+              protected_branches: .deployment_branch_policy.protected_branches
+            }'
