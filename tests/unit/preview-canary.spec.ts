@@ -47,7 +47,11 @@ describe('explicit preview isolation before network access', () => {
     'githubEnvironmentId',
   ] as const)('rejects production %s equality', (key) => {
     const f = previewFixture();
-    f.pins.target[key] = f.pins.deny[key];
+    if (key === 'githubEnvironmentId') {
+      f.pins.deny.githubEnvironmentId = f.pins.target.githubEnvironmentId;
+    } else {
+      f.pins.target[key] = f.pins.deny[key];
+    }
     expect(() => isolation(f.pins.target, f.pins.deny)).toThrow('PRODUCTION_RESOURCE_OVERLAP');
   });
   it.each(['environment', 'admissionPaused', 'turnProvider'] as const)(
