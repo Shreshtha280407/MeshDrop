@@ -109,10 +109,15 @@ The target JSON has exactly this schema; placeholders are deliberately invalid:
 
 The deny JSON has exactly: accountId, worker, project, projectId, origin,
 githubEnvironmentId, durableObjectNamespaces (an array of all applicable live
-namespace IDs). Equality with any configured preview resource is rejected before
-a provider request. Missing deny pins also fail closed. These comparisons assume
-honest independently reviewed configuration; a deliberately mislabeled account
-does not become safe through a JSON field.
+namespace IDs). If a production GitHub environment genuinely exists,
+githubEnvironmentId must be its exact reviewed numeric ID. If no production GitHub
+environment exists, githubEnvironmentId must be null; the hosted inspector then
+queries GitHub and fails if a production environment appears. Never use a dummy,
+rehearsal or preview environment ID to represent absence. Equality with any
+configured preview resource is rejected before a provider request. Missing deny
+pins also fail closed. These comparisons assume honest independently reviewed
+configuration; a deliberately mislabeled account does not become safe through a
+JSON field.
 
 Add **only** `PREVIEW_CANARY_API_TOKEN` to the `preview-canary` environment. Never
 paste it in chat, commit it, put it in repository variables or reuse production
