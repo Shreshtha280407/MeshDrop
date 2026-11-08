@@ -114,7 +114,7 @@ it('packages the real current Worker/gateway/frontend and verifies paused behavi
       const response = await fetch(local, {
         method: init?.method ?? 'GET',
         redirect: 'error',
-        signal: init?.signal,
+        ...(init?.signal ? { signal: init.signal } : {}),
         headers: Object.fromEntries(new Headers(init?.headers).entries()),
         ...(typeof init?.body === 'string' ? { body: init.body } : {}),
       });
