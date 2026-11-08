@@ -93,7 +93,7 @@ export async function pausedProbe(
   requireRelease(
     (await status(room + '/status')) === 401 &&
       (await status(room + '/join', 'POST', {})) === 401 &&
-      (await status(room + '/connection', 'POST', {})) === 401,
+      (await status(room + '/connection', 'POST')) === 401,
     'PREVIEW_SESSION_AUTH_FAILED',
   );
 }
