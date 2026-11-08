@@ -16,9 +16,61 @@ Its remaining jobs were skipped. The human's roadmap waiver acknowledges this
 risk; it authenticates no operator, recovery store, witness or production release.
 This permits isolated preview preparation, not production authorization.
 
-The human subsequently instructed: do not push; provide manual Git commands.
-Task 11 therefore remains local/uncommitted. New hosted CI is NOT RUN; the green
-baseline CI must not be reported as validating these new changes.
+Task 11 source was subsequently committed as
+`cf312f40ed39a53d7fa2c9941ee54684edb15d30` and published to main, followed by three
+CI corrections ending at reviewed SHA
+`d4a6d2f42151471d9e5e7f5aa81288f7ca2c136d`. Authenticated GitHub metadata verifies
+Phase Gates run 42452320328 on that exact source: core, browser and foundation all
+completed SUCCESS. The previous local/uncommitted and new-CI-NOT-RUN statements
+are historical and no longer describe the published Task 11 source.
+
+## Task 11B readiness audit — stopped before external mutation
+
+Required reviewed GitHub main: `d4a6d2f42151471d9e5e7f5aa81288f7ca2c136d`.
+Verified remote main and successful push-triggered CI run 42452320328 match it.
+Repository ID 1421237057 and owner ID 225167798 were verified again through the
+authenticated GitHub connector.
+
+The local main checkout at the start of this audit was clean at
+`cf312f40ed39a53d7fa2c9941ee54684edb15d30`, three commits behind the reviewed
+remote source. Read-only comparison confirms only scripts/preview/canary.ts and
+tests/integration/preview-package.spec.ts changed in that interval. No branch
+switch, merge, reset, source substitution, commit or push was performed here.
+
+Authenticated repository-variable enumeration contains none of the four required
+PREVIEW_CANARY_REPOSITORY_ID, PREVIEW_CANARY_OWNER_ID,
+PREVIEW_CANARY_TARGET_JSON or PREVIEW_CANARY_DENY_JSON inputs. The dedicated
+preview-canary environment GET returned HTTP 404. In particular, the independently
+reviewed production deny pins are unavailable. Task 11B's explicit hard-stop rule
+therefore prevents provisioning, credential handling, configuration writes and
+workflow dispatch. Missing pins are not inferred from resource suffixes, previous
+diagnostics or fixture data.
+
+Task 11B verdict: **BLOCKED — REQUIRED PRODUCTION DENY PINS UNAVAILABLE**.
+No hosted preview run ID exists for this audit. Preview account/Worker/project/
+project ID/origin/namespace/environment IDs remain UNCONFIGURED or UNVERIFIED.
+Provider readback and browser checks: NOT RUN. Canary: 0/50 attempts, success
+percentage N/A (not 0% or 100%). No verified earlier preview baseline exists:
+ROLLBACK_DRILL_NOT_RUN — NO VERIFIED PRIOR PREVIEW BASELINE.
+
+All production mutation/deployment/DNS/secret/migration counters remain 0. GitHub
+settings changes, secret changes, external Cloudflare operations, hosted workflow
+dispatches, commits, pushes and PRs performed by this audit are all 0.
+productionApproved=false; acceptanceEnabled=false;
+humanAuthorizationVerified=false; independentWitnessVerified=false.
+Task 10D remains SKIPPED — HOSTED TRUST EVIDENCE NOT ESTABLISHED. Task 12 is blocked.
+
+To resume, the operator must supply independently reviewed non-secret production
+deny pins (accountId, worker, project, projectId, origin, githubEnvironmentId and
+all applicable durableObjectNamespaces), plus the separate preview account or
+an authorized provisioning path. Do not send tokens or production credentials.
+An unavailable identity must be resolved explicitly; no placeholder or production
+resource may be created merely to satisfy the contract.
+
+This audit changes only this Markdown report locally. No commit or push is made:
+advancing remote main before dispatch would invalidate the exact d4a6d2f... pin.
+Keep this report correction local while resolving the blocked prerequisite; its
+source publication can be reviewed after the pinned hosted execution.
 
 ## Architecture and implementation
 
@@ -32,7 +84,7 @@ SQLite actors. There is no resource-sharing exception or waiver-derived authorit
 ## Hosted configuration and evidence
 
 Authenticated GET of preview-canary returned 404. Repository variable names
-included only the Task 10D rehearsal variables, with no PREVIEW*CANARY*\* inputs.
+included only the Task 10D rehearsal variables, with no `PREVIEW_CANARY_*` inputs.
 No environment, token, account, namespace, project, origin or secret was created
 or chosen. All actual preview identities are UNCONFIGURED.
 
@@ -70,10 +122,12 @@ No Task 12 production work follows this task.
 
 ## Final source and changed files
 
-Final repository HEAD remains `3429f9160dcbbb8cb7e271e06de3a6801f4c13f3`.
-There is no new Task 11 commit SHA: all seventeen files below remain local,
-unstaged and uncommitted under the human's latest instruction. GitHub main and
-origin/main still match the baseline. No unrelated user edits were overwritten.
+The initial implementation baseline was
+`3429f9160dcbbb8cb7e271e06de3a6801f4c13f3`. The seventeen implementation files below
+were committed as cf312f40...; the current reviewed published source is
+`d4a6d2f42151471d9e5e7f5aa81288f7ca2c136d`, with CI verified below. They are no
+longer uncommitted additions. This Task 11B audit leaves only this report modified
+locally and preserves all source and Git history.
 
 | File                                        | Purpose                                                                                                                                         |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -154,15 +208,16 @@ as release authorization or added to Git.
 
 ## Hosted CI
 
-| Source                      | Run ID      | core    | browser | foundation |
-| --------------------------- | ----------- | ------- | ------- | ---------- |
-| Baseline 3429f916...        | 42372539807 | SUCCESS | SUCCESS | SUCCESS    |
-| Uncommitted Task 11 changes | NOT RUN     | NOT RUN | NOT RUN | NOT RUN    |
+| Source               | Run ID      | core    | browser | foundation |
+| -------------------- | ----------- | ------- | ------- | ---------- |
+| Baseline 3429f916... | 42372539807 | SUCCESS | SUCCESS | SUCCESS    |
+| Reviewed d4a6d2f...  | 42452320328 | SUCCESS | SUCCESS | SUCCESS    |
 
-The human explicitly prohibited pushing. New hosted CI cannot run until the
-human commits and pushes reviewed source. The old green run is not proof of CI
-for the local changes. After that source publication, wait for all three new
-Phase Gates jobs, review the new exact SHA, then configure/dispatch preview only.
+Run 42452320328 is completed and successful for the exact reviewed d4a6d2f...
+source. It supersedes the original implementation's uncommitted/new-CI-NOT-RUN
+status. Green CI does not establish hosted preview isolation, publication,
+readback or canary results. No preview workflow is dispatched while required
+production deny configuration is missing.
 
 ## Operator and hosted limitations
 
@@ -192,10 +247,11 @@ Worker/Pages publication atomic. Operator pins and configuration freeze remain
 trust assumptions. A failed workflow, including cleanup failure, cannot be
 accepted based on a PUBLISHED_NOT_ACCEPTED record alone.
 
-Human actions remaining: review these changes; manually commit/push; verify new
-CI; configure the separate preview account/resources/environment/deny pins/token
-as specified in the runbook; review the isolated test window separately; then
-explicitly run preview validation. Do not use the Task 10D temporary branch or
+Human actions remaining: supply independently reviewed deny pins and the separate
+preview account/provisioning access; synchronize the clean local source to the
+exact reviewed d4a6d2f... commit; then resume the authorized preview-only setup and
+pinned workflow. The drain-safe Task 11B run does not require reopening admission.
+Any later full session/transfer test window still needs separate review. Do not use the Task 10D temporary branch or
 PR #1, reopen production admission, or proceed to Task 12.
 
 Commits: 0. Pushes: 0. PRs: 0. Deployments: 0. Cloudflare mutations: 0.
