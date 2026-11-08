@@ -22,6 +22,7 @@ import {
   buildValues,
   CAPABILITIES,
   ENVIRONMENT,
+  verifyProductionEnvironmentPin,
 } from './contract';
 import { PreviewReadback } from './provider';
 import { runHostedCanary, validateCanary } from './canary';
@@ -84,6 +85,8 @@ async function inspect() {
       environment.deployment_branch_policy?.custom_branch_policies === true,
     'PREVIEW_ENVIRONMENT_ID_MISMATCH',
   );
+  const environments = await get('environments?per_page=100');
+  verifyProductionEnvironmentPin(pins.deny, environments);
   const rules = await get(`environments/${ENVIRONMENT}/deployment-branch-policies?per_page=100`);
   requireRelease(
     rules.total_count === 1 &&
