@@ -38,7 +38,7 @@ export type DenyPins = {
   project: string;
   projectId: string;
   origin: string;
-  githubEnvironmentId: string;
+  githubEnvironmentId: string | null;
   durableObjectNamespaces: string[];
 };
 export type Isolation = { target: Target; deny: DenyPins };
@@ -58,14 +58,21 @@ export function isolation(targetValue: unknown, denyValue: unknown): Isolation {
       t.turnProvider === 'direct',
     'PREVIEW_ONLY_PAUSED_DIRECT_REQUIRED',
   );
+  requireRelease(
+    typeof t.accountId === 'string' &&
+      TAG.test(t.accountId) &&
+      typeof t.githubEnvironmentId === 'string' &&
+      ID.test(t.githubEnvironmentId),
+    'EXACT_ISOLATION_PINS_REQUIRED',
+  );
+  requireRelease(
+    typeof d.accountId === 'string' &&
+      TAG.test(d.accountId) &&
+      (d.githubEnvironmentId === null ||
+        (typeof d.githubEnvironmentId === 'string' && ID.test(d.githubEnvironmentId))),
+    'EXACT_ISOLATION_PINS_REQUIRED',
+  );
   for (const o of [t, d]) {
-    requireRelease(
-      typeof o.accountId === 'string' &&
-        TAG.test(o.accountId) &&
-        typeof o.githubEnvironmentId === 'string' &&
-        ID.test(o.githubEnvironmentId),
-      'EXACT_ISOLATION_PINS_REQUIRED',
-    );
     requireRelease(
       typeof o.worker === 'string' &&
         /^[a-z][a-z0-9-]{2,60}$/.test(o.worker) &&
@@ -82,16 +89,14 @@ export function isolation(targetValue: unknown, denyValue: unknown): Isolation {
       'EXACT_ISOLATION_PINS_REQUIRED',
     );
   }
-  // No shared account: an account-scoped edit token must have no production reach.
-  for (const k of [
-    'accountId',
-    'worker',
-    'project',
-    'projectId',
-    'origin',
-    'githubEnvironmentId',
-  ] as const)
+  // No shared account/resource: an account-scoped edit token must have no production reach.
+  for (const k of ['accountId', 'worker', 'project', 'projectId', 'origin'] as const)
     requireRelease(t[k] !== d[k], 'PRODUCTION_RESOURCE_OVERLAP');
+  if (d.githubEnvironmentId !== null)
+    requireRelease(
+      t.githubEnvironmentId !== d.githubEnvironmentId,
+      'PRODUCTION_RESOURCE_OVERLAP',
+    );
   requireRelease(
     typeof t.project === 'string' &&
       t.project.endsWith('-preview') &&
@@ -122,6 +127,28 @@ export function isolation(targetValue: unknown, denyValue: unknown): Isolation {
     seen.add(b.namespaceId);
   }
   return structuredClone({ target: t, deny: d }) as Isolation;
+}
+export function verifyProductionEnvironmentPin(deny: DenyPins, value: unknown) {
+  requireRelease(
+    !!value && typeof value === 'object' && Array.isArray((value as Record<string, unknown>).environments),
+    'PRODUCTION_ENVIRONMENT_DENY_STATE_UNVERIFIED',
+  );
+  const environments = (value as { environments: unknown[] }).environments;
+  const production = environments.filter(
+    (entry): entry is Record<string, unknown> =>
+      !!entry &&
+      typeof entry === 'object' &&
+      (entry as Record<string, unknown>).name === 'production',
+  );
+  requireRelease(production.length <= 1, 'PRODUCTION_ENVIRONMENT_DENY_STATE_UNVERIFIED');
+  if (deny.githubEnvironmentId === null) {
+    requireRelease(production.length === 0, 'PRODUCTION_ENVIRONMENT_DENY_STATE_CHANGED');
+    return;
+  }
+  requireRelease(
+    production.length === 1 && String(production[0]!.id) === deny.githubEnvironmentId,
+    'PRODUCTION_ENVIRONMENT_DENY_STATE_CHANGED',
+  );
 }
 export function configured(env: NodeJS.ProcessEnv): Isolation {
   requireRelease(
