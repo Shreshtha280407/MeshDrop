@@ -1,7 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { spawnSync, execFileSync } from 'node:child_process';
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { configured, isolation, runtime, manifestGate } from '../../scripts/preview/contract';
+import {
+  configured,
+  isolation,
+  runtime,
+  manifestGate,
+  verifyProductionEnvironmentPin,
+} from '../../scripts/preview/contract';
 import { PreviewReadback } from '../../scripts/preview/provider';
 import { runCanary, validateCanary, pausedProbe } from '../../scripts/preview/canary';
 import { previewRollbackEligibility } from '../../scripts/preview/rollback';
@@ -75,6 +81,43 @@ describe('explicit preview isolation before network access', () => {
       expect(() => isolation(t, f.pins.deny)).toThrow();
     },
   );
+  it('accepts an explicitly absent production GitHub environment only when GitHub confirms absence', () => {
+    const f = previewFixture();
+    f.pins.deny.githubEnvironmentId = null;
+    const pins = isolation(f.pins.target, f.pins.deny);
+    expect(() =>
+      verifyProductionEnvironmentPin(pins.deny, {
+        environments: [{ id: 555, name: 'preview-canary' }],
+      }),
+    ).not.toThrow();
+    expect(() =>
+      verifyProductionEnvironmentPin(pins.deny, {
+        environments: [
+          { id: 555, name: 'preview-canary' },
+          { id: 999, name: 'production' },
+        ],
+      }),
+    ).toThrow('PRODUCTION_ENVIRONMENT_DENY_STATE_CHANGED');
+  });
+  it('requires the exact reviewed production GitHub environment ID when one exists', () => {
+    const f = previewFixture();
+    expect(() =>
+      verifyProductionEnvironmentPin(f.pins.deny, {
+        environments: [
+          { id: 555, name: 'preview-canary' },
+          { id: 999, name: 'production' },
+        ],
+      }),
+    ).not.toThrow();
+    expect(() =>
+      verifyProductionEnvironmentPin(f.pins.deny, {
+        environments: [
+          { id: 555, name: 'preview-canary' },
+          { id: 998, name: 'production' },
+        ],
+      }),
+    ).toThrow('PRODUCTION_ENVIRONMENT_DENY_STATE_CHANGED');
+  });
   it('does not invent missing provider configuration', () =>
     expect(() => configured({})).toThrow('PREVIEW_INFRASTRUCTURE_NOT_CONFIGURED'));
   it('rejects extra credentials in target metadata', () => {
