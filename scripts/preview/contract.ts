@@ -93,10 +93,7 @@ export function isolation(targetValue: unknown, denyValue: unknown): Isolation {
   for (const k of ['accountId', 'worker', 'project', 'projectId', 'origin'] as const)
     requireRelease(t[k] !== d[k], 'PRODUCTION_RESOURCE_OVERLAP');
   if (d.githubEnvironmentId !== null)
-    requireRelease(
-      t.githubEnvironmentId !== d.githubEnvironmentId,
-      'PRODUCTION_RESOURCE_OVERLAP',
-    );
+    requireRelease(t.githubEnvironmentId !== d.githubEnvironmentId, 'PRODUCTION_RESOURCE_OVERLAP');
   requireRelease(
     typeof t.project === 'string' &&
       t.project.endsWith('-preview') &&
@@ -130,7 +127,9 @@ export function isolation(targetValue: unknown, denyValue: unknown): Isolation {
 }
 export function verifyProductionEnvironmentPin(deny: DenyPins, value: unknown) {
   requireRelease(
-    !!value && typeof value === 'object' && Array.isArray((value as Record<string, unknown>).environments),
+    !!value &&
+      typeof value === 'object' &&
+      Array.isArray((value as Record<string, unknown>).environments),
     'PRODUCTION_ENVIRONMENT_DENY_STATE_UNVERIFIED',
   );
   const environments = (value as { environments: unknown[] }).environments;
