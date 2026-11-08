@@ -69,6 +69,7 @@ it('packages the real current Worker/gateway/frontend and verifies paused behavi
     worker = new Miniflare(
       convertV4MiniflareOptions({
         cf: false,
+        upstream: f.pins.target.origin,
         workers: [
           {
             name: 'gateway-fixture',
@@ -102,10 +103,18 @@ it('packages the real current Worker/gateway/frontend and verifies paused behavi
         ],
       }),
     );
-    await worker.ready;
+    const localOrigin = await worker.ready;
     await pausedProbe(f.pins, async (input, init) => {
-      const response = await worker!.dispatchFetch(String(input), {
+      const requested = new URL(String(input));
+      const local = new URL(requested.pathname + requested.search, localOrigin);
+      // Use Miniflare's actual local HTTP listener for this fixture. dispatchFetch()
+      // force-resets its internal TCP connection and can fail under CI between
+      // consecutive requests; upstream above preserves the pinned HTTPS request
+      // URL seen by the packaged gateway without adding retries.
+      const response = await fetch(local, {
         method: init?.method ?? 'GET',
+        redirect: 'error',
+        signal: init?.signal,
         headers: Object.fromEntries(new Headers(init?.headers).entries()),
         ...(typeof init?.body === 'string' ? { body: init.body } : {}),
       });
