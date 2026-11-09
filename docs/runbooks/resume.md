@@ -28,6 +28,42 @@ pnpm exec playwright test tests/e2e/resume.spec.ts
 
 The engine fault matrix includes 0/10/50/70/95/100% interruption, delayed old-epoch ACK, exact source rejection, replayed NEED_RANGES and explicit cancellation. Chromium desktop/mobile-view cases cover real WebRTC at 10/50/70/95%, reload/new admission, unavailable/wrong source, changed stored bytes, a forged local block digest and automatic ICE-to-new-connection fallback. Storage crash-window, quota, lock, expiry and transaction-abort tests remain in the full suite. Test source patches and harness workers are not application runtime switches or production bundle dependencies.
 
+## Task 12 deterministic reliability gate
+
+```sh
+pnpm test:transfer-reliability
+CI=true pnpm exec playwright test tests/e2e/transfer-reliability.spec.ts --workers 1 --retries 0
+CI=true pnpm check
+```
+
+The dedicated engine harness generates offset-defined byte ranges on demand.
+64 MiB, 256 MiB and 1 GiB pass through the production framing/transfer state
+machine into disposable file-backed storage. Whole-file `arrayBuffer()` calls
+are forbidden by the generated source. Stored bytes are hashed incrementally
+and independently checked with Node SHA-256. This is a local transport/storage
+simulation, not a claim of a real browser or public-network 1 GiB transfer.
+
+Faults include interruptions at 0/1/10/25/50/75/95%, three recovery cycles, a lost
+committed ACK, slow ACKs, duplicates, invalid ordering, corrupt data/final stored
+bytes, changed source, quota/write/worker errors and cancellation through receipt
+signing. Each new engine is post-authentication test infrastructure; real browser
+cases separately require admission, explicit pairing and a fresh comparison after
+connection loss. Existing cryptographic, authorization and lifecycle tests remain.
+
+The browser gate sends a real 64 MiB file over WebRTC into OPFS, pauses/resumes,
+exports and hashes it. Smaller cases cover connection loss, a dispatched freeze/
+resume lifecycle event, storage-error UI and cancellation during actual signing.
+Synthetic lifecycle dispatch is not an operating-system suspension or a physical
+mobile/NAT test. No traces, videos or screenshots are captured by these cases.
+
+At most one 1 MiB verification block is outstanding; the send queue is capped at
+512 KiB and the peer receive queue at 2 MiB. A final hash, every required committed
+byte and the receipt handshake are required for completion. Cancelling aborts
+queued file controls before/after signing; the cancellation notification itself
+can still be signed and sent. Retention supports recovery, not background delivery
+or survival after browser eviction. Test metrics are secret-free and retained only
+under ignored `.meshdrop-artifacts/task12-transfer-reliability/`.
+
 ## Required 1 GiB network migration
 
 On Linux with unprivileged user/network namespaces and `iproute2`:

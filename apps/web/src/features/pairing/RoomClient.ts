@@ -727,7 +727,7 @@ export class RoomClient {
         get bufferedAmount() {
           return peer.bufferedAmount;
         },
-        sendControl: (message) => peer.sendFileControl(message),
+        sendControl: (message, signal) => peer.sendFileControl(message, signal),
         sendFrame: (bytes) => peer.sendFileFrame(bytes),
         waitForDrain: (signal) => peer.waitForDrain(signal),
       },

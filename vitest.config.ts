@@ -17,7 +17,16 @@ export default defineConfig({
           ],
         },
       },
-      { test: { name: 'unit', include: ['tests/unit/**/*.spec.ts'] } },
+      {
+        test: {
+          name: 'unit',
+          include: ['tests/unit/**/*.spec.ts'],
+          // The existing diagnostics-history case takes ~3s CPU in isolation.
+          // Competing unit workers exceeded its unchanged 5s deadline locally.
+          // Keep every case; isolate this project's CPU work instead of relaxing checks.
+          maxWorkers: 1,
+        },
+      },
       {
         test: {
           name: 'integration',

@@ -4,6 +4,7 @@ export type LifecycleEvent =
   | 'pagehide'
   | 'pageshow'
   | 'freeze'
+  | 'resume'
   | 'offline'
   | 'online';
 export function observeLifecycle(callback: (event: LifecycleEvent) => void): () => void {
@@ -15,11 +16,14 @@ export function observeLifecycle(callback: (event: LifecycleEvent) => void): () 
     return () => window.removeEventListener(event, listener);
   });
   const freeze = () => callback('freeze');
+  const resume = () => callback('resume');
   document.addEventListener('visibilitychange', visibility);
   document.addEventListener('freeze', freeze);
+  document.addEventListener('resume', resume);
   return () => {
     document.removeEventListener('visibilitychange', visibility);
     document.removeEventListener('freeze', freeze);
+    document.removeEventListener('resume', resume);
     for (const remove of handlers) remove();
   };
 }

@@ -651,9 +651,10 @@ export class PeerSession {
   get bufferedAmount(): number {
     return this.channel?.bufferedAmount ?? 0;
   }
-  async sendFileControl(input: FileControlInput): Promise<void> {
+  async sendFileControl(input: FileControlInput, signal?: AbortSignal): Promise<void> {
     const generation = this.generation;
     await this.enqueueControl(async () => {
+      signal?.throwIfAborted();
       if (
         !this.current(generation) ||
         !this.canTransfer ||
@@ -672,6 +673,7 @@ export class PeerSession {
         seq: this.sequence++,
       });
       const signature = await sign(control, this.identity.privateKey);
+      signal?.throwIfAborted();
       if (!this.current(generation)) throw new Error('Connection epoch changed.');
       const message = JSON.stringify({ control, signature });
       if (

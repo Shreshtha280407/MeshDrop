@@ -190,7 +190,10 @@ export class TransferMachine {
   ): Promise<void> {
     const transferId = this.view.manifest?.transferId;
     if (!transferId) throw new Error('Transfer identity unavailable.');
-    await this.options.transport.sendControl({ type, transferId, payload } as FileControlInput);
+    await this.options.transport.sendControl(
+      { type, transferId, payload } as FileControlInput,
+      type === 'TRANSFER_CANCEL' ? undefined : this.abort.signal,
+    );
   }
   async offer(files: readonly File[]): Promise<void> {
     if (this.options.role !== 'owner' || this.view.state)
@@ -570,6 +573,7 @@ export class TransferMachine {
           (await manifestDigest(manifest)) !== message.payload.manifestDigest
         )
           throw new Error('Invalid manifest binding.');
+        if (this.abort.signal.aborted) return;
         if (this.view.state) {
           if (
             this.view.manifest?.transferId === manifest.transferId &&
@@ -791,6 +795,7 @@ export class TransferMachine {
           receiptId: receipt.receiptId,
           manifestDigest: this.digest,
         });
+        if (!this.active) return;
         this.update({ receipt });
         await this.complete();
         return;
@@ -961,6 +966,7 @@ export class TransferMachine {
       await this.send('FILE_END', { fileId: file.fileId });
       await verified;
     }
+    this.abort.signal.throwIfAborted();
     this.maybeVerifying();
     await this.send('TRANSFER_FINALIZE', { manifestDigest: this.digest });
     this.touch();
@@ -993,8 +999,19 @@ export class TransferMachine {
     this.wake = null;
   }
   private async complete(): Promise<void> {
+    if (!this.active) return;
+    const manifest = this.view.manifest;
+    if (
+      !manifest ||
+      !this.view.receipt ||
+      this.view.state !== 'verifying' ||
+      this.view.committedBytes !== manifest.totalBytes ||
+      this.verified.size !== manifest.files.length
+    )
+      throw new Error('Completion requires every committed byte and verified file.');
     if (this.options.role === 'receiver' && this.view.receipt)
       await this.storage?.rememberReceipt?.(this.view.receipt);
+    if (!this.active) return;
     this.transition({ type: 'VERIFY_SUCCESS', integrityVerified: true, storageFinalized: true });
     this.storage?.dispose();
     this.storage = null;
@@ -1014,6 +1031,7 @@ export class TransferMachine {
   async cancel(notify = true, preserve = false): Promise<void> {
     if (!this.active && this.view.state !== 'reconnecting') return;
     this.transition({ type: 'CANCEL' });
+    this.update({ receipt: null, storageFull: false });
     this.stop();
     if (notify && this.view.manifest)
       await this.send('TRANSFER_CANCEL', { reason: 'user' }).catch(() => {});
@@ -1025,7 +1043,7 @@ export class TransferMachine {
   ): Promise<void> {
     if (!this.active) return;
     this.transition({ type: 'FAIL', code: reason });
-    this.update({ error: message });
+    this.update({ error: message, receipt: null });
     this.stop();
     if (this.view.manifest) await this.send('TRANSFER_CANCEL', { reason }).catch(() => {});
     if ((this.options.retention ?? 'discard') === 'discard') await this.cleanup();
@@ -1044,6 +1062,7 @@ export class TransferMachine {
       recovery:
         'Connection interrupted. Saved blocks are retained. Reconnect, compare the new pairing code, then resume.',
       error: '',
+      receipt: null,
     });
     this.stop();
     if ((this.options.retention ?? 'discard') === 'discard') void this.cleanup();

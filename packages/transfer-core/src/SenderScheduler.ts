@@ -6,7 +6,7 @@ export const SEND_HIGH_WATER_BYTES = 512 * 1024;
 export const SEND_LOW_WATER_BYTES = 128 * 1024;
 export interface TransferTransport {
   readonly bufferedAmount: number;
-  sendControl(message: FileControlInput): Promise<void>;
+  sendControl(message: FileControlInput, signal?: AbortSignal): Promise<void>;
   sendFrame(bytes: Uint8Array<ArrayBuffer>): void;
   waitForDrain(signal: AbortSignal): Promise<void>;
 }
