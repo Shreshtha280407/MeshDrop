@@ -1,6 +1,6 @@
 # Task 12 — large-file and unstable-network reliability
 
-Status: **LOCAL VALIDATION PASS — HOSTED CI PENDING**.
+Status: **PASS — TRANSFER RELIABILITY HARDENED**.
 
 ## Source and baseline
 
@@ -12,8 +12,12 @@ Status: **LOCAL VALIDATION PASS — HOSTED CI PENDING**.
   `9d3a5cc5328d84169067ab55cdaeb59782944c51`. Phase Gates run `42512951355`
   completed core/browser/foundation SUCCESS on that exact commit.
 - No Task 12 product changes began until the repaired baseline was green.
-- Final tested implementation SHA: pending commit after local validation.
-- Final hosted CI run: pending. No in-progress result is counted as success.
+- Tested implementation SHA:
+  `21dfae25c4273d01d286a200ae0e6d2bcf1b6367`.
+- Hosted [Phase Gates run `42671820721`, attempt 2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/42671820721/attempts/2)
+  completed core/browser/foundation SUCCESS on that exact commit.
+- This report's completion update is an evidence-only follow-up to that tested
+  implementation; it does not change production code or imply a deployment.
 
 Task10D = **SKIPPED — HOSTED TRUST EVIDENCE NOT ESTABLISHED**.
 Task11B = **SKIPPED — HOSTED PREVIEW VALIDATION NOT ESTABLISHED**.
@@ -161,27 +165,40 @@ No test, assertion, test timeout or normal browser retry policy was weakened.
 No diagnostics production code was changed to mask the timing issue. Failed logs
 are preserved alongside final results rather than omitted.
 
-| Command                                                                                            | Result  | Evidence                                                           |
-| -------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------ |
-| `pnpm test:transfer-reliability`                                                                   | PASS    | 58 dedicated cases                                                 |
-| `CI=true pnpm exec playwright test tests/e2e/transfer-reliability.spec.ts --workers 1 --retries 0` | PASS    | Initial eight; two freeze cases also passed after the listener fix |
-| `pnpm -r typecheck`                                                                                | PASS    | All workspaces, final pipeline                                     |
-| `pnpm typecheck`                                                                                   | PASS    | Root, final pipeline                                               |
-| `pnpm lint`                                                                                        | PASS    | ESLint/Prettier, final pipeline                                    |
-| `pnpm check:secrets`                                                                               | PASS    | Final pipeline                                                     |
-| `pnpm test:unit`                                                                                   | PASS    | 989                                                                |
-| `pnpm test:security`                                                                               | PASS    | 57                                                                 |
-| `pnpm test:integration`                                                                            | PASS    | 76                                                                 |
-| `pnpm test:faults`                                                                                 | PASS    | 51                                                                 |
-| `pnpm test:release-store`                                                                          | PASS    | 46 isolated PostgreSQL cases                                       |
-| `pnpm build`                                                                                       | PASS    | Web production build and local Worker dry-run                      |
-| `pnpm test:e2e`                                                                                    | PASS    | 118; 8.1 minutes, no retry/flaky summary                           |
-| `pnpm test:pwa`                                                                                    | PASS    | 5                                                                  |
-| `pnpm verify:rollback`                                                                             | PASS    | Four isolated local workerd runtimes started/disposed              |
-| `pnpm audit:release`                                                                               | PASS    | No known vulnerabilities; threshold unchanged                      |
-| `CI=true pnpm check`                                                                               | PASS    | 1,342 cases; previous timing failures retained                     |
-| Actionlint, all four existing workflows                                                            | PASS    | No workflow files changed                                          |
-| Hosted Phase Gates                                                                                 | PENDING | No hosted success inferred from local tests                        |
+Hosted validation independently passed the same 1,342 cases: 989 unit, 57 security,
+76 integration, 51 faults, 46 isolated PostgreSQL, 118 E2E and 5 PWA. All ten new
+browser cases passed on their first attempt; the browser log has no retry/flaky
+summary. E2E took 6.5 minutes and PWA 19.6 seconds on that runner. The 1 GiB engine
+case took 36.892 seconds; the existing diagnostics-history case passed in 3.213
+seconds. These timings are observations, not correctness thresholds.
+
+The first hosted attempt failed before creating any jobs or test check-runs.
+GitHub reported `Internal server error`, correlation ID
+`b366a7ec-97d3-4c33-b813-2f5b10b62f6f`. The CI workflow was unchanged and all four
+workflow files passed Actionlint. Rerunning the same commit produced the successful
+second attempt above; no source, test, timeout or retry policy was altered for it.
+
+| Command                                                                                            | Result | Evidence                                                           |
+| -------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------ |
+| `pnpm test:transfer-reliability`                                                                   | PASS   | 58 dedicated cases                                                 |
+| `CI=true pnpm exec playwright test tests/e2e/transfer-reliability.spec.ts --workers 1 --retries 0` | PASS   | Initial eight; two freeze cases also passed after the listener fix |
+| `pnpm -r typecheck`                                                                                | PASS   | All workspaces, final pipeline                                     |
+| `pnpm typecheck`                                                                                   | PASS   | Root, final pipeline                                               |
+| `pnpm lint`                                                                                        | PASS   | ESLint/Prettier, final pipeline                                    |
+| `pnpm check:secrets`                                                                               | PASS   | Final pipeline                                                     |
+| `pnpm test:unit`                                                                                   | PASS   | 989                                                                |
+| `pnpm test:security`                                                                               | PASS   | 57                                                                 |
+| `pnpm test:integration`                                                                            | PASS   | 76                                                                 |
+| `pnpm test:faults`                                                                                 | PASS   | 51                                                                 |
+| `pnpm test:release-store`                                                                          | PASS   | 46 isolated PostgreSQL cases                                       |
+| `pnpm build`                                                                                       | PASS   | Web production build and local Worker dry-run                      |
+| `pnpm test:e2e`                                                                                    | PASS   | 118; 8.1 minutes, no retry/flaky summary                           |
+| `pnpm test:pwa`                                                                                    | PASS   | 5                                                                  |
+| `pnpm verify:rollback`                                                                             | PASS   | Four isolated local workerd runtimes started/disposed              |
+| `pnpm audit:release`                                                                               | PASS   | No known vulnerabilities; threshold unchanged                      |
+| `CI=true pnpm check`                                                                               | PASS   | 1,342 cases; previous timing failures retained                     |
+| Actionlint, all four existing workflows                                                            | PASS   | No workflow files changed                                          |
+| Hosted Phase Gates                                                                                 | PASS   | Run 42671820721, attempt 2; core/browser/foundation SUCCESS        |
 
 The final browser/OPFS metrics also recorded a 524,288-byte peak send buffer and
 1,048,576-byte peak block, with independently verified 64 MiB exports in both
