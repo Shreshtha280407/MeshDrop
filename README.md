@@ -4,6 +4,15 @@
 
 # MeshDrop
 
+## Demo Video
+
+<a href="docs/assets/readme/demo-video.mp4"><img src="docs/assets/readme/demo-video-poster.webp" alt="Demo Video: real MeshDrop transfers with sender and receiver shown side by side, including a physical OPPO phone and a clearly labeled emulated mobile receiver." width="100%"></a>
+
+**[▶ Watch Demo Video — 4 minutes 32 seconds (MP4)](docs/assets/readme/demo-video.mp4)**
+
+Laptop → OPPO · OPPO → laptop · Laptop → laptop · OPPO → emulated mobile browser.
+Recorded locally with sender/receiver labels, pause/resume, and independently verified saved files. [Recording details](docs/assets/readme/demo-video.json).
+
 ### A room for two. A file you can verify.
 
 Account-free file sharing between browsers, with explicit approval, verified local storage, and authenticated resume.

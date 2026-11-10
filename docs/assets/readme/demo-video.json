@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "9aa40ba5580d064cb2de6eb99fc359fb2087cb18",
+  "file": "demo-video.mp4",
+  "bytes": 9628676,
+  "sha256": "37d6a6bc4876b05b7fe2974cc9714160fb51698555637a311b5017ff7cdb845f",
+  "durationSeconds": 272.0,
+  "width": 1920,
+  "height": 1080,
+  "fps": "25/1",
+  "codec": "H.264",
+  "captureMethod": "Real timestamped Playwright screenshots of owned laptop/physical-phone tabs; paired views composed without speeding up transfers; external title bars and burned-in step captions. Android firmware has no screenrecord binary.",
+  "chapters": [
+    {
+      "id": 1,
+      "title": "Laptop to phone",
+      "sender": "Laptop · Chromium",
+      "receiver": "OPPO F19 Pro · physical Android",
+      "bytes": 16777604,
+      "sourceSha256": "f5539aa928f57d8a8399aca2513fe9729eb51f6dd3cf2cc467a5233053277835",
+      "savedSha256": "f5539aa928f57d8a8399aca2513fe9729eb51f6dd3cf2cc467a5233053277835",
+      "verified": true,
+      "durationSeconds": 63.999972154000005
+    },
+    {
+      "id": 2,
+      "title": "Phone to laptop",
+      "sender": "OPPO F19 Pro · physical Android",
+      "receiver": "Laptop · Chromium",
+      "bytes": 16777604,
+      "sourceSha256": "4d191d30bf6ab3860f89e3770a140e5bc29861f0f56689e486d71a73e4583ce3",
+      "savedSha256": "4d191d30bf6ab3860f89e3770a140e5bc29861f0f56689e486d71a73e4583ce3",
+      "verified": true,
+      "durationSeconds": 63.999994359
+    },
+    {
+      "id": 3,
+      "title": "Laptop to laptop",
+      "sender": "Laptop · isolated Chrome profile A",
+      "receiver": "Laptop · isolated Chrome profile B",
+      "bytes": 67109252,
+      "sourceSha256": "f85d9c7d77c2047e03ee5256a4df60d604f7ff084a35f9364bdb73bb2f07b2c3",
+      "savedSha256": "f85d9c7d77c2047e03ee5256a4df60d604f7ff084a35f9364bdb73bb2f07b2c3",
+      "verified": true,
+      "durationSeconds": 63.999897604
+    },
+    {
+      "id": 4,
+      "title": "Phone to mobile browser",
+      "sender": "OPPO F19 Pro · physical Android",
+      "receiver": "Mobile browser · EMULATED",
+      "bytes": 8388996,
+      "sourceSha256": "cef4f5d68c6abc64b75f9b0eecdfaff74cc804f83495d97247abc1888eb3213a",
+      "savedSha256": "cef4f5d68c6abc64b75f9b0eecdfaff74cc804f83495d97247abc1888eb3213a",
+      "verified": true,
+      "durationSeconds": 63.99984367499998
+    }
+  ],
+  "phoneDeveloperOptionsEnabled": true,
+  "usbDebuggingEnabled": true,
+  "phoneSettingsUnchanged": true,
+  "productionDeployments": 0,
+  "productionMutations": 0,
+  "gitCommits": 0,
+  "gitPushes": 0,
+  "validation": {
+    "fullVideoDecode": "PASS",
+    "durationWithinFourToFiveMinutes": true,
+    "pairedViewsAndRoleLabelsReviewed": true,
+    "fourExportedHashesMatch": true
+  },
+  "cleanup": {
+    "demoServersStopped": true,
+    "temporaryAdbForwardRemoved": true,
+    "temporaryAdbReverseRemoved": true,
+    "ownedPhoneTabsClosed": true,
+    "temporaryScreenWakeLocksReleased": true,
+    "phoneGlobalSettingsUnchanged": true,
+    "preflightProbeFileRemoved": true,
+    "verifiedDemoArchiveRetainedInAndroidDownloads": "01-Laptop-to-OPPO-8Ehmdi.zip",
+    "gitWorkingTreeClean": true
+  },
+  "capturedAt": "2026-11-10T10:17:15.725Z"
+}

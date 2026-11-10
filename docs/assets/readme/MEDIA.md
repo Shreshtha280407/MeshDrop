@@ -1,8 +1,37 @@
 # README media and verification
 
-Captured on **4 November 2026** from MeshDrop application revision `1f5af25`.
+The original captures below were recorded on **4 November 2026** from MeshDrop
+application revision `1f5af25`.
 The README combines a visual product walkthrough with setup, architecture,
 failure handling, and independently checked results.
+
+## Demo Video — 10 November 2026
+
+[demo-video.mp4](demo-video.mp4) is the **4 minute 32 second**, 1920×1080
+walkthrough recorded from application revision
+`9aa40ba5580d064cb2de6eb99fc359fb2087cb18`. Both views remain visible with
+sender/receiver labels and step captions. Its four chapters show laptop → physical
+OPPO, physical OPPO → laptop, two isolated profiles on the same laptop, and physical
+OPPO → an explicitly labeled emulated mobile browser.
+
+All four transfers use the real local application, Worker, SQLite actors,
+WebSockets, WebRTC, and browser file storage. Each chapter demonstrates pause/resume;
+every exported archive was independently SHA-256 checked against its source.
+The first archive was saved in the physical phone's Android Downloads. Phone-source
+fixtures were preloaded through the local development server before recording and
+selected in the real file input; transfer, storage, and verification were not mocked.
+
+Timestamped live Playwright screenshots were composed at their original timing,
+with external title cards, role labels, and captions. The poster is an extracted
+frame at 66 seconds. Personal tabs and notifications were not recorded; invitation
+fields remained password-masked and no private invitation QR was opened. Owned
+demo tabs, screen wake locks, servers, and ADB tunnels were cleaned up, and phone
+settings were unchanged. No production deployment or configuration change occurred.
+This local demonstration does not certify public-network or TURN connectivity.
+
+Exact file hashes, transfer sizes, source revision, and capture scope are in
+[demo-video.json](demo-video.json). This evidence is separate from the original
+4 November recordings documented below.
 
 ## What was captured
 
