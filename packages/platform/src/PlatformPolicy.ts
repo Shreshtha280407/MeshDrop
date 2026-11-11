@@ -8,24 +8,41 @@ export interface ReceivePolicy {
   warnings: string[];
   requiresAcknowledgement: boolean;
 }
+/** Sender requirements differ from receiving/checkpoint requirements; export remains a separate action. */
+export function transferSupport(capabilities: CapabilityResult, role: 'sender' | 'receiver') {
+  const reasons: string[] = [];
+  if (!capabilities.secureContext)
+    reasons.push('Use HTTPS or loopback for a secure browser context.');
+  if (!capabilities.webRtc) reasons.push('This browser could not create a WebRTC data channel.');
+  if (capabilities.crypto !== 'available')
+    reasons.push('Required SHA-256 and signed pairing cryptography are unavailable.');
+  if (capabilities.worker !== 'available')
+    reasons.push('This browser could not start the required file worker.');
+  if (role === 'sender' && !capabilities.filePicker)
+    reasons.push('This browser has no file-selection input.');
+  if (role === 'receiver') {
+    if (capabilities.opfs !== 'available')
+      reasons.push('Verified browser file storage is unavailable.');
+    if (capabilities.checkpointDb !== 'available')
+      reasons.push('The checkpoint database could not commit and read back data.');
+    if (!capabilities.exclusiveAccess)
+      reasons.push('Exclusive access to saved transfer files is unavailable.');
+  }
+  return { supported: reasons.length === 0, reasons };
+}
 /** Limits are product safeguards, not measured universal browser/phone maxima. */
 export function receivePolicy(
   capabilities: CapabilityResult,
   requiredBytes: number,
 ): ReceivePolicy {
   const warnings: string[] = [];
-  let allowed =
-    capabilities.secureContext &&
-    capabilities.webRtc &&
-    capabilities.opfs === 'available' &&
-    capabilities.checkpointDb === 'available' &&
-    capabilities.exclusiveAccess &&
-    Number.isSafeInteger(requiredBytes) &&
-    requiredBytes >= 0;
+  const support = transferSupport(capabilities, 'receiver');
+  let allowed = support.supported && Number.isSafeInteger(requiredBytes) && requiredBytes >= 0;
   if (!allowed)
     warnings.push(
       'This browser mode cannot provide verified file storage. Use a regular supported browser over HTTPS or loopback.',
     );
+  warnings.push(...support.reasons);
   const free = capabilities.estimatedFreeBytes;
   if (free === null) {
     warnings.push(

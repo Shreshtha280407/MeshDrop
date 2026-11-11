@@ -1,4 +1,5 @@
 import type { CapabilityResult } from '@meshdrop/platform';
+import { transferSupport } from '@meshdrop/platform';
 import type { RoomView } from '../pairing/RoomClient';
 export function MobilePanel({
   capabilities,
@@ -44,6 +45,14 @@ export function MobilePanel({
         <>
           <dl className="capability-list">
             <div>
+              <dt>File workers</dt>
+              <dd data-testid="capability-worker">{capabilities.worker}</dd>
+            </div>
+            <div>
+              <dt>Signed pairing and SHA-256</dt>
+              <dd data-testid="capability-crypto">{capabilities.crypto}</dd>
+            </div>
+            <div>
               <dt>Secure WebRTC</dt>
               <dd data-testid="capability-webrtc">
                 {capabilities.webRtc ? 'Available' : 'Unavailable'}
@@ -82,12 +91,26 @@ export function MobilePanel({
             <div>
               <dt>Choose-location save</dt>
               <dd>
-                {capabilities.savePicker ? 'Available' : 'Use browser download / system share'}
+                {capabilities.savePicker
+                  ? 'API available; destination checked when saving'
+                  : 'Use browser download / system share'}
               </dd>
             </div>
             <div>
               <dt>File selection</dt>
-              <dd>{capabilities.filePicker ? 'Available' : 'Unavailable'}</dd>
+              <dd>
+                {capabilities.filePicker
+                  ? 'File input available; native picker requires user action'
+                  : 'Unavailable'}
+              </dd>
+            </div>
+            <div>
+              <dt>Saved-transfer recovery</dt>
+              <dd data-testid="capability-recovery">
+                {transferSupport(capabilities, 'receiver').supported
+                  ? 'Available when verified checkpoints survive; fresh pairing required'
+                  : 'Unavailable in this browser mode'}
+              </dd>
             </div>
             <div>
               <dt>Camera</dt>

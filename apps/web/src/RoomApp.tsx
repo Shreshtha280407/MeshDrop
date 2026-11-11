@@ -5,7 +5,7 @@ import { SavedTransfersPanel } from './features/transfer/SavedTransfersPanel';
 import { PairingPanel } from './features/pairing/PairingPanel';
 import { RoomClient } from './features/pairing/RoomClient';
 import { detectDeviceCapabilities } from '@meshdrop/platform';
-import { observeLifecycle, probeCapabilities } from '@meshdrop/platform';
+import { observeLifecycle, probeCapabilities, transferSupport } from '@meshdrop/platform';
 import type { CapabilityResult } from '@meshdrop/platform';
 import { MobilePanel } from './features/mobile/MobilePanel';
 import { PwaPanel } from './features/mobile/PwaPanel';
@@ -47,6 +47,8 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
   const status = view.status;
   const isOwner = status?.role === 'owner';
   const capabilities = detectDeviceCapabilities();
+  const sendSupport = platform ? transferSupport(platform, 'sender') : null;
+  const receiveSupport = platform ? transferSupport(platform, 'receiver') : null;
   async function copyInvitation() {
     try {
       await navigator.clipboard.writeText(view.invitation);
@@ -117,13 +119,28 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
             Connect two approved devices and compare their pairing codes. Keep both browser windows
             open.
           </p>
+          <p
+            role="status"
+            className="status-note"
+            data-testid="platform-support"
+            data-send-support={
+              platform ? (sendSupport?.supported ? 'supported' : 'unsupported') : 'checking'
+            }
+            data-receive-support={
+              platform ? (receiveSupport?.supported ? 'supported' : 'unsupported') : 'checking'
+            }
+          >
+            {platform
+              ? `Sending: ${sendSupport?.supported ? 'supported' : 'unavailable'}. Receiving: ${receiveSupport?.supported ? 'supported' : 'unavailable'}. ${[...new Set([...(sendSupport?.reasons ?? []), ...(receiveSupport?.reasons ?? [])])].join(' ')}`
+              : platformError || 'Checking browser transfer capabilities…'}
+          </p>
           {!status ? (
             <div className="entry-grid">
               <div>
                 <h3>Start a room</h3>
                 <p className="muted">Create a private invitation. You decide who gets in.</p>
                 <button
-                  disabled={view.busy}
+                  disabled={view.busy || !sendSupport?.supported}
                   onClick={() => {
                     setCopied(false);
                     void client.createRoom();
@@ -152,7 +169,10 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
                   required
                 />
                 <CameraInvitation onInvitation={setInvite} />
-                <button disabled={view.busy || !invite.trim()} type="submit">
+                <button
+                  disabled={view.busy || !invite.trim() || !receiveSupport?.supported}
+                  type="submit"
+                >
                   Request to join
                 </button>
               </form>

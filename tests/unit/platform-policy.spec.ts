@@ -8,6 +8,8 @@ import type { CapabilityResult } from '../../packages/platform/src/CapabilityPro
 import { estimateCapacity } from '../../packages/storage/src/QuotaManager';
 const supported: CapabilityResult = {
   secureContext: true,
+  crypto: 'available',
+  worker: 'available',
   webRtc: true,
   opfs: 'available',
   checkpointDb: 'available',

@@ -1,0 +1,543 @@
+{
+  "schemaVersion": 1,
+  "task": 13,
+  "startingSha": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+  "scope": "real Free BrowserStack devices/native browsers against isolated in-memory built assets and disposable local workerd state; no production application endpoint",
+  "oldEvidencePreserved": true,
+  "fixture": "all bytes 91; synthetic files only",
+  "sourceIdentity": {
+    "purpose": "isolated-task13-test",
+    "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+    "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+    "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+    "productionApproved": false,
+    "productionMutations": 0
+  },
+  "availability": {
+    "schemaVersion": 1,
+    "recordedAt": "2026-11-11T17:06:05.245Z",
+    "scope": "Free provider availability only; about:blank; no application origin or sessions",
+    "paidServicesActivated": 0,
+    "clientVersion": "1.63.0",
+    "cases": [
+      {
+        "profile": "iphone",
+        "freePlanVerified": true,
+        "available": true,
+        "platform": {
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+          "platform": "iPhone",
+          "maxTouchPoints": 5
+        }
+      },
+      {
+        "profile": "ipad",
+        "freePlanVerified": true,
+        "available": true,
+        "platform": {
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+          "platform": "MacIntel",
+          "maxTouchPoints": 5
+        }
+      },
+      {
+        "profile": "windows-chrome",
+        "freePlanVerified": true,
+        "available": true,
+        "platform": {
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+          "platform": "Win32",
+          "maxTouchPoints": 0
+        }
+      },
+      {
+        "profile": "macos-safari",
+        "freePlanVerified": true,
+        "available": true,
+        "httpStatus": 200,
+        "nativeBrowser": {
+          "name": "Safari",
+          "version": "26.4",
+          "platform": "macOS"
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "case": "ipad-recovery",
+      "caseId": "f5df2863-7eda-48f3-8a1a-ba71c0af5cc9",
+      "direction": "laptop-to-ipad",
+      "profile": "ipad",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": true,
+      "reusedBytes": 1048576,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "real cloud iPad Safari download returned by the provider download stream",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Safari/605.1.15",
+        "platform": "MacIntel",
+        "secureContext": true,
+        "maxTouchPoints": 5
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:37:45.153Z",
+      "nativeExportStatus": "PASS"
+    },
+    {
+      "case": "ipad-reverse",
+      "caseId": "65bf6109-0f3e-4bcb-b9cc-a576cd69bba6",
+      "direction": "ipad-to-laptop",
+      "profile": "ipad",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": false,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "laptop Chromium browser download",
+      "sourceSelection": "synthetic File assigned to the real input; native iOS picker not tested",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Safari/605.1.15",
+        "platform": "MacIntel",
+        "secureContext": true,
+        "maxTouchPoints": 5
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:37:25.465Z",
+      "nativeExportStatus": "PASS"
+    },
+    {
+      "case": "iphone-normal",
+      "caseId": "288046b9-201e-4a44-a2dc-108bef017394",
+      "direction": "laptop-to-iphone",
+      "profile": "iphone",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": false,
+      "stage": "native-export",
+      "transferVerified": true,
+      "recoveryVerified": false,
+      "bytes": 8388608,
+      "sha256": "d6da60c0eddd93a5c447f65a7e12dc629ec32618609c9c39674722f7ece241db",
+      "nativeExportVerified": false,
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+        "platform": "iPhone",
+        "secureContext": true,
+        "maxTouchPoints": 5
+      },
+      "error": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+      "errorDetail": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+      "recordedAt": "2026-11-11T17:34:18.758Z",
+      "laptopStates": ["connected", "connected", "complete"],
+      "iphoneStates": ["connected", "connected", "complete"],
+      "laptopIcePath": ["direct"],
+      "iphoneIcePath": ["direct"],
+      "nativeExportStatus": "NATIVE_EXPORT_NOT_OBSERVABLE"
+    },
+    {
+      "case": "iphone-recovery",
+      "caseId": "7051afbf-c1a0-4c1f-b502-f3df2f47f870",
+      "direction": "laptop-to-iphone",
+      "profile": "iphone",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": false,
+      "stage": "native-export",
+      "transferVerified": true,
+      "recoveryVerified": true,
+      "reusedBytes": 1048576,
+      "bytes": 8388608,
+      "sha256": "d6da60c0eddd93a5c447f65a7e12dc629ec32618609c9c39674722f7ece241db",
+      "nativeExportVerified": false,
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1",
+        "platform": "iPhone",
+        "secureContext": true,
+        "maxTouchPoints": 5
+      },
+      "error": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+      "errorDetail": "IOS_NATIVE_DOWNLOAD_NOT_OBSERVABLE",
+      "recordedAt": "2026-11-11T17:36:41.568Z",
+      "laptopStates": ["connected", "connected", "complete"],
+      "iphoneStates": ["connected", "connected", "complete"],
+      "laptopIcePath": ["direct"],
+      "iphoneIcePath": ["direct"],
+      "nativeExportStatus": "NATIVE_EXPORT_NOT_OBSERVABLE"
+    },
+    {
+      "case": "iphone-reverse",
+      "caseId": "ed102b71-1c3d-4f38-8cd4-8f8eccc34aa1",
+      "direction": "iphone-to-laptop",
+      "profile": "iphone",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": false,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "laptop Chromium browser download",
+      "sourceSelection": "synthetic File assigned to the real input; native iOS picker not tested",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+        "platform": "iPhone",
+        "secureContext": true,
+        "maxTouchPoints": 5
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:36:31.114Z",
+      "nativeExportStatus": "PASS"
+    },
+    {
+      "case": "macos-normal",
+      "caseId": "812714e9-cc60-48af-a6eb-8120de981021",
+      "direction": "laptop-to-macos-safari",
+      "profile": "macos-safari",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": false,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "cloud macOS Tahoe native Safari saved download returned by the provider file-retrieval executor",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15",
+        "platform": "MacIntel",
+        "secureContext": true,
+        "maxTouchPoints": 0
+      },
+      "nativeBrowser": {
+        "name": "Safari",
+        "version": "26.4",
+        "platform": "macOS"
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:38:52.652Z",
+      "nativeExportStatus": "PASS"
+    },
+    {
+      "case": "macos-recovery",
+      "caseId": "2c788a9e-98e3-4a4d-9d20-bf4b93ab3ddc",
+      "direction": "laptop-to-macos-safari",
+      "profile": "macos-safari",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": true,
+      "reusedBytes": 1048576,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "cloud macOS Tahoe native Safari saved download returned by the provider file-retrieval executor",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15",
+        "platform": "MacIntel",
+        "secureContext": true,
+        "maxTouchPoints": 0
+      },
+      "nativeBrowser": {
+        "name": "Safari",
+        "version": "26.4",
+        "platform": "macOS"
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:40:06.220Z",
+      "nativeExportStatus": "PASS"
+    },
+    {
+      "case": "macos-reverse",
+      "caseId": "cae95e69-03df-4771-a06e-878b730d726c",
+      "direction": "macos-safari-to-laptop",
+      "profile": "macos-safari",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": false,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "laptop Chromium browser download",
+      "sourceSelection": "synthetic File assigned to the cloud macOS Tahoe native Safari input; native picker not tested",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15",
+        "platform": "MacIntel",
+        "secureContext": true,
+        "maxTouchPoints": 0
+      },
+      "nativeBrowser": {
+        "name": "Safari",
+        "version": "26.4",
+        "platform": "macOS"
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:39:48.263Z",
+      "nativeExportStatus": "PASS"
+    },
+    {
+      "case": "windows-normal",
+      "caseId": "7eb3fce9-ee23-47b3-b77a-6124b3fcbec6",
+      "direction": "laptop-to-windows-chrome",
+      "profile": "windows-chrome",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": false,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "cloud Windows 11 Chrome download returned by the provider download stream",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+        "platform": "Win32",
+        "secureContext": true,
+        "maxTouchPoints": 0
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:38:13.453Z",
+      "nativeExportStatus": "PASS"
+    },
+    {
+      "case": "windows-recovery",
+      "caseId": "798e2429-8ae4-44ef-8f64-467df1dbbba7",
+      "direction": "laptop-to-windows-chrome",
+      "profile": "windows-chrome",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": true,
+      "reusedBytes": 1048576,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "cloud Windows 11 Chrome download returned by the provider download stream",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+        "platform": "Win32",
+        "secureContext": true,
+        "maxTouchPoints": 0
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:38:24.837Z",
+      "nativeExportStatus": "PASS"
+    },
+    {
+      "case": "windows-reverse",
+      "caseId": "429203dc-ac34-4c33-ac7e-342d2612c422",
+      "direction": "windows-chrome-to-laptop",
+      "profile": "windows-chrome",
+      "peerScope": "separate devices over public signaling",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": false,
+      "stage": "pair",
+      "recoveryVerified": false,
+      "nativeExportVerified": false,
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+        "platform": "Win32",
+        "secureContext": true,
+        "maxTouchPoints": 0
+      },
+      "error": "IOS_STATE_GATE_PEER_STATE",
+      "errorDetail": "IOS_STATE_GATE_PEER_STATE",
+      "recordedAt": "2026-11-11T17:39:27.823Z",
+      "laptopStates": ["connected", "checking", "idle"],
+      "iphoneStates": ["connected", "checking", "idle"],
+      "laptopIcePath": ["unknown"],
+      "iphoneIcePath": ["unknown"],
+      "nativeExportStatus": "NOT_RUN"
+    },
+    {
+      "case": "windows-sender-engine",
+      "caseId": "4c4e4634-4a64-48c7-b2c0-a6520796413c",
+      "direction": "windows-to-windows",
+      "profile": "windows-chrome",
+      "peerScope": "two separate cloud browser contexts on one Windows host; no cross-network claim",
+      "plan": "Free",
+      "clientVersion": "1.63.0",
+      "pass": true,
+      "stage": "complete",
+      "transferVerified": true,
+      "recoveryVerified": false,
+      "bytes": 2097152,
+      "sha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "exportedSha256": "385d6c03c1399b00d72591350a05a248449226c92e572152ed8008a24cbd2a72",
+      "nativeExportVerified": true,
+      "nativeExportRoute": "laptop Chromium browser download",
+      "sourceSelection": "synthetic File assigned to the cloud Windows 11 Chrome input; native picker not tested",
+      "sourceIdentity": {
+        "purpose": "isolated-task13-test",
+        "sourceCommit": "e31f8c3d28cfa40b988ad8bc986df53f8a19943f",
+        "sourceDiffSha256": "e2b0f8f679be3a8549eb504bebe92e32b3fd41a1271f66a4f5760bb94ce7faa2",
+        "buildSha256": "298bfedb5f6b6a73a75f824b2a9eb49fa2f17c214675996f2457cb70b3c4d31f",
+        "productionApproved": false,
+        "productionMutations": 0
+      },
+      "platform": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+        "platform": "Win32",
+        "secureContext": true,
+        "maxTouchPoints": 0
+      },
+      "error": "",
+      "recordedAt": "2026-11-11T17:40:30.665Z",
+      "nativeExportStatus": "PASS"
+    }
+  ],
+  "productionDeployments": 0,
+  "productionMutations": 0,
+  "paidServicesActivated": 0,
+  "productionApproved": false,
+  "task10D": "SKIPPED",
+  "task11B": "SKIPPED",
+  "cleanup": {
+    "finalProviderPlanCheck": {
+      "schemaVersion": 1,
+      "scope": "read-only existing BrowserStack Free account preflight",
+      "recordedAt": "2026-11-11T17:48:11.213Z",
+      "credentialsPresent": true,
+      "planVerifiedFree": true,
+      "paidServicesActivated": 0,
+      "cloudSessionsCreated": 0,
+      "httpStatus": 200,
+      "automate_plan": "Free",
+      "parallel_sessions_running": 0,
+      "parallel_sessions_max_allowed": 5,
+      "queued_sessions": 0,
+      "queued_sessions_max_allowed": 5
+    },
+    "temporaryTunnelStopped": true,
+    "temporaryBuiltAssetsServerStopped": true,
+    "ownedBrowserSessionsClosed": true
+  }
+}

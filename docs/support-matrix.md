@@ -9,8 +9,9 @@ UDP/TCP/TLS relay delivery. The physical Oppo additionally passed production
 independent hashes, receipts and diagnostics. Earlier preview direct Wi-Fi and
 mobile-data results remain valid. See the [latest audit](reports/continuation-2026-10-25.md)
 and [device matrix](../tests/devices/browser-matrix.md) for exact measured scopes.
-Further iPhone work is deferred at the user's request; retained prior results
-below do not establish every tablet, PC or network.
+The table below retains the historical P7/P9 observations, including failures.
+Task 13 resumed device work against an isolated unpublished build; its narrower,
+dated results follow below. Neither set establishes every tablet, PC or network.
 
 | Platform                                                                   | Evidence already recorded                                                                                                                                                                                                                                                          | Limits / remaining coverage                                                                                                                                                                         |
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -32,6 +33,39 @@ headroom and the explicit warning from 300 MiB. Unknown quota permits at most
 not a universal mobile maximum. Browser eviction and OS background restrictions
 can interrupt delivery or remove saved data. WebRTC transport requires both
 devices online and the app open; installing a PWA does not change this contract.
+
+## Task 13 isolated current-build evidence — 2026-11-11
+
+[Sanitized device evidence](reports/evidence/task-13-device-cloud.json) and
+[investigation report](reports/task-13-cross-platform-reliability.md) preserve
+transfer verification separately from actual exported-byte verification. All
+sessions checked the provider's Free plan. No existing public application room
+or production endpoint was used.
+
+| Actual target                                     | New measured scope                                                                                                                                                                                                                  | Remaining limitation                                                                                                                                                                                                                    |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real cloud iPhone 15 Pro Max / Safari 26.6–26.6.1 | 8 MiB receive and 8 MiB reload recovery both committed every byte and verified the final hash; recovery reuses 1 MiB and sends 7 MiB. Synthetic-source 2 MiB reverse to the laptop also independently verifies its laptop download. | Both 8 MiB native iPhone downloads are `NATIVE_EXPORT_NOT_OBSERVABLE` through Free provider retrieval. These complete cases remain incomplete, not PASS. No native picker/share/install or personally held iOS lifecycle certification. |
+| Real cloud iPad Pro 13 2025 / Safari 26.6.1       | 2 MiB synthetic-source reverse and 2 MiB receive/reload recovery; 1 MiB checkpoint reuse. Actual destination downloads independently hash correctly.                                                                                | Small fixtures; no Android-tablet inference, native picker/install or physical iPad lifecycle claim.                                                                                                                                    |
+| Native cloud Windows 11 Chrome 157                | Real cross-network 2 MiB receive and recovery/export; 1 MiB checkpoint reuse. A separate 2 MiB same-cloud-host sender-engine control also passes with matching exported bytes.                                                      | True cross-network Windows-to-laptop attempt remains failed at ICE `checking`; cause unestablished. Same-host sender evidence does not resolve or conceal it. Native picker/install untested.                                           |
+| Native cloud macOS Tahoe Safari 26.4              | 2 MiB cross-network receive, recovery and synthetic-source reverse; 1 MiB checkpoint reuse and actual exported bytes independently hashed.                                                                                          | Not Playwright WebKit. Prior macOS WebKit OPFS failure remains unchanged. Native picker/share/install and larger sizes untested.                                                                                                        |
+
+The requested iOS version is 26; the actual cloud Safari user agents identify
+Safari 26.6–26.6.1 but retain an iPhone OS 18_7 token. Evidence records both rather
+than deriving an independent OS version from a requested capability. All reverse
+sources are explicitly synthetic File injection, not a native OS file-picker test.
+Temporary HTTPS/WSS carried only test control traffic; real WebRTC used separate
+devices/networks except the explicitly labelled Windows sender-engine control.
+No production TURN configuration or credentials were used.
+
+Capability checks now exercise storage commit/readback/cleanup, cryptographic
+algorithms and disposable WebRTC construction. Export API presence remains distinct
+from a user-authorized action, and an action returning remains distinct from an
+independently retrieved, hashed file. PWA registration and actual install behavior
+remain separate from standalone-mode/API detection.
+
+Task10D remains **SKIPPED — HOSTED TRUST EVIDENCE NOT ESTABLISHED**. Task11B remains
+**SKIPPED — HOSTED PREVIEW VALIDATION NOT ESTABLISHED**. Task 13 creates no release
+authorization; `productionApproved=false`.
 
 ## P9 release evidence
 

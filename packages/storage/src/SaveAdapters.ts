@@ -8,8 +8,14 @@ export function startFileDownload(file: File, path: string): () => void {
   anchor.download = output.name;
   anchor.rel = 'noopener';
   anchor.hidden = true;
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
+  try {
+    document.body.append(anchor);
+    anchor.click();
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
+  } finally {
+    anchor.remove();
+  }
   return () => URL.revokeObjectURL(url);
 }

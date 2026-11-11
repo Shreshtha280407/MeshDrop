@@ -1,8 +1,16 @@
 import { relativePathSchema } from '@meshdrop/protocol';
 export type ExportOutcome = {
   status: 'saved' | 'started' | 'cancelled' | 'unsupported' | 'failed';
+  route: 'download' | 'save-picker' | 'system-share';
+  // A resolved picker/share/download action cannot independently hash the destination.
+  nativeExportVerified: false;
   message: string;
 };
+export function exportCancelled(error: unknown): boolean {
+  return (
+    typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError'
+  );
+}
 export function namedExportFile(file: File, path: string): File {
   relativePathSchema.parse(path);
   const name = path.split('/').at(-1)!;
@@ -36,23 +44,31 @@ export async function shareVerifiedFile(file: File, path: string): Promise<Expor
   if (!canShareFile(file, path))
     return {
       status: 'unsupported',
+      route: 'system-share',
+      nativeExportVerified: false,
       message: 'System file sharing is unavailable for this file. Use Save download instead.',
     };
   try {
     await navigator.share({ files: [namedExportFile(file, path)] });
     return {
       status: 'started',
+      route: 'system-share',
+      nativeExportVerified: false,
       message:
         'The system share flow returned. Check Files or the app you chose for your saved copy.',
     };
   } catch (error) {
-    return error instanceof DOMException && error.name === 'AbortError'
+    return exportCancelled(error)
       ? {
           status: 'cancelled',
+          route: 'system-share',
+          nativeExportVerified: false,
           message: 'Sharing cancelled. The verified browser copy is still available.',
         }
       : {
           status: 'failed',
+          route: 'system-share',
+          nativeExportVerified: false,
           message:
             'System sharing did not finish. Your verified copy remains here; try Save download.',
         };

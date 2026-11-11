@@ -124,6 +124,53 @@ laptop-to-Windows internet path. See the [additional device evidence](../reports
 
 ## Manual physical gates
 
+### Task 13 isolated cloud matrix
+
+`pnpm verify:platform-cloud` adds named, opt-in cases using the same Free-plan
+guard and isolated Playwright 1.63 client. It requires both
+`MESHDROP_TEST_URL` (an exact disposable HTTPS `trycloudflare.com` origin) and
+`MESHDROP_DEVICE_TEST_IDENTITY` (a local JSON identity file). There is no deployed
+application default for this command. Missing scope is rejected before credentials
+are loaded or any browser starts.
+
+Serve only a reviewed production build's static inventory and isolated local
+signaling state, with the actual same-origin gateway/security headers. Do not put
+a public tunnel in front of a workspace/Vite filesystem server, credential
+directory or production Worker. Use a fresh temporary origin and disposable test
+data, direct-only configuration and no production TURN/operator credentials.
+The `/__meshdrop_test_identity` endpoint and local identity must agree on
+`purpose=isolated-task13-test`, `sourceCommit`, `sourceDiffSha256`, `buildSha256`
+and `productionApproved=false`. Both peers check the build identity. These local
+fingerprints prevent accidentally testing a stale build; they are not provider
+attestations or release authorization. Stop the tunnel and runtime afterward.
+
+```sh
+MESHDROP_TEST_URL=https://YOUR-TEMPORARY-HOST.trycloudflare.com \
+MESHDROP_DEVICE_TEST_IDENTITY=/absolute/path/test-identity.json \
+pnpm verify:platform-cloud iphone-normal iphone-recovery iphone-reverse \
+  ipad-recovery ipad-reverse windows-normal windows-recovery windows-reverse \
+  macos-normal macos-recovery macos-reverse
+```
+
+Each child rechecks Free, uses synthetic data, has recording disabled and owns
+only its own room/session. At most two cases run concurrently. Results stay in
+ignored `.meshdrop-artifacts/device-cloud/task13/`; export only reviewed sanitized
+JSON. iPhone normal/recovery use 8 MiB; reverse and other targets use 2 MiB. A case
+only passes after transfer completion and independently hashed exported bytes.
+An iPhone export observation failure exits nonzero, even after a verified transfer.
+
+`windows-sender-engine` is an explicit alternative control when true cross-network
+reverse negotiation cannot be established. It uses two contexts on the same native
+cloud Chrome host and says so in evidence. It is never cross-network proof and
+does not erase the failed reverse attempt. Synthetic source injection in every
+reverse case does not certify the native picker. Native macOS Safari uses the
+W3C profile; Playwright WebKit remains a separate engine result.
+
+The [Task 13 evidence](../reports/evidence/task-13-device-cloud.json) records
+matching iPad/Windows/macOS exports and iPhone reverse, but both 8 MiB iPhone
+download gates remain **NATIVE_EXPORT_NOT_OBSERVABLE**. Do not increase retries,
+buy a provider upgrade or label a click/OPFS hash as native export verification.
+
 For each physical browser, record OS/browser version, usable storage results, quota estimate, export route, tested size and result. Start with a small file, then a larger file appropriate to available space. Confirm actual destination bytes after the native save/share flow, not just a returned promise.
 
 On iPhone Safari, test laptop-to-iPhone and reverse roles. Accept, store, verify and export a file to Files; independently compare bytes. Repeat with pause/resume if local browser storage survives. Also test Android-to-iPhone and reverse. Test Safari on macOS separately. Linux Playwright WebKit is useful engine coverage but does not establish these OS results.

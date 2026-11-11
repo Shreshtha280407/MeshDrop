@@ -9,6 +9,7 @@ import { setTimeout } from 'node:timers/promises';
 import { chromium } from '@playwright/test';
 import { connectOwnAndroidChrome } from './scoped-android-cdp.mjs';
 import { connectNativeSafari } from './cloud-safari-webdriver.mjs';
+import { assertDeviceTestIdentity } from './device-test-identity.mjs';
 
 // Opt-in real hardware test. The provider client is isolated from application dependencies.
 const directory = resolve('.meshdrop-artifacts/device-cloud');
@@ -78,11 +79,9 @@ if (!selected)
     'Choose iphone, iphone-native, ipad, windows, windows-chrome, macos-webkit or macos-safari cloud profile.',
   );
 const colocated = process.env.MESHDROP_CLOUD_PEER === 'cloud';
-if (colocated && profile !== 'windows')
+if (colocated && !['windows', 'windows-chrome'].includes(profile))
   throw new Error('The colocated desktop network control is scoped to Windows.');
 const direction = process.env.MESHDROP_IOS_DIRECTION ?? 'laptop-to-iphone';
-if (profile !== 'iphone' && direction !== 'laptop-to-iphone')
-  throw new Error('Additional cloud profiles currently receive from the laptop only.');
 if (
   !['laptop-to-iphone', 'iphone-to-laptop', 'android-to-iphone', 'iphone-to-android'].includes(
     direction,
@@ -149,13 +148,15 @@ if (!planResponse.ok || (await planResponse.json()).automate_plan !== 'Free')
 const id = randomUUID();
 const report = {
   scope: reverse
-    ? `real cloud iPhone Safari sending to ${otherDevice} over public HTTPS/WSS; synthetic source selected programmatically`
+    ? `${selected.label} sending to ${otherDevice} over public HTTPS/WSS; synthetic source selected programmatically`
     : `${selected.label} receiving from ${otherDevice} over public HTTPS/WSS`,
   direction: colocated
     ? 'windows-to-windows'
     : profile === 'iphone'
       ? direction
-      : `laptop-to-${profile}`,
+      : reverse
+        ? `${profile}-to-laptop`
+        : `laptop-to-${profile}`,
   profile,
   peerScope: colocated
     ? 'two separate cloud browser contexts on one Windows host; no cross-network claim'
@@ -172,6 +173,25 @@ const report = {
   recoveryVerified: false,
   error: '',
 };
+// Task 13 uses only a disposable current-build origin. It never borrows a live room.
+if (process.env.MESHDROP_DEVICE_TEST_IDENTITY) {
+  if (
+    !/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(origin) ||
+    android ||
+    (colocated && process.env.MESHDROP_CLOUD_SENDER_ENGINE !== 'true') ||
+    relayOnly
+  )
+    throw new Error('IOS_ISOLATED_DEVICE_TEST_REQUIRED');
+  const expected = JSON.parse(await readFile(process.env.MESHDROP_DEVICE_TEST_IDENTITY, 'utf8'));
+  const response = await globalThis.fetch(`${origin}/__meshdrop_test_identity`, {
+    redirect: 'error',
+    signal: globalThis.AbortSignal.timeout(15000),
+  });
+  const observed = await response.json();
+  if (!response.ok) throw new Error('IOS_CURRENT_BUILD_IDENTITY_MISMATCH');
+  assertDeviceTestIdentity(expected, observed);
+  report.sourceIdentity = expected;
+}
 const caps = {
   browser:
     selected.browser ??
@@ -184,7 +204,9 @@ const caps = {
     : { os: selected.os }),
   osVersion: selected.osVersion,
   name: `MeshDrop ${profile} transfer ${id}`,
-  build: 'MeshDrop free iOS 2026-10-21',
+  build: process.env.MESHDROP_DEVICE_TEST_IDENTITY
+    ? 'MeshDrop Task 13 isolated current build'
+    : 'MeshDrop free iOS 2026-10-21',
   'browserstack.username': values.BROWSERSTACK_USERNAME,
   'browserstack.accessKey': values.BROWSERSTACK_ACCESS_KEY,
   'browserstack.playwrightVersion': clientVersion,
@@ -374,6 +396,15 @@ try {
     laptop = await (await laptopBrowser.newContext({ acceptDownloads: true })).newPage();
   }
   await laptop.goto(origin);
+  if (report.sourceIdentity) {
+    for (const page of [iphone, laptop]) {
+      const observed = await page.evaluate(async () =>
+        (await globalThis.fetch('/__meshdrop_test_identity', { cache: 'no-store' })).json(),
+      );
+      assertDeviceTestIdentity(report.sourceIdentity, observed);
+    }
+    report.checks.push('both peers independently loaded the pinned isolated current build');
+  }
   if (relayOnly) {
     if (recovery && selected.engine === 'webdriver')
       throw new Error('IOS_NATIVE_RELAY_RELOAD_NOT_SUPPORTED');
@@ -442,8 +473,7 @@ try {
       },
       { name, size: bytes.length },
     );
-    report.sourceSelection =
-      'synthetic File assigned to the real input; native iOS picker not tested';
+    report.sourceSelection = `synthetic File assigned to the ${selected.label} input; native picker not tested`;
   } else {
     await owner
       .getByLabel('Choose files to send', { exact: true })
@@ -510,15 +540,17 @@ try {
     await state(owner, 'attempt-bytes', String(bytes.length - committed));
     report.recoveryVerified = true;
     report.checks.push(
-      'real iPhone reload rehashes its checkpoint; fresh admission/comparison and exact-source resume send only missing bytes',
+      `${selected.label} reload rehashes its checkpoint; fresh admission/comparison and exact-source resume send only missing bytes`,
     );
   }
   await state(receiver, 'transfer-state', 'complete', 90000);
   await state(owner, 'transfer-state', 'complete');
   await state(receiver, 'committed-bytes', String(bytes.length));
+  await state(owner, 'committed-bytes', String(bytes.length));
   await state(receiver, 'file-sha256', digest);
   report.bytes = bytes.length;
   report.sha256 = digest;
+  report.transferVerified = true;
   report.checks.push(
     'receiver commits the entire fixture and completes final SHA-256 verification',
   );
@@ -585,6 +617,7 @@ try {
   )
     throw new Error('IOS_EXPORTED_DIGEST_MISMATCH');
   report.nativeExportVerified = true;
+  report.exportedSha256 = digest;
   report.checks.push('actual exported download independently hashes to the source digest');
   if (relayOnly) {
     report.stage = 'relay-proof';

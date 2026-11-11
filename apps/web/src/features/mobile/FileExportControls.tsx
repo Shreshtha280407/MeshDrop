@@ -47,12 +47,16 @@ export function FileExportControls({
               releases.current.push(startFileDownload(file, outputName));
               setResult({
                 status: 'started',
+                route: 'download',
+                nativeExportVerified: false,
                 message:
                   'Download requested. On iPhone, use the download or share menu to Save to Files. Check your saved copy before clearing browser data.',
               });
             } catch {
               setResult({
                 status: 'failed',
+                route: 'download',
+                nativeExportVerified: false,
                 message:
                   'The download could not start. The verified browser copy remains available.',
               });
@@ -85,6 +89,9 @@ export function FileExportControls({
           role="status"
           className={result.status === 'failed' ? 'error' : 'muted'}
           data-testid="file-export-result"
+          data-export-status={result.status}
+          data-export-route={result.route}
+          data-native-export-verified={String(result.nativeExportVerified)}
         >
           {result.message}
         </p>
