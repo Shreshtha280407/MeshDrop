@@ -9,8 +9,15 @@ GitHub main matched `e31f8c3d28cfa40b988ad8bc986df53f8a19943f`. Starting Phase G
 [`42800281423`](https://github.com/Shreshtha280407/MeshDrop/actions/runs/42800281423)
 completed core/browser/foundation SUCCESS on that exact SHA before editing.
 
-Final implementation SHA and hosted CI: pending the normal commit/push and
-completed Phase Gates; queued or in-progress checks are not counted as passing.
+Final implementation SHA: `a635662f55d91716d58aaac61a100e43efed8d8b`, commit
+`harden cross-platform capability and export reliability`. It was pushed normally
+under Task 13's original authorization before the operator's later instruction
+to leave all further pushes manual.
+
+Hosted [Phase Gates `43074089192`](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43074089192),
+attempt 1, completed **core SUCCESS, browser SUCCESS, foundation SUCCESS** on that
+exact implementation SHA. This completion update is local, unstaged and uncommitted
+for the operator to review/commit/push manually. No further automatic push occurs.
 
 Task10D = **SKIPPED — HOSTED TRUST EVIDENCE NOT ESTABLISHED**.
 Task11B = **SKIPPED — HOSTED PREVIEW VALIDATION NOT ESTABLISHED**.
@@ -146,24 +153,32 @@ executions from five cases in both desktop/mobile-emulated Chromium). Final
 local total: **1,400**, with all old cases retained. External device cases are
 reported separately and are not counted as unit/CI tests.
 
-| Exact command                    | Result                     | Evidence                                                                                                |
-| -------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `pnpm -r typecheck`              | PASS                       | All workspaces                                                                                          |
-| `pnpm typecheck`                 | PASS                       | Root TypeScript                                                                                         |
-| `pnpm lint`                      | PASS                       | ESLint and Prettier; rerun after final docs                                                             |
-| `pnpm check:secrets`             | PASS                       | Environment files ignored; scanner passes; actual automation credential matches zero                    |
-| `pnpm audit:release`             | PASS                       | No known vulnerabilities; original low threshold unchanged                                              |
-| `pnpm test:unit`                 | PASS                       | 1,023; including 34 new capability/export cases                                                         |
-| `pnpm test:security`             | PASS                       | 71; includes all 14 new scope/identity guards                                                           |
-| `pnpm test:integration`          | PASS                       | 76                                                                                                      |
-| `pnpm test:faults`               | PASS                       | 51; Task 12 large-file/network cases retained                                                           |
-| `pnpm test:release-store`        | PASS                       | 46; isolated local PostgreSQL fixtures                                                                  |
-| `pnpm build`                     | PASS                       | Production assets and local Worker dry-run; no deployment                                               |
-| `pnpm test:e2e`                  | PASS                       | 128; 7.1 minutes, no first-attempt failure/retry/flaky summary                                          |
-| `pnpm test:pwa`                  | PASS                       | Five; 21.8 seconds, zero retries                                                                        |
-| `pnpm verify:rollback`           | PASS                       | Four local runtimes started/disposed; all rollback/drain stages                                         |
-| `CI=true pnpm check`             | PASS                       | 1,400 cases; all 1,342 old cases retained and 58 additions                                              |
-| `pnpm verify:platform-cloud ...` | NONZERO, HONEST INCOMPLETE | Handler run directly as node scripts/local-dev/verify-platforms.mjs; all cases attempted; gaps retained |
+Hosted logs independently confirm the same **1,400 cases**: 1,023 unit, 71 security,
+76 integration, 51 faults, 46 PostgreSQL, 128 E2E and five PWA. All ten Task 13
+platform browser executions and all ten retained Task 12 browser regressions pass.
+Hosted E2E took 6.0 minutes and PWA 17.8 seconds, with no retry/flaky summary.
+The hosted audit also reported no known vulnerabilities. Local success was not
+used as a substitute for these completed hosted results.
+
+| Exact command                                     | Result                     | Evidence                                                                             |
+| ------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------ |
+| `pnpm -r typecheck`                               | PASS                       | All workspaces                                                                       |
+| `pnpm typecheck`                                  | PASS                       | Root TypeScript                                                                      |
+| `pnpm lint`                                       | PASS                       | ESLint and Prettier; final local report checked separately                           |
+| `pnpm check:secrets`                              | PASS                       | Environment files ignored; scanner passes; actual automation credential matches zero |
+| `pnpm audit:release`                              | PASS                       | No known vulnerabilities; original low threshold unchanged                           |
+| `pnpm test:unit`                                  | PASS                       | 1,023; including 34 new capability/export cases                                      |
+| `pnpm test:security`                              | PASS                       | 71; includes all 14 new scope/identity guards                                        |
+| `pnpm test:integration`                           | PASS                       | 76                                                                                   |
+| `pnpm test:faults`                                | PASS                       | 51; Task 12 large-file/network cases retained                                        |
+| `pnpm test:release-store`                         | PASS                       | 46; isolated local PostgreSQL fixtures                                               |
+| `pnpm build`                                      | PASS                       | Production assets and local Worker dry-run; no deployment                            |
+| `pnpm test:e2e`                                   | PASS                       | 128; 7.1 minutes, no first-attempt failure/retry/flaky summary                       |
+| `pnpm test:pwa`                                   | PASS                       | Five; 21.8 seconds, zero retries                                                     |
+| `pnpm verify:rollback`                            | PASS                       | Four local runtimes started/disposed; all rollback/drain stages                      |
+| `CI=true pnpm check`                              | PASS                       | 1,400 cases; all 1,342 old cases retained and 58 additions                           |
+| `node scripts/local-dev/verify-platforms.mjs ...` | NONZERO, HONEST INCOMPLETE | Explicit recovery/reverse/matrix cases; all attempts preserved                       |
+| Hosted Phase Gates `43074089192`                  | PASS                       | core/browser/foundation SUCCESS; exact implementation SHA, attempt 1                 |
 
 The first six new unit regressions all failed against the original implementation
 before the correction and passed afterward. All ten focused platform browser
@@ -239,4 +254,21 @@ secrets, admission, TURN configuration, migrations and live-session mutations = 
 Paid services activated = **0**. `productionApproved=false`, acceptance remains
 blocked, human authorization and independent witness remain unverified. No deploy,
 preview/canary or trust-rehearsal workflow was dispatched. Only normal Phase Gates
-may run from the explicitly authorized normal push. Task 14 has not begun.
+ran from the explicitly authorized normal push. Task 14 has not begun.
+
+## Git handoff
+
+Implementation commits created: **1**. Normal pushes performed: **1**, before the
+operator's final manual-push instruction. Commits/pushes after that instruction:
+**0**. PRs, force pushes, GitHub settings changes and secret changes: **0**.
+The only subsequent repository modification is this Markdown completion report;
+the application/tests/evidence remain the CI-verified implementation above.
+
+Review and publish this report manually:
+
+```sh
+git diff -- docs/reports/task-13-cross-platform-reliability.md
+git add -- docs/reports/task-13-cross-platform-reliability.md
+git commit -m "record Task 13 cross-platform validation"
+git push origin main
+```
