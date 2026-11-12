@@ -7,7 +7,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { expect, it } from 'vitest';
 import type { Miniflare } from 'miniflare';
 import { sessionStatusSchema } from '@meshdrop/protocol';
-import { inspectCommit } from '../../scripts/deploy/rollback-compatibility';
+import { compareSnapshots, inspectCommit } from '../../scripts/deploy/rollback-compatibility';
 import { disposeLocalRuntime } from '../../scripts/deploy/local-rollback';
 import { API, approve, capability, create, join as admit, request, runtime } from './harness';
 
@@ -57,9 +57,16 @@ it('retains all v2 actor SQL/KV state, authorization and drain through a real hi
   const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const current = await inspectCommit(head);
   const previous = await inspectCommit('b103d568d7d2bed62957f4c129dc238a5b7752f6');
-  // Persistence compatibility is separate from stricter release-tooling eligibility.
-  expect(current.workerScript).toBe(previous.workerScript);
-  expect(current.gatewayScript).toBe(previous.gatewayScript);
+  // Preserve the original byte-identical historical proof. A later runtime fix
+  // need not have identical code: its actual state must survive the drill below,
+  // while the release validator must still reject unreviewed source differences.
+  const audited = await inspectCommit('d07d11bf79147504a76dead3081b1ed5cd4c7cf3');
+  expect(audited.workerScript).toBe(previous.workerScript);
+  expect(audited.gatewayScript).toBe(previous.gatewayScript);
+  expect(current.gatewayScript).toBe(audited.gatewayScript);
+  expect(compareSnapshots(current, previous)).toContainEqual(
+    expect.objectContaining({ code: 'UNREVIEWED_SOURCE_CHANGE' }),
+  );
   expect(current.bindings).toEqual(previous.bindings);
   expect(current.migrations).toEqual(previous.migrations);
   expect(current.protocol).toBe(previous.protocol);
@@ -191,6 +198,17 @@ it('retains all v2 actor SQL/KV state, authorization and drain through a real hi
       available: true,
       measured: { requestsToday: 42, durableRequestsToday: 7 },
     });
+    // Failed delivery remains genuine SQL evidence across both versions. No
+    // external webhook is called because the fixture has no unique HTTPS origin.
+    expect(
+      (await request(worker!, '/ops/alerts/test', { method: 'POST', token: operator, body: {} }))
+        .status,
+    ).toBe(200);
+    expect(
+      await (await request(worker!, '/ops/metrics', { token: operator })).json(),
+    ).toMatchObject({
+      pendingDeliveries: 1,
+    });
     await stop();
     let state = await persisted(directory);
     for (const [script, paused] of [
@@ -221,6 +239,9 @@ it('retains all v2 actor SQL/KV state, authorization and drain through a real hi
         relay,
       );
       expect(await accountUsage()).toEqual(account);
+      expect(
+        await (await request(worker!, '/ops/metrics', { token: operator })).json(),
+      ).toMatchObject({ pendingDeliveries: 1 });
       expect(await (await request(worker!, '/ops/alerts', { token: operator })).json()).toEqual({
         alerts: [alert],
       });

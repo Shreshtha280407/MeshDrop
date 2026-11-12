@@ -1,7 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from '../env';
 import { allowedOrigins } from '../env';
-import { errorResponse } from '../errors';
+import { errorResponse, HttpError } from '../errors';
 import { readJson } from '../limits';
 import { operatorAuthorized } from '../operations';
 import { CONTROL_OPERATIONS, validatedAlert } from '../monitoring';
@@ -12,6 +12,8 @@ import {
   ACCOUNT_USAGE_REFRESH_MS,
 } from '../routes/account-usage';
 import type { AccountUsage } from '../routes/account-usage';
+
+export const MAX_PENDING_ALERTS = 128;
 
 /** Free-plan monitor: bounded aggregate control counters and a redacted alert outbox.
  * Counts are application observations, not provider-wide billing measurements. */
@@ -77,12 +79,34 @@ export class OperationsMonitor extends DurableObject<Env> {
       value,
       threshold,
     };
-    this.ctx.storage.sql.exec(
-      'INSERT OR IGNORE INTO outbox VALUES(?,?,?)',
-      alert.id,
-      JSON.stringify(alert),
-      observedAt,
-    );
+    this.ctx.storage.transactionSync(() => {
+      this.pruneOutbox();
+      if (this.ctx.storage.sql.exec('SELECT 1 FROM outbox WHERE id = ?', alert.id).toArray().length)
+        return;
+      if (
+        this.ctx.storage.sql.exec<{ count: number }>('SELECT COUNT(*) AS count FROM outbox').one()
+          .count >= MAX_PENDING_ALERTS
+      )
+        throw new HttpError(
+          429,
+          'RATE_LIMITED',
+          'Pending alert queue is full. Retry after delivery.',
+          true,
+        );
+      this.ctx.storage.sql.exec(
+        'INSERT INTO outbox VALUES(?,?,?)',
+        alert.id,
+        JSON.stringify(alert),
+        observedAt,
+      );
+    });
+  }
+  private pruneOutbox(): void {
+    this.ctx.storage.sql.exec('DELETE FROM outbox WHERE created_at < ?', Date.now() - 86400000);
+  }
+  private async armAlarm(): Promise<void> {
+    if ((await this.ctx.storage.getAlarm()) === null)
+      await this.ctx.storage.setAlarm(Date.now() + 60000);
   }
   private async evaluate(): Promise<void> {
     const now = Date.now();
@@ -101,51 +125,64 @@ export class OperationsMonitor extends DurableObject<Env> {
       }
       await this.ctx.storage.put('account-usage', this.providerUsage);
     }
-    const account = this.providerUsage.value;
-    if (
-      account &&
-      now - account.checkedAt < ACCOUNT_USAGE_REFRESH_MS * 2 &&
-      account.dayStart === Math.floor(now / 86400000) * 86400000 &&
-      account.requestsToday >= 80000
-    )
-      this.enqueue('account_worker_request_budget', account.requestsToday, 80000, 86400000);
-    if (
-      account &&
-      now - account.checkedAt < ACCOUNT_USAGE_REFRESH_MS * 2 &&
-      account.dayStart === Math.floor(now / 86400000) * 86400000 &&
-      account.durableRequestsToday >= 80000
-    )
-      this.enqueue('account_durable_request_budget', account.durableRequestsToday, 80000, 86400000);
-    const metrics = this.snapshot();
-    if (metrics.failedJoinsLastFiveMinutes >= 10)
-      this.enqueue('failed_joins', metrics.failedJoinsLastFiveMinutes, 10, 300000);
-    if (metrics.serverErrorsLastFiveMinutes >= 5)
-      this.enqueue('server_errors', metrics.serverErrorsLastFiveMinutes, 5, 300000);
-    if (metrics.requestsToday >= 80000)
-      this.enqueue('control_request_budget', metrics.requestsToday, 80000, 86400000);
-    if (this.env.TURN_PROVIDER === 'metered' && this.env.RELAY_POOLS) {
-      try {
-        const response = await this.env.RELAY_POOLS.get(
-          this.env.RELAY_POOLS.idFromName('deployment'),
-        ).fetch('https://relay.internal/status');
-        const state = (await response.json()) as {
-          usage?: { usageInGB?: number };
-          checkedAt?: number;
-        };
-        const usage = state.usage?.usageInGB;
-        if (
-          typeof usage === 'number' &&
-          usage >= 0.4 &&
-          Date.now() - (state.checkedAt ?? 0) < 120000
-        )
-          this.enqueue('relay_quota', usage, 0.4, 86400000);
-      } catch {
-        /* The relay pool itself fails closed on unknown usage. */
+    try {
+      const account = this.providerUsage.value;
+      if (
+        account &&
+        now - account.checkedAt < ACCOUNT_USAGE_REFRESH_MS * 2 &&
+        account.dayStart === Math.floor(now / 86400000) * 86400000 &&
+        account.requestsToday >= 80000
+      )
+        this.enqueue('account_worker_request_budget', account.requestsToday, 80000, 86400000);
+      if (
+        account &&
+        now - account.checkedAt < ACCOUNT_USAGE_REFRESH_MS * 2 &&
+        account.dayStart === Math.floor(now / 86400000) * 86400000 &&
+        account.durableRequestsToday >= 80000
+      )
+        this.enqueue(
+          'account_durable_request_budget',
+          account.durableRequestsToday,
+          80000,
+          86400000,
+        );
+      const metrics = this.snapshot();
+      if (metrics.failedJoinsLastFiveMinutes >= 10)
+        this.enqueue('failed_joins', metrics.failedJoinsLastFiveMinutes, 10, 300000);
+      if (metrics.serverErrorsLastFiveMinutes >= 5)
+        this.enqueue('server_errors', metrics.serverErrorsLastFiveMinutes, 5, 300000);
+      if (metrics.requestsToday >= 80000)
+        this.enqueue('control_request_budget', metrics.requestsToday, 80000, 86400000);
+      if (this.env.TURN_PROVIDER === 'metered' && this.env.RELAY_POOLS) {
+        let warningUsage: number | undefined;
+        try {
+          const response = await this.env.RELAY_POOLS.get(
+            this.env.RELAY_POOLS.idFromName('deployment'),
+          ).fetch('https://relay.internal/status');
+          const state = (await response.json()) as {
+            usage?: { usageInGB?: number };
+            checkedAt?: number;
+          };
+          const usage = state.usage?.usageInGB;
+          if (
+            typeof usage === 'number' &&
+            usage >= 0.4 &&
+            Date.now() - (state.checkedAt ?? 0) < 120000
+          )
+            warningUsage = usage;
+        } catch {
+          /* The relay pool itself fails closed on unknown usage. */
+        }
+        // Provider read failure is unknown; queue admission failure is explicit.
+        if (warningUsage !== undefined) this.enqueue('relay_quota', warningUsage, 0.4, 86400000);
       }
+    } finally {
+      // Even a full queue must keep draining; admission failure must not starve recovery.
+      await this.deliver();
     }
-    await this.deliver();
   }
   private async deliver(): Promise<void> {
+    this.pruneOutbox();
     const origins = allowedOrigins(this.env);
     if (origins.length !== 1 || !origins[0]!.startsWith('https://')) return;
     const rows = this.ctx.storage.sql
@@ -223,8 +260,7 @@ export class OperationsMonitor extends DurableObject<Env> {
             metric,
           );
         this.ctx.storage.sql.exec('DELETE FROM buckets WHERE slot < ?', slot - 1440);
-        if ((await this.ctx.storage.getAlarm()) === null)
-          await this.ctx.storage.setAlarm(Date.now() + 60000);
+        await this.armAlarm();
         return Response.json({ recorded: true });
       }
       if (path === '/deliver') {
@@ -249,12 +285,12 @@ export class OperationsMonitor extends DurableObject<Env> {
         return Response.json({ delivered: true });
       }
       if (path === '/evaluate') {
+        await this.armAlarm();
         await this.evaluate();
-        if ((await this.ctx.storage.getAlarm()) === null)
-          await this.ctx.storage.setAlarm(Date.now() + 60000);
         return Response.json(this.snapshot());
       }
       if (path === '/test') {
+        await this.armAlarm();
         this.enqueue('delivery_test', 1, 1, 1000);
         await this.deliver();
         return Response.json(this.snapshot());

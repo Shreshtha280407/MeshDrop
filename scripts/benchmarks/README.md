@@ -1,5 +1,39 @@
 # Benchmark contracts
 
+Task 14 adds isolated capacity and abuse checks. These commands start only local
+test infrastructure; they accept neither a public URL nor an arbitrary command:
+
+```sh
+pnpm test:load
+pnpm test:load:browser
+```
+
+The first runs the 1/10/25/50/100-room control-plane matrix, abuse/rate-limit
+checks, 1,000 seeded admission schedules and concurrent file-backed transfer
+simulations. Its largest socket case keeps 100 paired rooms and 200 real local
+TCP WebSockets open. The second runs four simultaneous real WebRTC/OPFS transfers
+in each of desktop Chromium and mobile-emulated Chromium, with independent saved
+file hashes and zero retries. Mobile emulation is not physical-device evidence.
+Per-case measurements append to ignored
+`.meshdrop-artifacts/task14-load/metrics.jsonl`; only reviewed numeric summaries
+belong in public evidence. No room credentials, SDP, IPs or filenames are exported.
+
+The wrapper strips ambient provider variables, forces loopback development
+origins, disables Wrangler telemetry and dotenv loading, refuses signaling
+`.dev.vars*` files, and prevents reuse of an existing development server. Preserve
+any such private file and use an isolated checkout rather than deleting it. Local
+browser tests use empty ICE-server lists; relay cases use injected responses and
+consume no provider quota. Allow local socket binding, installed browser binaries
+and enough temporary disk for the synthetic files. Close any unrelated service
+using the test ports first.
+
+These are separate evidence scopes: real local Worker/SQLite/signaling, injected
+transfer transport/storage, representative local browsers, and synthetic relay
+responses. They establish no hosted user capacity, real relay concurrency, native
+mobile background behavior or provider-wide memory limit. See the
+[Task 14 report](../../docs/reports/task-14-concurrency-load.md) for exact limits,
+observations and pending hosted CI.
+
 P3's correctness/memory gate runs with `pnpm bench:p3` while the local development server is running. It verifies exact 100 MiB and 1 GiB downloads, intermediate committed progress, bounded owned queues and page/worker JavaScript memory. See the [streaming runbook](../../docs/runbooks/streaming-verification.md) for artifact paths, reproduction and measurement limits, and the [P3 report](../../docs/reports/phase-3.md) for recorded results.
 
 P9's release matrix runs with `pnpm bench:p9` while MeshDrop is available. It uses

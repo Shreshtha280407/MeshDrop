@@ -219,6 +219,28 @@ are **not account-wide Cloudflare billing or usage measurements**. Continue to
 check the provider's account-wide limits separately. Local injected usage tests
 do not establish live account quota notifications.
 
+Task 14 bounds new pending alert admission to 128 entries. A full queue rejects
+new work explicitly with HTTP 429; duplicate pending IDs remain idempotent.
+Evaluation still attempts delivery after overload, and diagnostic alerts arm the
+same retry alarm without requiring unrelated traffic. Expired outbox entries are
+pruned even when the webhook origin is unavailable or unsuitable. Existing queues
+above the new ceiling are preserved and drained under the existing retention
+policy; the ceiling does not delete valid historical evidence to make room.
+Inspect pending delivery counts and the selected deployment's webhook/operator
+configuration before retrying. Do not increase the limit or clear evidence to hide
+an outage. These changes have local regression evidence only until separately
+reviewed and released.
+
+The configured create/request rate bindings are 30/300 requests per minute per
+derived identity, with separate room-local budgets. Cloudflare documents its
+rate-limit binding as approximate and local to each Cloudflare location, with
+asynchronous counter updates. It is not a strict worldwide quota. Local boundary
+and deterministic-window tests verify application behavior; use independently
+authorized hosted measurements before making capacity promises. See the
+[official rate-limit contract](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)
+and [Task 14 evidence](reports/task-14-concurrency-load.md). Never run these load
+tests against the live service.
+
 For rollback after applying v2, retain both new actor exports in the previous
 Worker release. An old v1-only release is not a compatible rollback target once
 these namespaces exist. Publish and record a compatible v2 baseline before

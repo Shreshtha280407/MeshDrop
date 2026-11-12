@@ -22,6 +22,8 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed --project chromium",
     "test:faults": "vitest run --project faults",
+    "test:load": "node scripts/benchmarks/load.mjs matrix",
+    "test:load:browser": "node scripts/benchmarks/load.mjs browser",
     "test:transfer-reliability": "vitest run --project unit tests/unit/transfer-stop.spec.ts tests/unit/transfer-lifecycle.spec.ts && vitest run --project security tests/security/transfer-control-abort.spec.ts packages/recovery/tests/property/transfer-reliability.spec.ts && vitest run --project faults tests/faults/transfer-reliability.spec.ts",
     "test:release-store": "vitest run --config vitest.release-trust.config.ts",
     "build": "pnpm -r build",

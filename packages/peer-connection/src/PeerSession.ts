@@ -318,6 +318,9 @@ export class PeerSession {
       void this.maybeHello().catch(() => this.fail('Peer handshake could not start.'));
     };
     channel.onmessage = (event: MessageEvent<unknown>) => {
+      // Retired channels may still deliver queued DOM callbacks after replacement.
+      // Reject ownership before charging any queue or failing the current epoch.
+      if (channel !== this.channel || this.view.state === 'closed') return;
       const generation = this.generation;
       const size =
         typeof event.data === 'string'
