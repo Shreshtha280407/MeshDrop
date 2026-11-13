@@ -1,7 +1,12 @@
 import { checkpointDigest } from '@meshdrop/recovery';
 import { VERIFICATION_BLOCK_BYTES } from '@meshdrop/protocol';
 import { blockRecordSchema, CheckpointDB } from './CheckpointDB';
-import { digestBytes, digestManifest, storedBlockLength } from './integrity';
+import {
+  digestBytes,
+  digestManifest,
+  receiptMatchesManifest,
+  storedBlockLength,
+} from './integrity';
 import { OpfsReceiverStore, purgeStoredTransfer, RECEIVER_DIRECTORY } from './OpfsReceiverStore';
 import type { BlockRecord, Checkpoint, RecoveryListing } from './ReceiverStore';
 import { StorageFailure } from './ReceiverStore';
@@ -67,7 +72,9 @@ export class LedgerReconciler {
       }
     }
     const receipt =
-      record.receipt && finalized.length === manifest.files.length ? record.receipt : null;
+      finalized.length === manifest.files.length && receiptMatchesManifest(record.receipt, manifest)
+        ? record.receipt
+        : null;
     const next = {
       ...record,
       finalizedFiles: finalized,

@@ -1,6 +1,6 @@
 # MeshDrop privacy model
 
-Reviewed 2026-10-18 for P8. This describes current local code and its limits. Public deployment/provider policy verification belongs to P9.
+Originally reviewed 2026-10-18 for P8; re-audited locally on 2026-11-13 for Task 15. This describes application controls and their limits. Public deployment/provider policy verification requires separate hosted evidence.
 
 ## What each component can see
 
@@ -16,7 +16,7 @@ There is no cloud file-upload/download route, account database, analytics SDK, Q
 
 ## Invitations and authorization
 
-Invitations carry a short-lived, single-use bearer in the URL fragment. Fragments are not part of HTTP requests. The app captures an invitation in memory and immediately replaces the visible URL/current history entry with the pathname; pasted/scanned invitations are strictly bounded and origin-validated. The site sends `Referrer-Policy: no-referrer` and makes no analytics calls. QR encoding/decoding and dependencies are served by this origin.
+Invitations carry a short-lived, single-use bearer in the URL fragment. Fragments are not part of HTTP requests. The app captures an invitation in memory and immediately replaces the visible URL/current history entry with the pathname, including later hash-only navigation and history/BFCache restoration. The listener is removed on component cleanup. Oversized fragment input is scrubbed without being delivered. A newly consumed link never replaces an active room's authority. Pasted/scanned invitations are strictly bounded and origin-validated. The site sends `Referrer-Policy: no-referrer` and makes no analytics calls. QR encoding/decoding and dependencies are served by this origin.
 
 History replacement is not guaranteed erasure of browser data. The production test directly observed Chromium retaining the original fragment in internal `userTypedURL` navigation metadata even when the current history entry URL was clean. Browser history/sync, bookmarks, clipboard managers, extensions, screenshots, a displayed QR, crash/session recovery and someone viewing a device may retain or disclose an invitation. Do not publish invitations or place credentials in query strings; application code cannot undo a query already sent to a server. Expiry, owner approval, single candidate admission, revocation and independent code comparison limit the authority of a leaked invitation, but do not erase external copies.
 
@@ -36,8 +36,16 @@ Downloads, shares, native destinations, copied invitations and exported JSON/CSV
 
 ## Logging and evidence
 
-Production application source has no console logging, third-party telemetry, raw request dumping or structured payload logging. User-visible room events use fixed phrases; error boundaries return bounded generic messages and request IDs. Wrangler/workerd development and hosting systems can emit request paths, room IDs, timing and runtime errors. Provider log settings, retention/access, request-header/subprotocol capture and TURN logs require deployment review. Do not enable body/header capture or attach raw signaling to monitoring.
+There is no third-party telemetry, raw request dumping or structured payload logging. When explicitly enabled, the Worker audit logger writes a fixed event, preview/production category, allowlisted operation and numeric status. It does not log URLs, room IDs, credentials or peer payloads. User-visible room events use fixed phrases; the web client maps signaling error codes to locally authored guidance and suppresses raw dependency/provider exception text. Unknown errors remain failures with generic guidance. Wrangler/workerd development and hosting systems can emit request paths, room IDs, timing and runtime errors. Provider log settings, retention/access, request-header/subprotocol capture and TURN logs require deployment review. Do not enable body/header capture or attach raw signaling to monitoring.
 
 Live test traces, video and automatic failure screenshots are disabled by default. Tests and raw artifacts stay ignored; assertion output, browser internals and third-party tooling can still contain test invitation values and must be reviewed before sharing. Committed evidence uses synthetic content, redacted summaries and reviewed screenshots without invitation QR/capabilities. Never copy private provider environment files into evidence.
 
 Static provider keys belong only in ignored server `.env` files locally (the existing signaling file is mode 0600), with empty secret placeholders in `.env.example`. Runtime bearers are ephemeral credentials rather than configuration. No private `VITE_*` variable is permitted. The secret check is pattern-based prevention, not a complete secret-detection guarantee. See [secret handling](security/secrets.md), [security review](security-review.md) and the [phase report](reports/phase-8.md).
+
+## Task 15 evidence and residual limits
+
+The [internal adversarial review](reports/task-15-security-privacy-redteam.md) uses synthetic secrets, isolated workerd and disposable browser profiles. It separately tests invitation request/referrer/storage behavior, allowlisted JSON/CSV diagnostics, fixed audit output, exact public-shell caches and real OPFS/IndexedDB tampering. Formula-like filenames remain legitimate text labels; they are excluded from diagnostics rather than inserted into spreadsheet cells. React text rendering and conservative download MIME remain required, and received files can still be dangerous if opened outside the application.
+
+A stored receipt is neither a credential nor an independently signed offline identity document. Reopening now rejects receipts inconsistent with the rehashed manifest; it does not authenticate an arbitrarily replaced but internally consistent browser profile. Similarly, an authenticated receiver ACK describes that peer's claimed commitment, not independently observed physical storage. Previously issued temporary TURN credentials and established allocations are not erased by revocation; the room denies new issuance and further authorized signaling. Actual provider expiry/allocation behavior remains an external operational dependency.
+
+The expanded source scan detects recognizable provider/operator assignments, credential-bearing URLs and concrete invitation literals without printing their values. Explicitly synthetic fixtures are permitted. No pattern scan guarantees that an arbitrary unknown secret format is absent. Reports and test artifacts still require review before sharing.

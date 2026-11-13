@@ -1,5 +1,5 @@
 import { sha256 } from '@noble/hashes/sha2.js';
-import { manifestSchema, VERIFICATION_BLOCK_BYTES } from '@meshdrop/protocol';
+import { manifestSchema, receiptSchema, VERIFICATION_BLOCK_BYTES } from '@meshdrop/protocol';
 import type { TransferManifest, TransferFile } from '@meshdrop/protocol';
 
 export const hexDigest = (bytes: Uint8Array) =>
@@ -7,6 +7,17 @@ export const hexDigest = (bytes: Uint8Array) =>
 export const digestBytes = (bytes: Uint8Array) => hexDigest(sha256(bytes));
 export const digestManifest = (input: TransferManifest) =>
   digestBytes(new TextEncoder().encode(JSON.stringify(manifestSchema.parse(input))));
+/** Structural/context consistency only, never independent authentication of local metadata. */
+export function receiptMatchesManifest(input: unknown, manifest: TransferManifest): boolean {
+  const parsed = receiptSchema.safeParse(input);
+  return (
+    parsed.success &&
+    parsed.data.transferId === manifest.transferId &&
+    parsed.data.manifestDigest === digestManifest(manifest) &&
+    parsed.data.totalBytes === manifest.totalBytes &&
+    JSON.stringify(parsed.data.files) === JSON.stringify(manifest.files)
+  );
+}
 export function storedBlockLength(size: number, index: number): number {
   if (
     !Number.isSafeInteger(index) ||

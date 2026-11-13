@@ -35,6 +35,7 @@
     "test:pwa": "playwright test --config playwright.pwa.config.ts",
     "bench:p7": "playwright test tests/e2e/mobile-hardening.spec.ts --project chromium --workers 1 --retries 0 && pnpm test:pwa",
     "test:security": "vitest run --project security --reporter default --reporter json --outputFile .meshdrop-artifacts/phase-8/security.json",
+    "test:security-redteam": "vitest run --project unit tests/unit/privacy-boundaries.spec.ts tests/unit/secret-policy.spec.ts && vitest run --project security tests/security/adversarial-protocol.spec.ts tests/security/diagnostics-privacy.spec.ts && vitest run --project integration tests/integration/adversarial-auth.spec.ts && vitest run --project faults tests/faults/adversarial-transfer.spec.ts",
     "bench:p8": "pnpm test:security && pnpm test:integration && playwright test tests/e2e/security-abuse.spec.ts --project chromium --workers 1 --retries 0 && pnpm test:pwa",
     "audit:release": "pnpm audit --audit-level low",
     "deploy:cloud": "tsx scripts/deploy/cloudflare.ts",

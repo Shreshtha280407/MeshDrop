@@ -10,6 +10,7 @@ import type { CapabilityResult } from '@meshdrop/platform';
 import { MobilePanel } from './features/mobile/MobilePanel';
 import { PwaPanel } from './features/mobile/PwaPanel';
 import { CameraInvitation, PrivateQr } from './features/mobile/QrInvitation';
+import { observeInvitationUrls } from './security/invitationUrl';
 
 export default function RoomApp({ initialInvitation }: { initialInvitation: string }) {
   const client = useMemo(() => new RoomClient(), []);
@@ -24,6 +25,14 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
   const [platform, setPlatform] = useState<CapabilityResult | null>(null);
   const [platformError, setPlatformError] = useState('');
   const [probeVersion, setProbeVersion] = useState(0);
+  useEffect(
+    () =>
+      observeInvitationUrls((invitation) => {
+        // Navigation never replaces active room authority or silently requests admission.
+        if (!client.getSnapshot().status) setInvite(invitation);
+      }),
+    [client],
+  );
   useEffect(() => {
     let current = true;
     setPlatform(null);

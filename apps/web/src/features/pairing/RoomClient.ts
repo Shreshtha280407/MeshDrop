@@ -1,3 +1,4 @@
+import { PublicRoomError, publicRoomError, signalingError } from '../../security/publicErrors';
 import {
   MAX_CONTROL_MESSAGE_BYTES,
   apiErrorSchema,
@@ -299,7 +300,7 @@ export class RoomClient {
     body?: unknown,
   ): Promise<unknown> {
     if (navigator.onLine === false)
-      throw new Error(
+      throw new PublicRoomError(
         'You are offline. Pairing and file delivery require connectivity; retained local files can still be checked and exported.',
       );
     const generation = this.generation;
@@ -315,8 +316,8 @@ export class RoomClient {
     });
     if (!response.ok) {
       const parsed = apiErrorSchema.safeParse(await response.json().catch(() => null));
-      if (parsed.success) throw new Error(`${parsed.data.code}: ${parsed.data.message}`);
-      throw new Error('The signaling service is unavailable. Try again.');
+      if (parsed.success) throw new PublicRoomError(signalingError(parsed.data.code));
+      throw new PublicRoomError('The signaling service is unavailable. Try again.');
     }
     const bodyResult: unknown = await response.json();
     if (generation !== this.generation) throw new Error('Local session changed.');
@@ -330,7 +331,12 @@ export class RoomClient {
       await work();
     } catch (error) {
       if (generation !== this.generation || this.view.status?.state === 'closed') return;
-      this.update({ error: error instanceof Error ? error.message : 'Operation failed.' });
+      this.update({
+        error: publicRoomError(
+          error,
+          'The operation could not finish. Check the selected input and connection, then try again.',
+        ),
+      });
     } finally {
       if (generation === this.generation) this.update({ busy: false });
     }
@@ -363,7 +369,9 @@ export class RoomClient {
       try {
         invitation = parseInvitation(value);
       } catch {
-        throw new Error('Invalid invitation. Paste the complete private invitation link.');
+        throw new PublicRoomError(
+          'Invalid invitation. Paste the complete private invitation link.',
+        );
       }
       if (!this.joinAttempt || this.joinAttempt.invite !== value)
         this.joinAttempt = {
@@ -414,7 +422,10 @@ export class RoomClient {
     if (this.polling) clearInterval(this.polling);
     this.polling = setInterval(() => {
       void this.refresh().catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Status is unavailable.';
+        const message = publicRoomError(
+          error,
+          'Status is unavailable. Check connectivity and reconnect.',
+        );
         if (message.startsWith('ROOM_CLOSED') || message.startsWith('NOT_FOUND')) this.markClosed();
         else this.update({ error: message });
       });
@@ -483,7 +494,9 @@ export class RoomClient {
       await new Promise<void>((resolve, reject) => {
         const timer = setTimeout(() => {
           socket.close();
-          reject(new Error('Signaling connection timed out. Request a fresh connection.'));
+          reject(
+            new PublicRoomError('Signaling connection timed out. Request a fresh connection.'),
+          );
         }, 8000);
         socket.onopen = () => {
           if (socket !== this.socket || generation !== this.generation) {
@@ -501,7 +514,7 @@ export class RoomClient {
         };
         socket.onerror = () => {
           clearTimeout(timer);
-          reject(new Error('Signaling admission failed. Request a fresh connection.'));
+          reject(new PublicRoomError('Signaling admission failed. Request a fresh connection.'));
         };
         socket.onclose = () => {
           clearTimeout(timer);
@@ -510,7 +523,7 @@ export class RoomClient {
           this.closePeer();
           this.update({ connection: 'disconnected' });
           this.scheduleRecovery();
-          reject(new Error('Signaling connection closed.'));
+          reject(new PublicRoomError('Signaling connection closed.'));
         };
         socket.onmessage = (event: MessageEvent<unknown>) => {
           if (socket !== this.socket || event.data === 'pong' || typeof event.data !== 'string')
@@ -600,7 +613,7 @@ export class RoomClient {
     } else if (envelope.epoch !== status.epoch) {
       throw new Error('Unexpected signaling epoch.');
     } else if (envelope.type === 'ERROR') {
-      this.update({ error: `${envelope.payload.code}: ${envelope.payload.message}` });
+      this.update({ error: signalingError(envelope.payload.code) });
       if (envelope.payload.code === 'PEER_UNAVAILABLE') {
         this.closePeer();
         this.scheduleRecovery();
@@ -631,7 +644,7 @@ export class RoomClient {
       this.socket?.readyState !== WebSocket.OPEN ||
       status.state !== 'approved'
     )
-      throw new Error('Authorized signaling is unavailable.');
+      throw new PublicRoomError('Authorized signaling is unavailable.');
     this.socket.send(
       serializeSignalingMessage({
         version: 1,
@@ -663,7 +676,12 @@ export class RoomClient {
       } else this.sendSignal('RENEGOTIATE', { reason: mode });
       this.update({ error: '' });
     } catch (error) {
-      this.update({ error: error instanceof Error ? error.message : 'Connection request failed.' });
+      this.update({
+        error: publicRoomError(
+          error,
+          'Connection request failed. Check both devices and reconnect.',
+        ),
+      });
       this.scheduleRecovery();
     } finally {
       this.startingEpoch = false;
@@ -673,7 +691,9 @@ export class RoomClient {
     try {
       await this.peerSession?.ping();
     } catch (error) {
-      this.update({ error: error instanceof Error ? error.message : 'Ping failed.' });
+      this.update({
+        error: publicRoomError(error, 'Ping failed. Check both devices and the peer connection.'),
+      });
     }
   }
   confirmComparison(entered: string, independentConfirmation: boolean): void {
@@ -804,7 +824,7 @@ export class RoomClient {
     return this.action(async () => {
       this.ensureTransfer();
       if (!this.peerSession?.canTransfer || !this.transfer)
-        throw new Error(
+        throw new PublicRoomError(
           'Both devices must confirm the pairing code and support temporary browser storage.',
         );
       this.sourceFiles = files;
@@ -813,23 +833,23 @@ export class RoomClient {
   }
   private async replaceForResume(): Promise<TransferMachine> {
     if (this.peerSession?.snapshot.capabilities?.resumeMode !== 'persistent')
-      throw new Error('Both browsers must support persistent checkpoint resume.');
+      throw new PublicRoomError('Both browsers must support persistent checkpoint resume.');
     if (!this.peerSession?.canTransfer)
-      throw new Error('Compare and confirm the new pairing code on both devices first.');
+      throw new PublicRoomError('Compare and confirm the new pairing code on both devices first.');
     const state = this.transfer?.snapshot.state;
     if (state && !['reconnecting', 'failed', 'cancelled', 'complete'].includes(state))
-      throw new Error('Finish or cancel the current attempt first.');
+      throw new PublicRoomError('Finish or cancel the current attempt first.');
     await this.transfer?.dispose(false);
     this.transfer = null;
     this.update({ transfer: INITIAL_TRANSFER });
     this.ensureTransfer();
-    if (!this.transfer) throw new Error('Resume storage is unavailable.');
+    if (!this.transfer) throw new PublicRoomError('Resume storage is unavailable.');
     return this.transfer;
   }
   async resumeSource(manifest: TransferManifest, files: readonly File[]): Promise<void> {
     return this.action(async () => {
       if (this.view.status?.role !== 'owner')
-        throw new Error('The room owner provides the original source.');
+        throw new PublicRoomError('The room owner provides the original source.');
       const transfer = await this.replaceForResume();
       this.sourceFiles = files;
       await transfer.restoreSource(manifest, files);
@@ -838,7 +858,7 @@ export class RoomClient {
   async resumeReceiver(manifest: TransferManifest): Promise<void> {
     return this.action(async () => {
       if (this.view.status?.role !== 'receiver')
-        throw new Error('Join and confirm a fresh room as the receiver first.');
+        throw new PublicRoomError('Join and confirm a fresh room as the receiver first.');
       const transfer = await this.replaceForResume();
       await transfer.restoreReceiver(manifest);
     });

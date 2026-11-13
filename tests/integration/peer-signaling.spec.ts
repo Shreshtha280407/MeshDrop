@@ -140,7 +140,7 @@ it('mints bounded coturn REST credentials independently verifiable by HMAC, with
 it.each([
   { TURN_URLS: 'turn:relay.example.test:3478' },
   { TURN_URLS: 'turn:relay.example.test:3478', TURN_SHARED_SECRET: 'too-short' },
-  { STUN_URLS: 'https://user:password@invalid.test' },
+  { STUN_URLS: 'https://synthetic-user:synthetic-password@invalid.test' },
 ])('fails closed for incomplete or unsafe ICE configuration %j', async (bindings) => {
   const worker = await runtime({ bindings });
   try {

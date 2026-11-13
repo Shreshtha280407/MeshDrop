@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { basename } from 'node:path';
+import { secretFindings } from './security/secret-policy.mjs';
 
 const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' })
   .split('\0')
@@ -27,12 +28,7 @@ for (const path of new Set(candidates)) {
   if (!statSync(path).isFile() || !/\.(?:[cm]?[jt]sx?|jsonc?|ya?ml|md|txt|example)$/.test(path))
     continue;
   const text = readFileSync(path, 'utf8');
-  if (
-    /(?:AKIA|ASIA)[A-Z0-9]{16}|gh[pousr]_[A-Za-z0-9]{36,}|-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/.test(
-      text,
-    )
-  )
-    failures.push(`${path}: possible embedded secret`);
+  for (const finding of secretFindings(text)) failures.push(`${path}: ${finding}`);
   if (
     basename(path) === '.env.example' &&
     /^[ \t]*[A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|API_KEY|PRIVATE_KEY)[A-Z0-9_]*[ \t]*=[ \t]*[^\s#]+/m.test(

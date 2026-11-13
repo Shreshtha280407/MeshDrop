@@ -80,9 +80,9 @@ export function faultFixture() {
       production: { database: target.production.database, storeId: target.production.storeId },
     }),
     REHEARSAL_FAULT_DATABASE_JSON: JSON.stringify(db),
-    REHEARSAL_DB_PASSWORD: 'normal-offline-canary',
-    REHEARSAL_FAULT_DB_PASSWORD: 'writer-offline-canary',
-    REHEARSAL_FAULT_DB_READER_PASSWORD: 'reader-offline-canary',
+    REHEARSAL_DB_PASSWORD: 'synthetic-normal-offline-canary',
+    REHEARSAL_FAULT_DB_PASSWORD: 'synthetic-writer-offline-canary',
+    REHEARSAL_FAULT_DB_READER_PASSWORD: 'synthetic-reader-offline-canary',
     TRUST_REHEARSAL_PRODUCTION_ENVIRONMENT_ID: '999',
   };
   return { ...f, target, env, normal, db };
