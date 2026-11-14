@@ -71,9 +71,6 @@ async function run(operation: string, payload: unknown): Promise<unknown> {
     };
     if (retention !== 'discard') {
       const db = new CheckpointDB();
-      const old = await db.sources();
-      if (old.length >= 32)
-        await db.removeSource(old.sort((a, b) => a.expiresAt - b.expiresAt)[0]!.transferId);
       await db.rememberSource({
         transferId: manifest.transferId,
         manifest,

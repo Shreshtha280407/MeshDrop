@@ -1,6 +1,7 @@
 import { exportNames } from '../../security/safeFilePath';
 import { useEffect, useRef, useState } from 'react';
 import { requestPersistence, StorageClient } from '@meshdrop/storage';
+import { uuidSchema } from '@meshdrop/protocol';
 import { FileExportControls } from '../mobile/FileExportControls';
 import type { RoomClient, RoomView } from '../pairing/RoomClient';
 import type { RecoveryListing } from '@meshdrop/storage';
@@ -17,6 +18,21 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  function applyListing(value: RecoveryListing) {
+    const verifiedFiles = new Set(
+      value.checkpoints.flatMap((checkpoint) =>
+        checkpoint.files
+          .filter((file) => file.finalized)
+          .map((file) => `${checkpoint.record.transferId}:${file.fileId}`),
+      ),
+    );
+    setPrepared((previous) =>
+      Object.fromEntries(Object.entries(previous).filter(([key]) => verifiedFiles.has(key))),
+    );
+    const sourceIds = new Set(value.sources.map((source) => source.transferId));
+    for (const id of selected.current.keys()) if (!sourceIds.has(id)) selected.current.delete(id);
+    setListing(value);
+  }
   useEffect(() => {
     const storage = new StorageClient();
     client.current = storage;
@@ -24,7 +40,7 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
     void storage
       .list()
       .then((value) => {
-        if (current) setListing(value);
+        if (current) applyListing(value);
       })
       .catch(() => {
         if (current)
@@ -90,7 +106,7 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
           disabled={busy}
           onClick={() => {
             void action(async (storage) => {
-              setListing(await storage.list());
+              applyListing(await storage.list());
             });
           }}
         >
@@ -202,7 +218,7 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
                       Export saved {meta.path}
                     </button>
                   )}
-                  {prepared[`${checkpoint.record.transferId}:${meta.fileId}`] && (
+                  {file.finalized && prepared[`${checkpoint.record.transferId}:${meta.fileId}`] && (
                     <FileExportControls
                       file={prepared[`${checkpoint.record.transferId}:${meta.fileId}`]!}
                       path={meta.path}
@@ -218,7 +234,6 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
             disabled={busy}
             onClick={() => {
               void action(async (storage) => {
-                await storage.purge(checkpoint.record.transferId);
                 setPrepared((previous) =>
                   Object.fromEntries(
                     Object.entries(previous).filter(
@@ -226,7 +241,8 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
                     ),
                   ),
                 );
-                setListing(await storage.list());
+                await storage.purge(checkpoint.record.transferId);
+                applyListing(await storage.list());
               });
             }}
           >
@@ -292,7 +308,7 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
               void action(async (storage) => {
                 selected.current.delete(source.transferId);
                 await storage.removeSource(source.transferId);
-                setListing(await storage.list());
+                applyListing(await storage.list());
               });
             }}
           >
@@ -301,9 +317,30 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
         </article>
       ))}
       {listing?.unavailable.map((item) => (
-        <p className="muted" key={item.transferId}>
-          {item.reason}
-        </p>
+        <div className="muted" key={`${item.kind ?? 'storage'}:${item.transferId}`}>
+          <p>{item.reason}</p>
+          {item.kind && uuidSchema.safeParse(item.transferId).success && (
+            <button
+              className="secondary"
+              disabled={busy}
+              onClick={() => {
+                void action(async (storage) => {
+                  if (item.kind === 'source') {
+                    selected.current.delete(item.transferId);
+                    await storage.removeSource(item.transferId);
+                  } else {
+                    await storage.purge(item.transferId);
+                  }
+                  applyListing(await storage.list());
+                });
+              }}
+            >
+              {item.kind === 'source'
+                ? 'Forget unavailable source'
+                : 'Delete unavailable checkpoint'}
+            </button>
+          )}
+        </div>
       ))}
       {Boolean(listing?.cleaned) && (
         <p className="muted">

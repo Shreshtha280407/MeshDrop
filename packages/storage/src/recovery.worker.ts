@@ -5,7 +5,6 @@ import { LedgerReconciler } from './LedgerReconciler';
 import { OpfsReceiverStore, purgeStoredTransfer } from './OpfsReceiverStore';
 import { verifyReselectedSource, digestManifest } from './integrity';
 import { StorageFailure } from './ReceiverStore';
-const reselected = new Map<string, File>();
 async function run(operation: string, input: unknown): Promise<unknown> {
   if (operation === 'list') return new LedgerReconciler().listAndReconcile();
   const payload = input as { transferId: string; fileId?: string; file?: File };
@@ -20,15 +19,29 @@ async function run(operation: string, input: unknown): Promise<unknown> {
     return null;
   }
   if (operation === 'reselect') {
-    const source = (await db.sources()).find((source) => source.transferId === id);
+    let source = (await db.sources()).find((source) => source.transferId === id);
+    if (source && source.expiresAt <= Date.now()) {
+      await db.removeSource(id, 'retention');
+      source = (await db.sources()).find(
+        (value) => value.transferId === id && value.expiresAt > Date.now(),
+      );
+    }
+    const receiver = source ? null : await db.get(id);
+    if (
+      !source &&
+      (!receiver ||
+        receiver.expiresAt <= Date.now() ||
+        receiver.retention === 'discard' ||
+        receiver.state === 'deleting')
+    )
+      throw new StorageFailure('unavailable', 'Source retention has ended.');
     const manifest = source?.manifest ?? (await db.manifest(id));
-    const digest = source?.manifestDigest ?? (await db.get(id))?.manifestDigest;
+    const digest = source?.manifestDigest ?? receiver?.manifestDigest;
     if (manifest.transferId !== id || digestManifest(manifest) !== digest)
       throw new Error('Source manifest is damaged.');
     const expected = manifest.files.find((file) => file.fileId === payload.fileId);
     if (!expected || !payload.file) throw new Error('Source identity unavailable.');
     const actual = await verifyReselectedSource(payload.file, expected);
-    reselected.set(`${id}:${expected.fileId}`, payload.file);
     return { sha256: actual, fileId: expected.fileId };
   }
   if (operation === 'export') {

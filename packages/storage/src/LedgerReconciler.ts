@@ -25,6 +25,15 @@ export function compactRanges(indices: number[]): [number, number][] {
 export class LedgerReconciler {
   async reconcile(store: OpfsReceiverStore): Promise<Checkpoint> {
     const { manifest, record, db } = store;
+    const assertRetained = () => {
+      if (
+        record.state === 'deleting' ||
+        record.expiresAt <= Date.now() ||
+        record.retention === 'discard'
+      )
+        throw new StorageFailure('unavailable', 'Checkpoint retention has ended.');
+    };
+    assertRetained();
     const all = await db.blocks(record.transferId);
     const valid: BlockRecord[] = [];
     const invalid: BlockRecord[] = [];
@@ -83,6 +92,7 @@ export class LedgerReconciler {
       state: receipt ? ('complete' as const) : ('interrupted' as const),
       updatedAt: Date.now(),
     };
+    assertRetained();
     await db.reconcile(next, invalid);
     store.record = next;
     return {
@@ -105,7 +115,27 @@ export class LedgerReconciler {
   async listAndReconcile(): Promise<RecoveryListing> {
     const db = new CheckpointDB();
     const result: RecoveryListing = { checkpoints: [], sources: [], unavailable: [], cleaned: 0 };
+    // A durable explicit-deletion intent survives even damaged non-identity metadata.
+    const deleting = new Set(await db.pendingDeletions());
+    for (const id of deleting) {
+      try {
+        if (await purgeStoredTransfer(id, 'retention')) result.cleaned++;
+      } catch (error) {
+        result.unavailable.push({
+          transferId: id,
+          kind: 'receiver',
+          reason:
+            error instanceof StorageFailure && error.code === 'busy'
+              ? 'Open in another tab.'
+              : 'Local deletion could not finish. Try deleting this checkpoint again.',
+        });
+      }
+    }
+    result.unavailable.push(
+      ...(await db.catalogIssues('transfers')).filter((item) => !deleting.has(item.transferId)),
+    );
     for (const record of await db.list()) {
+      if (deleting.has(record.transferId)) continue;
       const store = new OpfsReceiverStore();
       try {
         if (
@@ -113,15 +143,17 @@ export class LedgerReconciler {
           record.expiresAt <= Date.now() ||
           record.retention === 'discard'
         ) {
-          await purgeStoredTransfer(record.transferId);
-          result.cleaned++;
-          continue;
+          if (await purgeStoredTransfer(record.transferId, 'retention')) {
+            result.cleaned++;
+            continue;
+          }
         }
         await store.open(record.transferId);
         result.checkpoints.push(await this.reconcile(store));
       } catch (error) {
         result.unavailable.push({
           transferId: record.transferId,
+          kind: 'receiver',
           reason:
             error instanceof StorageFailure && error.code === 'busy'
               ? 'Open in another tab.'
@@ -131,50 +163,103 @@ export class LedgerReconciler {
         await store.close();
       }
     }
-    for (const source of await db.sources()) {
+    result.unavailable.push(...(await db.catalogIssues('sources')));
+    for (let source of await db.sources()) {
       if (source.expiresAt <= Date.now()) {
-        await db.removeSource(source.transferId);
-        continue;
+        if (await db.removeSource(source.transferId, 'retention')) continue;
+        const fresh = (await db.sources()).find((value) => value.transferId === source.transferId);
+        if (!fresh || fresh.expiresAt <= Date.now()) continue;
+        source = fresh;
       }
       if (
         source.transferId !== source.manifest.transferId ||
         digestManifest(source.manifest) !== source.manifestDigest
-      )
+      ) {
+        result.unavailable.push({
+          transferId: source.transferId,
+          kind: 'source',
+          reason: 'Source metadata is damaged.',
+        });
         continue;
+      }
       result.sources.push(source);
     }
-    // A cleared/missing IDB may leave OPFS directories. Only collect this package's valid UUID roots,
-    // under the same exclusive lock used by prepare/purge; never touch unrelated origin data.
+    // Loss of transfer rows can strand both OPFS and manifest/block metadata.
+    // Each candidate is rechecked under the same lock used by prepare/purge.
     try {
-      const parent = await (
-        await navigator.storage.getDirectory()
-      ).getDirectoryHandle(RECEIVER_DIRECTORY);
-      const known = new Set((await db.list()).map((r) => r.transferId));
-      const iterable = parent as FileSystemDirectoryHandle & {
-        entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
-      };
-      for await (const [name] of iterable.entries())
-        if (uuidSchema.safeParse(name).success && !known.has(name)) {
-          // Recheck after taking the lock to avoid racing a newly prepared transfer.
-          const { acquireStoreLock } = await import('./locks');
-          const release = await acquireStoreLock(name).catch(() => null);
-          if (!release) continue;
-          try {
-            if (!(await db.get(name))) {
-              await parent.removeEntry(name, { recursive: true });
-              result.cleaned++;
-            }
-          } finally {
-            await release();
-          }
+      let parent: FileSystemDirectoryHandle | null = null;
+      try {
+        parent = await (
+          await navigator.storage.getDirectory()
+        ).getDirectoryHandle(RECEIVER_DIRECTORY);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'NotFoundError')) throw error;
+      }
+      const known = new Set([
+        ...(await db.list()).map((r) => r.transferId),
+        ...(await db.catalogIssues('transfers')).map((r) => r.transferId),
+      ]);
+      const collect = async (id: string) => {
+        const { acquireStoreLock } = await import('./locks');
+        let release: () => Promise<void>;
+        try {
+          release = await acquireStoreLock(id);
+        } catch (error) {
+          if (!(error instanceof StorageFailure && error.code === 'busy'))
+            result.unavailable.push({ transferId: id, reason: 'Orphan cleanup is unavailable.' });
+          return;
         }
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === 'NotFoundError'))
-        result.unavailable.push({
-          transferId: 'local-storage',
-          reason: 'Some orphaned storage could not be inspected.',
-        });
+        try {
+          if (await db.get(id)) return;
+          // Remove orphan metadata first: a crash still leaves a discoverable
+          // UUID directory for the next pass. Sources are independently scoped.
+          await db.remove(id);
+          if (parent) {
+            let directory = false;
+            try {
+              await parent.getDirectoryHandle(id);
+              directory = true;
+            } catch (error) {
+              if (
+                !(
+                  error instanceof DOMException &&
+                  ['NotFoundError', 'TypeMismatchError'].includes(error.name)
+                )
+              )
+                throw error;
+            }
+            if (directory) await parent.removeEntry(id, { recursive: true });
+          }
+          result.cleaned++;
+        } catch {
+          result.unavailable.push({ transferId: id, reason: 'Orphan cleanup could not finish.' });
+        } finally {
+          await release();
+        }
+      };
+      for (const id of await db.orphanIds()) await collect(id);
+      if (parent) {
+        const iterable = parent as FileSystemDirectoryHandle & {
+          entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+        };
+        for await (const [name, handle] of iterable.entries())
+          if (handle.kind === 'directory' && uuidSchema.safeParse(name).success && !known.has(name))
+            await collect(name);
+      }
+    } catch {
+      result.unavailable.push({
+        transferId: 'local-storage',
+        reason: 'Some orphaned storage could not be inspected.',
+      });
     }
+    const unavailable = new Map<string, RecoveryListing['unavailable'][number]>();
+    for (const item of result.unavailable) {
+      const key = `${item.kind ?? 'orphan'}:${item.transferId}`;
+      const previous = unavailable.get(key);
+      if (!previous) unavailable.set(key, item);
+      else if (!previous.reason.includes(item.reason)) previous.reason += ' ' + item.reason;
+    }
+    result.unavailable = [...unavailable.values()];
     return result;
   }
 }

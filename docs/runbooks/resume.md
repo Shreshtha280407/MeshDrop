@@ -16,6 +16,22 @@ Reload loses memory-only room credentials. Create a fresh invitation, join/appro
 
 Use Check saved transfers after closing another tab that held the checkpoint. Storage errors or eviction may leave fewer reusable blocks. Corrupt rows are excluded; a whole missing file requires retransmitting that file. Never treat a stored byte counter or file length alone as proof. A completed individual saved file may be exported locally without any network resume.
 
+## Retention, unavailable entries and deletion
+
+Preparation sets the initial 24-hour/seven-day deadline; successful committed blocks refresh it. Checking/listing, finalizing or preparing an export does not extend it. Exact expiry is already expired. Discard intentionally removes the checkpoint on the next unlocked reopening; its one-hour crash deadline does not promise an hour of saved recovery. An actively open store remains protected by its lock. Cleanup runs only on later app/storage access, not while the browser is closed.
+
+If an entry says **Open in another tab**, close that owner before retrying. Damaged/unavailable entries do not supply verified bytes: retry a temporary permission failure, or choose **Delete unavailable checkpoint** / **Forget unavailable source** to remove only that entry. Failed deletion leaves a tombstone for the next check; cached Save/Share controls are withdrawn immediately. Other valid transfers remain independent. Deleting a receiver checkpoint does not forget the owner's source manifest, and forgetting a source never deletes receiver bytes.
+
+Keep an external verified copy. Browser/OS eviction or clearing site data can remove checkpoints early. Delete saved removes only MeshDrop's scoped browser data, not previously exported Downloads/Files copies; it is not secure erasure. Reopening after a crash still requires rehash and fresh network admission/comparison to resume.
+
+Task 16's deterministic local gate is:
+
+```sh
+pnpm test:storage-lifecycle
+```
+
+It includes 2,000 seeded lifecycle schedules with simulated APIs plus separate real Chromium desktop/mobile-viewport storage tests. The restart cases close an independent persistent browser process and reopen the same disposable profile; they do not simulate physical power loss. Test workers/fault injection remain isolated under `tests/` and are not production switches.
+
 ## Automated gates
 
 ```sh

@@ -62,7 +62,7 @@ export interface Checkpoint {
 export interface RecoveryListing {
   checkpoints: Checkpoint[];
   sources: SourceRecord[];
-  unavailable: { transferId: string; reason: string }[];
+  unavailable: { transferId: string; reason: string; kind?: 'receiver' | 'source' }[];
   cleaned: number;
 }
 export type CommitStage =

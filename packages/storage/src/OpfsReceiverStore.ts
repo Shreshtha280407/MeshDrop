@@ -5,7 +5,7 @@ import {
   VERIFICATION_BLOCK_BYTES,
 } from '@meshdrop/protocol';
 import type { TransferManifest, TransferReceipt } from '@meshdrop/protocol';
-import { CheckpointDB } from './CheckpointDB';
+import { CheckpointDB, MAX_CHECKPOINTS } from './CheckpointDB';
 import { acquireStoreLock } from './locks';
 import { digestBytes, digestManifest, hashLocalFile, storedBlockLength } from './integrity';
 import { estimateCapacity } from './QuotaManager';
@@ -42,13 +42,16 @@ export class OpfsReceiverStore implements ReceiverStore {
     const manifest = manifestSchema.parse(input);
     const capacity = await estimateCapacity(manifest.totalBytes);
     if (!capacity.available)
-      throw new StorageFailure('quota', capacity.warnings.at(-1) ?? 'Storage is unavailable.');
+      throw new StorageFailure(
+        capacity.estimatedFreeBytes === null ? 'unavailable' : 'quota',
+        capacity.warnings.at(-1) ?? 'Storage is unavailable.',
+      );
     this.release = await acquireStoreLock(manifest.transferId);
     this.options = options;
     try {
       if (await this.db.get(manifest.transferId))
         throw new Error('A checkpoint with this transfer ID already exists.');
-      if ((await this.db.list()).length >= 64)
+      if ((await this.db.list()).length >= MAX_CHECKPOINTS)
         throw new Error('Clear saved transfers before accepting more files.');
       this.manifest = manifest;
       const now = Date.now();
@@ -86,11 +89,14 @@ export class OpfsReceiverStore implements ReceiverStore {
     }
   }
   async open(transferId: string): Promise<void> {
+    if (this.release) throw new StorageFailure('busy', 'Store already open.');
     this.release = await acquireStoreLock(transferId);
     try {
       const record = await this.db.get(transferId);
       if (!record || record.state === 'deleting')
         throw new Error('Checkpoint is missing or being deleted.');
+      if (record.expiresAt <= Date.now() || record.retention === 'discard')
+        throw new StorageFailure('unavailable', 'Checkpoint retention has ended.');
       const manifest = await this.db.manifest(transferId);
       if (
         manifest.transferId !== record.transferId ||
@@ -283,24 +289,28 @@ export class OpfsReceiverStore implements ReceiverStore {
   }
 }
 /** Tombstone before OPFS deletion, then remove ledger. A crash leaves a retryable deletion. */
-export async function purgeStoredTransfer(transferId: string): Promise<void> {
+export async function purgeStoredTransfer(
+  transferId: string,
+  mode: 'explicit' | 'retention' = 'explicit',
+): Promise<boolean> {
   const release = await acquireStoreLock(transferId);
   const db = new CheckpointDB();
   try {
-    const record = await db.get(transferId);
-    if (!record) return;
-    await db.put({ ...record, state: 'deleting', updatedAt: Date.now() });
+    // A catalog is only a hint: a live owner may have renewed retention since
+    // it was read. Decide under the same lock that protects block commitment.
+    if (!(await db.markDeleting(transferId, mode))) return false;
     try {
       const root = await navigator.storage.getDirectory();
       const parent = await root.getDirectoryHandle(RECEIVER_DIRECTORY);
-      const transfer = await parent.getDirectoryHandle(transferId);
-      await transfer.removeEntry(record.storageKey, { recursive: true });
+      await parent.getDirectoryHandle(transferId);
       // The validated transfer directory belongs to this record and contains no external paths.
+      // Preparation may have stopped before creating the storage-key child.
       await parent.removeEntry(transferId, { recursive: true });
     } catch (error) {
       if (!missing(error)) throw error;
     }
     await db.remove(transferId);
+    return true;
   } finally {
     await release();
   }

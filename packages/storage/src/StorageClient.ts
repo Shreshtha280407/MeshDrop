@@ -3,6 +3,7 @@ import type { RecoveryListing } from './ReceiverStore';
 /** Local worker only; no network, credentials or file bytes go to the signaling server. */
 export class StorageClient {
   private readonly worker: Worker;
+  private disposed = false;
   private pending: {
     id: number;
     resolve(value: unknown): void;
@@ -23,7 +24,11 @@ export class StorageClient {
       else
         current.reject(
           new StorageFailure(
-            event.data.code === 'busy' ? 'busy' : 'unavailable',
+            event.data.code === 'busy' ||
+              event.data.code === 'quota' ||
+              event.data.code === 'integrity'
+              ? event.data.code
+              : 'unavailable',
             'Local storage operation failed. Check browser support, free space and whether this transfer is open in another tab.',
           ),
         );
@@ -31,6 +36,8 @@ export class StorageClient {
     this.worker.onerror = () => this.dispose();
   }
   private request<T>(operation: string, payload: unknown): Promise<T> {
+    if (this.disposed)
+      return Promise.reject(new StorageFailure('unavailable', 'Local storage client is closed.'));
     if (this.pending)
       return Promise.reject(new Error('Another local storage operation is running.'));
     return new Promise((resolve, reject) => {
@@ -41,7 +48,13 @@ export class StorageClient {
         reject,
         timer: setTimeout(() => this.dispose(), 300000),
       };
-      this.worker.postMessage({ id, operation, payload });
+      try {
+        this.worker.postMessage({ id, operation, payload });
+      } catch {
+        clearTimeout(this.pending.timer);
+        this.pending = null;
+        reject(new StorageFailure('unavailable', 'Local storage operation could not start.'));
+      }
     });
   }
   list(): Promise<RecoveryListing> {
@@ -64,6 +77,7 @@ export class StorageClient {
     return this.request('reselect', { transferId, fileId, file });
   }
   dispose(): void {
+    this.disposed = true;
     this.worker.terminate();
     if (this.pending) {
       clearTimeout(this.pending.timer);

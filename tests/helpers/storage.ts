@@ -11,11 +11,14 @@ declare global {
     };
   }
 }
-export async function startStoreHarness(page: Page): Promise<void> {
+export async function startStoreHarness(
+  page: Page,
+  workerFile = 'store-harness.worker.ts',
+): Promise<void> {
   // tsx preserves callback names with this helper; Playwright's own TS loader does not need it.
   // Install only in the isolated test page before serializing nested harness callbacks.
   await page.evaluate('globalThis.__name ??= (value) => value');
-  const url = `/@fs${fileURLToPath(new URL('../storage/store-harness.worker.ts', import.meta.url))}`;
+  const url = `/@fs${fileURLToPath(new URL('../storage/' + workerFile, import.meta.url))}`;
   await page.evaluate((url) => {
     const worker = new Worker(url, { type: 'module' });
     let next = 0;

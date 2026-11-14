@@ -79,7 +79,11 @@ export class HashWorker implements HashStorage {
       else
         pending.reject(
           new StorageFailure(
-            event.data.code === 'quota' ? 'quota' : 'unavailable',
+            event.data.code === 'quota' ||
+              event.data.code === 'busy' ||
+              event.data.code === 'integrity'
+              ? event.data.code
+              : 'unavailable',
             event.data.error ?? 'Hash/storage worker failed.',
           ),
         );
