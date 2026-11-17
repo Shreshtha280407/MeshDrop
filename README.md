@@ -21,6 +21,50 @@ MeshDrop delivers files between browsers without accounts or a central file-uplo
 - **Measured hardening:** 1,816 distinct automated full-check cases at the final roadmap acceptance source; 1 GiB logical streaming simulation and real 64 MiB browser transfers; 100 local logical paired rooms with 200 real local signaling sockets. These are separate scopes, not hosted capacity claims.
 - **Usable interfaces:** keyboard workflows, bounded announcements, reduced motion, responsive layouts and 99 automated accessibility scans with zero reported violations in the final Task 17 check. No formal accessibility certification is claimed.
 
+
+## See MeshDrop in action
+
+These are recorded runs of the actual application—not UI mockups. Each clip retains its original measured scope and verification evidence. The complete media provenance, source revisions, hashes, devices and capture limitations are documented in [README media and verification](docs/assets/readme/MEDIA.md).
+
+### Full walkthrough
+
+**[Watch the 4 minute 32 second MeshDrop demo](docs/assets/readme/demo-video.mp4)**
+
+Laptop → physical OPPO · physical OPPO → laptop · two isolated laptop browser profiles · physical OPPO → explicitly emulated mobile Chromium. Every exported archive shown in this walkthrough was independently SHA-256 checked against its source. This was a local demonstration and does not establish public-network or TURN performance. [Exact chapter sizes and recording metadata](docs/assets/readme/demo-video.json).
+
+### Physical Android transfer
+
+<a href="docs/assets/readme/android-transfer.mp4">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/android-desktop.webp">
+    <img src="docs/assets/readme/android-transfer.gif" alt="Real MeshDrop recording of a desktop sender transferring a synthetic file to a physical OPPO Android phone, followed by verified completion." width="100%">
+  </picture>
+</a>
+
+<p align="center"><sub>Physical OPPO F19 Pro / Android 13 + fresh desktop Chromium. An 8 MiB synthetic file was downloaded on the phone, retrieved over ADB and independently SHA-256 checked. The local app used an ADB reverse tunnel, so this recording does not establish public-network performance. <a href="docs/assets/readme/android-transfer.mp4">Watch the full recording ↗</a></sub></p>
+
+### Verified browser-to-browser transfer
+
+<a href="docs/assets/readme/browser-transfer.mp4">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/verified.webp">
+    <img src="docs/assets/readme/browser-transfer.gif" alt="Two isolated browser profiles complete invitation, approval, pairing-code confirmation, a verified 16 MiB MeshDrop transfer, export and receipt checks." width="100%">
+  </picture>
+</a>
+
+<p align="center"><sub>Two isolated Chromium profiles using the real local frontend, Worker, SQLite room actors, WebSockets and WebRTC. The exported 16 MiB file independently matched its source SHA-256; receipt and diagnostics checks passed with zero JavaScript page errors in the recorded run. <a href="docs/assets/readme/browser-transfer.mp4">Watch the full recording ↗</a></sub></p>
+
+### Interrupted transfer → verified recovery
+
+<a href="docs/assets/readme/browser-recovery.mp4">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/recovery.webp">
+    <img src="docs/assets/readme/browser-recovery.gif" alt="A controlled local MeshDrop recovery recording where a 32 MiB transfer pauses after 12 MiB, reconnects with a fresh pairing epoch and sends only the remaining bytes." width="100%">
+  </picture>
+</a>
+
+<p align="center"><sub>Controlled local recovery evidence: a 32 MiB transfer pauses after 12 MiB of verified data, restarts ICE, advances the connection epoch, repeats pairing comparison and sends exactly the remaining 20 MiB. The final saved file independently matches the original SHA-256. This is not a universal public-network recovery guarantee. <a href="docs/assets/readme/browser-recovery.mp4">Watch the full recording ↗</a></sub></p>
+
 ## Architecture
 
 <img src='docs/assets/readme/architecture.svg' alt='Pages and a private signaling Worker coordinate two browsers. WebRTC carries encrypted file traffic directly or through TURN; hashing, storage, recovery and diagnostics remain on devices.' width='100%'>
