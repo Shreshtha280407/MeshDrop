@@ -18,29 +18,8 @@ MeshDrop delivers files between browsers without accounts or a central file-uplo
 - **Explicit trust:** short-lived bearer invitations, owner approval, independently compared connection codes, two-peer membership and epoch/replay checks.
 - **Verifiable delivery:** incremental SHA-256, bounded queues, storage commitment before ACK, final hashes and scoped transfer receipts. Completion and external export are separate results.
 - **Recoverable transfers:** OPFS bytes and an IndexedDB ledger, restart rehash, exact-source checks, fresh admission/pairing and missing-only resume.
-- **Measured hardening:** 1,816 automated cases at the latest verified source; 1 GiB logical streaming simulation and real 64 MiB browser transfers; 100 local logical paired rooms with 200 real local signaling sockets. These are separate scopes, not hosted capacity claims.
-- **Usable interfaces:** keyboard workflows, bounded announcements, reduced motion, responsive layouts and 99 automated accessibility scans in the final Task 17 check. No formal accessibility certification is claimed.
-
-## Run locally
-
-Use Node 24 (the CI version), pnpm **10.34.7**, and the supported Node range `>=22.12.0 <27`.
-
-```sh
-git clone https://github.com/Shreshtha280407/MeshDrop.git
-cd MeshDrop
-pnpm install --frozen-lockfile
-pnpm dev
-```
-
-Open <http://127.0.0.1:5173> in two independent regular browser profiles. Signaling health is <http://127.0.0.1:8787/health>. Local direct transfer requires no cloud login, provider key or `.env`.
-
-1. Create an invitation on the device with the files and privately share it with the intended receiver.
-2. Request to join on the receiver; approve it on the sender.
-3. Independently compare the codes on both devices and confirm on both sides. A matching code binds the connection, not a person's identity.
-4. Offer files and accept on the receiver. Keep both windows open; wait for verified completion.
-5. Save the file and receipt before clearing browser storage. Surviving interrupted checkpoints require renewed admission/pairing and the exact source to resume.
-
-Use HTTPS or the [authorized Android loopback setup](docs/runbooks/mobile-pwa.md) for another device; arbitrary LAN HTTP does not provide the secure context required by browser storage/crypto APIs. [Local prerequisites and troubleshooting](docs/runbooks/local-development.md) · [Recovery guide](docs/runbooks/resume.md).
+- **Measured hardening:** 1,816 distinct automated full-check cases at the final roadmap acceptance source; 1 GiB logical streaming simulation and real 64 MiB browser transfers; 100 local logical paired rooms with 200 real local signaling sockets. These are separate scopes, not hosted capacity claims.
+- **Usable interfaces:** keyboard workflows, bounded announcements, reduced motion, responsive layouts and 99 automated accessibility scans with zero reported violations in the final Task 17 check. No formal accessibility certification is claimed.
 
 ## Architecture
 
@@ -60,7 +39,9 @@ The control plane has no file-body or manifest upload API. The data plane carrie
 
 ## Current build verification
 
-The latest hosted verification is source **`b3f95d14a103f45f25bbca5b4cfd9c5bb61c7e07`**, [Phase Gates `44062526570`](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44062526570): **core, browser and foundation SUCCESS**. Task 18's documentation/tooling changes require their own manual commit/push and new CI; see [current status](docs/CURRENT_STATUS.md) for that distinction and the final local audit.
+The **final roadmap acceptance source** is **`130bf45b5711d4d4014428d1094792a74b2653bf`**, [Phase Gates `44079358491`, attempt 2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44079358491/attempts/2): **core, browser and foundation SUCCESS**. Task 18 completed the normal development roadmap. Later documentation-only synchronization commits may have newer SHAs without redefining this accepted application baseline; [current status](docs/CURRENT_STATUS.md) records the scope and remaining limits.
+
+The [acceptance addendum](docs/reports/task-18-final-project-audit.md#final-hosted-acceptance--17-november-2026) retains the initial hosted browser failure and unchanged successful rerun. Its root cause remains unestablished; no test, timeout, retry, assertion or security control was weakened.
 
 | Suite in the complete check       | Distinct executions |
 | --------------------------------- | ------------------: |
@@ -131,6 +112,27 @@ Invitations are private bearer access. Owner approval, independent code comparis
 This is **internal adversarial testing**, not an independent penetration test. Compromised origins/profiles, malicious files after export, external browser/clipboard history, provider metadata/retention and browser/OS storage behavior remain boundaries. Diagnostics are optional/local; private data is excluded from the public PWA cache. [Threat model](docs/threat-model.md) · [Privacy model](docs/privacy-model.md) · [Security review](docs/security-review.md).
 
 Release publication/acceptance remains fail-closed and **`productionApproved=false`**. Skipped hosted trust/preview certification is not a failure of the core product, and it supplies no production authorization. [Roadmap and current limitations](docs/CURRENT_STATUS.md) · [Release safety](docs/release-provenance.md).
+
+## Run locally
+
+Use Node 24 (the CI version), pnpm **10.34.7**, and the supported Node range `>=22.12.0 <27`.
+
+```sh
+git clone https://github.com/Shreshtha280407/MeshDrop.git
+cd MeshDrop
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+Open <http://127.0.0.1:5173> in two independent regular browser profiles. Signaling health is <http://127.0.0.1:8787/health>. Local direct transfer requires no cloud login, provider key or `.env`.
+
+1. Create an invitation on the device with the files and privately share it with the intended receiver.
+2. Request to join on the receiver; approve it on the sender.
+3. Independently compare the codes on both devices and confirm on both sides. A matching code binds the connection, not a person's identity.
+4. Offer files and accept on the receiver. Keep both windows open; wait for verified completion.
+5. Save the file and receipt before clearing browser storage. Surviving interrupted checkpoints require renewed admission/pairing and the exact source to resume.
+
+Use HTTPS or the [authorized Android loopback setup](docs/runbooks/mobile-pwa.md) for another device; arbitrary LAN HTTP does not provide the secure context required by browser storage/crypto APIs. [Local prerequisites and troubleshooting](docs/runbooks/local-development.md) · [Recovery guide](docs/runbooks/resume.md).
 
 ## Project navigation and license
 

@@ -2,6 +2,8 @@
 
 Audit date: 17 November 2026. This is the final normal roadmap task and an internal repository audit. It is not production-release certification, an independent penetration test, formal WCAG certification or universal platform certification. No Task 19 is started.
 
+**Reading this report:** the original local investigation below retains its point-in-time pending SHA/CI statements. The [final hosted acceptance addendum](#final-hosted-acceptance--17-november-2026) supersedes those pending statements with verified acceptance on 17 November 2026. For current claims, start with [CURRENT_STATUS](../CURRENT_STATUS.md).
+
 ## Verdict and source identity
 
 Local audit/validation: **COMPLETE — full regression exited 0 with 1,816 passing cases**. Final documentation is separately rechecked after the reconciliation edits. This is not a final Task 18 hosted PASS. Final Task 18 acceptance and the statement NORMAL DEVELOPMENT ROADMAP COMPLETE remain pending the owner's manual commit/push and a new successful exact-source Phase Gates run. The standing manual-push preference is preserved.
@@ -170,3 +172,50 @@ PRs = 0
 ```
 
 The skipped optional release-certification work is not a core-product functional failure. **NORMAL DEVELOPMENT ROADMAP COMPLETE is not justified until Task 18's own final exact-source hosted CI succeeds.** There is no requirement to invent another engineering task or start Task 19; future optional certification needs a separate explicit owner decision.
+
+## Final hosted acceptance — 17 November 2026
+
+This addendum records the owner's later commit and hosted CI. It updates Task 18's acceptance status without rewriting the original investigation or the failed-attempt history above.
+
+| Property                         | Independently verified evidence                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
+| Task 18 acceptance commit        | `130bf45b5711d4d4014428d1094792a74b2653bf`                                           |
+| Commit message                   | `finalize project audit and portfolio documentation`                                 |
+| Phase Gates                      | [44079358491](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44079358491)  |
+| Final successful attempt         | [2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44079358491/attempts/2) |
+| core                             | SUCCESS; job 134049721751                                                            |
+| browser                          | SUCCESS; job 134049718376                                                            |
+| foundation                       | SUCCESS; job 134057200535                                                            |
+| Distinct complete-check baseline | **1,816**; no application test definitions were added by Task 18                     |
+
+The main checkout, origin/main and authenticated GitHub main all matched the acceptance commit at the start of the documentation synchronization. Both hosted attempts bind to that exact SHA. Later documentation-only commits may have newer Git SHAs; they do not redefine this final roadmap acceptance source or require embedding their own SHA inside themselves.
+
+### Retained hosted CI history
+
+| Attempt                                                                              | core    | browser | foundation |
+| ------------------------------------------------------------------------------------ | ------- | ------- | ---------- |
+| [1](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44079358491/attempts/1) | SUCCESS | FAILURE | FAILURE    |
+| [2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44079358491/attempts/2) | SUCCESS | SUCCESS | SUCCESS    |
+
+The first hosted attempt passed core but failed two retained Task 17 accessibility cases in the browser job:
+
+- WebKit: `keyboard pairing remains explicit and storage retry refuses duplicate actions` observed the Retry storage button enabled when the test expected it disabled.
+- Mobile Chromium: `reduced motion, visible focus and forced colors preserve usable controls` observed the initial skip link inactive when the test expected keyboard focus.
+
+Foundation then failed its aggregate gate. Task 18 had not changed the accessibility tests or their underlying UI implementation; the Git comparison against Task 17's accepted source confirms that those application, test and browser-configuration files were unchanged. The same Task 18 SHA was rerun without application or test modification. Attempt 2 completed all three jobs successfully.
+
+This is an **initial hosted browser flake observed; root cause not established; unchanged rerun passed**. The original failure was not proven fixed. No test, timeout, retry, assertion or security behavior was weakened to obtain the successful result. The failed attempt remains part of the evidence.
+
+### Final verdict and boundaries
+
+**PASS — FINAL PROJECT AUDIT AND PORTFOLIO READINESS COMPLETE**
+
+**NORMAL DEVELOPMENT ROADMAP COMPLETE**
+
+The distinct full-check baseline remains 1,816: unit 1,075; security 105; integration 154; faults 66; release-store 46; browser/storage 282; accessibility 80; PWA 8. Focused repeats, property schedules, benchmarks and external-device sessions are separate evidence, not extra cases.
+
+Tasks 10D and 11B remain SKIPPED, Tasks 13 and 16 remain PARTIAL, and Tasks 12, 14, 15 and 17 retain their accepted PASS results. The [canonical roadmap](../CURRENT_STATUS.md#final-normal-roadmap) preserves the exact statuses and remaining platform, export, storage, security and accessibility limits. Completion does not establish universal browser support, independent certification, absence of future defects or production release authority.
+
+The follow-up synchronization changes only README/current documentation and adds zero application tests. Its commit and push remain manual under the owner's standing preference; its own hosted CI must be checked after that push and is not fabricated here. This does not make Task 18 acceptance pending again.
+
+No Task 12–18 source deployment is established by this acceptance. Production and preview deployments, Cloudflare configuration mutations, DNS changes, secret changes, TURN changes and paid-service activation during the audit/synchronization remain **0**. `productionApproved=false`, `acceptanceEnabled=false`, production publication disabled, `humanAuthorizationVerified=false` and `independentWitnessVerified=false` remain unchanged.

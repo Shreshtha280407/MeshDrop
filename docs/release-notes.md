@@ -1,4 +1,12 @@
-# P9 release verification
+# MeshDrop release notes
+
+## Final roadmap acceptance — 17 November 2026
+
+Task 18 completed the normal development roadmap at source `130bf45b5711d4d4014428d1094792a74b2653bf`: [Phase Gates 44079358491, attempt 2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44079358491/attempts/2) passed core, browser and foundation, with the distinct full-check baseline unchanged at 1,816. The [acceptance addendum](reports/task-18-final-project-audit.md#final-hosted-acceptance--17-november-2026) retains attempt 1's accessibility failures and the unchanged successful rerun; their root cause remains unestablished.
+
+This is repository/roadmap acceptance, not a deployment. Later documentation-only commits may have newer SHAs. Tasks 10D/11B remain SKIPPED, Tasks 13/16 remain PARTIAL and `productionApproved=false`. See [CURRENT_STATUS](CURRENT_STATUS.md) for current capabilities, evidence and limitations.
+
+## Historical P9 release verification
 
 **Historical P9 release notes.** Present-tense rollout statements, counts and versions below belong to their dated entries. [CURRENT_STATUS](CURRENT_STATUS.md) records current source, later hardening and deliberately skipped release-certification work; it does not claim current main is deployed.
 

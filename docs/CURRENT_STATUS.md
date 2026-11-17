@@ -4,16 +4,18 @@ Reviewed 17 November 2026. Start here for current claims; dated reports and medi
 
 ## Source and verification
 
-| Property                                    | Verified state                                                                                                                                                                                                              |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Latest committed and hosted-verified source | `b3f95d14a103f45f25bbca5b4cfd9c5bb61c7e07`                                                                                                                                                                                  |
-| Its Phase Gates                             | [44062526570](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44062526570): core SUCCESS, browser SUCCESS, foundation SUCCESS                                                                                      |
-| Distinct complete-check cases               | 1,816: unit 1,075; security 105; integration 154; faults 66; release-store 46; browser/storage 282; accessibility 80; PWA 8                                                                                                 |
-| Task 18 source / final CI                   | Local audit patch; final repository SHA not created and new hosted CI NOT RUN, pending the owner's manual commit/push                                                                                                       |
-| Task 18 local validation                    | PASS locally: 1,816 cases from the committed source fixture; final documentation gates separately rechecked. Exact-source main/hosted acceptance remains pending; see [final audit](reports/task-18-final-project-audit.md) |
-| Current deployed public source              | UNVERIFIED in this audit. P9 hosted evidence does not establish that current main is deployed                                                                                                                               |
+| Property                         | Verified state                                                                                                                                                               |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Final roadmap acceptance source  | `130bf45b5711d4d4014428d1094792a74b2653bf`                                                                                                                                   |
+| Phase Gates / successful attempt | [44079358491, attempt 2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44079358491/attempts/2): core SUCCESS, browser SUCCESS, foundation SUCCESS                 |
+| Distinct complete-check cases    | 1,816: unit 1,075; security 105; integration 154; faults 66; release-store 46; browser/storage 282; accessibility 80; PWA 8                                                  |
+| Task 18 final verdict            | **PASS — FINAL PROJECT AUDIT AND PORTFOLIO READINESS COMPLETE**; [final hosted acceptance](reports/task-18-final-project-audit.md#final-hosted-acceptance--17-november-2026) |
+| Production authorization         | `productionApproved=false`; release publication and acceptance remain blocked                                                                                                |
+| Current deployed public source   | UNVERIFIED in this audit. Tasks 12–18 did not deploy their source; P9 hosted evidence does not establish that current main is deployed                                       |
 
-The baseline above was independently checked through GitHub run/job metadata. It is not a substitute for a new Task 18 run. Focused repetitions, property schedules, benchmarks and external-device sessions are not added to the distinct complete-check total. No machine-readable status copy is maintained alongside this document.
+Both attempts were independently checked through GitHub run/job metadata. Attempt 1 passed core but failed browser and foundation after two retained accessibility timing/focus failures. Attempt 2 reran the unchanged source and passed all three jobs. The initial hosted browser flake remains recorded; its root cause is not established, and no test, timeout, retry, assertion or security control was weakened.
+
+This acceptance SHA identifies the audited roadmap state, not every later Git HEAD. Documentation-only synchronization commits may have newer SHAs and receive their own CI without redefining the application baseline. Focused repetitions, property schedules, benchmarks and external-device sessions are not added to the distinct complete-check total. No machine-readable status copy is maintained alongside this document.
 
 ## Architecture and verified engineering scope
 
@@ -63,24 +65,24 @@ independentWitnessVerified = false
 
 ## Final normal roadmap
 
-| Task | Scope                             | Current final status / acceptance evidence                                                                                                                             |
-| ---- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 10D  | Hosted trust rehearsal            | **SKIPPED — HOSTED TRUST EVIDENCE NOT ESTABLISHED**                                                                                                                    |
-| 11B  | Hosted isolated preview           | **SKIPPED — HOSTED PREVIEW VALIDATION NOT ESTABLISHED**                                                                                                                |
-| 12   | Transfer reliability              | **PASS — TRANSFER RELIABILITY HARDENED**; [42671820721, attempt 2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/42671820721/attempts/2)                    |
-| 13   | Cross-platform reliability        | **PARTIAL — APPLICATION HARDENING COMPLETE, EXTERNAL DEVICE EVIDENCE INCOMPLETE**; [43074089192](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43074089192) |
-| 14   | Concurrency / abuse               | **PASS — CONCURRENCY AND ABUSE RESILIENCE HARDENED**; [43286704187](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43286704187)                              |
-| 15   | Security / privacy                | **PASS — ADVERSARIAL SECURITY AND PRIVACY HARDENED**; [43467956839](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43467956839)                              |
-| 16   | Storage lifecycle                 | **PARTIAL — APPLICATION STORAGE HARDENED, PLATFORM LIMITATION REMAINS**; [43625992715](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43625992715)           |
-| 17   | Accessibility / UX                | **PASS — ACCESSIBILITY AND PRODUCT UX HARDENED**; [44062526570](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44062526570)                                  |
-| 18   | Final audit / portfolio readiness | **LOCAL AUDIT COMPLETE — final acceptance PENDING owner commit/push/new hosted CI**                                                                                    |
+| Task | Scope                             | Current final status / acceptance evidence                                                                                                                                 |
+| ---- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10D  | Hosted trust rehearsal            | **SKIPPED — HOSTED TRUST EVIDENCE NOT ESTABLISHED**                                                                                                                        |
+| 11B  | Hosted isolated preview           | **SKIPPED — HOSTED PREVIEW VALIDATION NOT ESTABLISHED**                                                                                                                    |
+| 12   | Transfer reliability              | **PASS — TRANSFER RELIABILITY HARDENED**; [42671820721, attempt 2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/42671820721/attempts/2)                        |
+| 13   | Cross-platform reliability        | **PARTIAL — APPLICATION HARDENING COMPLETE, EXTERNAL DEVICE EVIDENCE INCOMPLETE**; [43074089192](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43074089192)     |
+| 14   | Concurrency / abuse               | **PASS — CONCURRENCY AND ABUSE RESILIENCE HARDENED**; [43286704187](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43286704187)                                  |
+| 15   | Security / privacy                | **PASS — ADVERSARIAL SECURITY AND PRIVACY HARDENED**; [43467956839](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43467956839)                                  |
+| 16   | Storage lifecycle                 | **PARTIAL — APPLICATION STORAGE HARDENED, PLATFORM LIMITATION REMAINS**; [43625992715](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43625992715)               |
+| 17   | Accessibility / UX                | **PASS — ACCESSIBILITY AND PRODUCT UX HARDENED**; [44062526570](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44062526570)                                      |
+| 18   | Final audit / portfolio readiness | **PASS — FINAL PROJECT AUDIT AND PORTFOLIO READINESS COMPLETE**; [44079358491, attempt 2](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44079358491/attempts/2) |
 
 The deliberate skipped release-certification work is not a failed core application feature. Partial platform results remain visible. Task 18 is the last normal roadmap task; no Task 19 is being started or required for ordinary portfolio readiness.
 
-**NORMAL DEVELOPMENT ROADMAP COMPLETE is not recorded yet:** Task 18's own exact committed-source and hosted-CI acceptance is pending. Once that evidence exists, append the SHA/run and results to the final audit and update this row. Completion will still not mean zero future bugs, production authorization, independent security certification or universal platform support.
+**NORMAL DEVELOPMENT ROADMAP COMPLETE.** Task 18's exact-source hosted acceptance is established. Completion does not mean zero future bugs, production authorization, independent security certification or universal platform support. The skipped and partial results above remain unchanged.
 
 ## Reproduce and maintain
 
 Use the [local-development runbook](runbooks/local-development.md), frozen dependencies and the documented Linux full-suite prerequisites: Playwright libraries, Git/OpenSSL, GitHub CLI at `/usr/bin/gh` for offline signature fixtures, and Docker's Unix socket for disposable PostgreSQL. Native Windows/macOS app evidence is separate from full test-host portability. `CI=true pnpm check` includes the read-only documentation validator; `pnpm audit:release` separately requests current npm advisories. Never count an unavailable registry response as clean. Root source is MIT; dependency licenses remain separate. Self-hosted QR notices remain, and development-only axe-core is MPL-2.0 and absent from application bundles.
 
-After manual publication of reviewed source, verify the new run's exact SHA and all three completed `core/browser/foundation` results. YAML and this status file alone prove neither hosted settings nor production acceptance. Future work should follow actual feedback/bugs/contributions or an explicit optional release-certification decision, rather than invented roadmap phases.
+After a manual push of reviewed changes, verify that commit's exact SHA and all three completed `core/browser/foundation` results. A later documentation-only CI run validates that synchronized repository state; it does not replace the final roadmap acceptance source recorded above. YAML and this status file alone prove neither hosted settings nor production acceptance. Future work should follow actual feedback/bugs/contributions or an explicit optional release-certification decision, rather than invented roadmap phases.
