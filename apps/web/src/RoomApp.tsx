@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useFocusRecovery } from './accessibility';
 import { NetworkPanel } from './features/network-intelligence/NetworkPanel';
 import { TransferPanel } from './features/transfer/TransferPanel';
 import { SavedTransfersPanel } from './features/transfer/SavedTransfersPanel';
@@ -13,6 +14,8 @@ import { CameraInvitation, PrivateQr } from './features/mobile/QrInvitation';
 import { observeInvitationUrls } from './security/invitationUrl';
 
 export default function RoomApp({ initialInvitation }: { initialInvitation: string }) {
+  const main = useRef<HTMLElement>(null);
+  useFocusRecovery(main);
   const client = useMemo(() => new RoomClient(), []);
   const view = useSyncExternalStore(client.subscribe, client.getSnapshot);
   const diagnosticsView = useMemo(
@@ -22,6 +25,8 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
   const [invite, setInvite] = useState(initialInvitation);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState('');
+  const copying = useRef(false);
+  const [joinEdited, setJoinEdited] = useState(false);
   const [platform, setPlatform] = useState<CapabilityResult | null>(null);
   const [platformError, setPlatformError] = useState('');
   const [probeVersion, setProbeVersion] = useState(0);
@@ -58,28 +63,52 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
   const capabilities = detectDeviceCapabilities();
   const sendSupport = platform ? transferSupport(platform, 'sender') : null;
   const receiveSupport = platform ? transferSupport(platform, 'receiver') : null;
+  const invitationInvalid =
+    !joinEdited &&
+    !status &&
+    /^(Invalid invitation|INVITE_|NOT_FOUND|ROOM_CLOSED)/.test(view.error);
+  const roomAnnouncement = view.busy
+    ? 'Updating room. Please wait.'
+    : !status
+      ? 'Create an invitation on the sending device, or paste one on the receiving device.'
+      : status.state === 'closed'
+        ? 'Room closed. Peer access is revoked. Saved local checkpoints remain separate.'
+        : status.approval === 'rejected'
+          ? 'The owner rejected the request. Ask for a new invitation.'
+          : status.state === 'pending'
+            ? isOwner
+              ? 'A receiver is waiting for your approval.'
+              : 'Join requested. Waiting for owner approval.'
+            : `Room ${status.state}. Signaling ${view.connection}. Compare the pairing code before sending files.`;
   async function copyInvitation() {
+    if (copying.current) return;
+    copying.current = true;
     try {
       await navigator.clipboard.writeText(view.invitation);
       setCopied(true);
       setCopyError('');
     } catch {
       setCopyError('Clipboard unavailable. Select the invitation field and copy it manually.');
+    } finally {
+      copying.current = false;
     }
   }
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <header>
-        <a className="brand" href="/" aria-label="MeshDrop home">
+        <a className="brand" href="/" aria-label="MeshDrop v1 home">
           <img src="/icon.svg" alt="" />
-          MeshDrop<span className="version">v1</span>
+          MeshDrop <span className="version">v1</span>
         </a>
         <span className="phase-label">
           <i />
           Private device-to-device sharing
         </span>
       </header>
-      <main>
+      <main id="main-content" tabIndex={-1} ref={main}>
         {view.lifecycleMessage && (
           <p className="status-note mobile-notice" role="status">
             {view.lifecycleMessage}
@@ -93,8 +122,9 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
             Your decision.
           </h1>
           <p className="lede">
-            Create a short-lived room and approve the person joining you. Your files will travel
-            between devices, with no account required.
+            On the device with the files, create an invitation. Open it on the receiving device,
+            approve that device, then compare codes together. Keep both windows open; no account is
+            required.
           </p>
           <div className="principles">
             <span>Explicit approval</span>
@@ -120,13 +150,18 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
           <div className="panel-heading">
             <div>
               <p className="eyebrow">MAKE A CONNECTION</p>
-              <h2 id="room-title">A room for two.</h2>
+              <h2 id="room-title" tabIndex={-1} data-focus-target>
+                A room for two.
+              </h2>
             </div>
-            <span className="pill">Live local backend</span>
+            <span className="pill">Private room</span>
           </div>
           <p className="demo-note">
             Connect two approved devices and compare their pairing codes. Keep both browser windows
             open.
+          </p>
+          <p className="sr-only" role="status" aria-atomic="true" data-testid="room-announcement">
+            {roomAnnouncement}
           </p>
           <p
             role="status"
@@ -152,6 +187,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
                   disabled={view.busy || !sendSupport?.supported}
                   onClick={() => {
                     setCopied(false);
+                    setCopyError('');
                     void client.createRoom();
                   }}
                 >
@@ -161,11 +197,15 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
+                  setJoinEdited(false);
                   void client.joinRoom(invite);
                 }}
               >
                 <label htmlFor="join-invitation">Join with an invitation</label>
-                <p className="muted">Paste the complete link from the room owner.</p>
+                <p className="muted" id="join-help">
+                  Paste the complete private link from the sender. Owner approval and code
+                  comparison are still required.
+                </p>
                 <input
                   id="join-invitation"
                   maxLength={2048}
@@ -174,7 +214,12 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
                   spellCheck={false}
                   placeholder="Paste private invitation link"
                   value={invite}
-                  onChange={(event) => setInvite(event.target.value)}
+                  aria-describedby={`join-help${view.error ? ' room-error' : ''}`}
+                  aria-invalid={invitationInvalid || undefined}
+                  onChange={(event) => {
+                    setInvite(event.target.value);
+                    setJoinEdited(true);
+                  }}
                   required
                 />
                 <CameraInvitation onInvitation={setInvite} />
@@ -216,6 +261,7 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
                     readOnly
                     autoComplete="off"
                     spellCheck={false}
+                    aria-describedby="private-invitation-help"
                     onFocus={(event) => event.target.select()}
                   />
                   <button
@@ -224,18 +270,19 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
                       void copyInvitation();
                     }}
                   >
-                    {copied ? 'Copied' : 'Copy invitation'}
+                    Copy invitation
                   </button>
-                  <p className="muted">
+                  <p className="muted" id="private-invitation-help">
                     Share privately. One receiver may request admission before the invitation
                     expires.
                   </p>
                   <PrivateQr invitation={view.invitation} />
-                  {copyError && (
-                    <p role="status" className="muted">
-                      {copyError}
-                    </p>
-                  )}
+                  <p role="status" aria-atomic="true" className="muted" data-testid="copy-status">
+                    {copyError ||
+                      (copied
+                        ? 'Invitation copied. Share it privately with your intended receiver.'
+                        : '')}
+                  </p>
                 </div>
               )}
               {isOwner && status.state === 'pending' && (
@@ -315,13 +362,9 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               </div>
             </>
           )}
-          {view.busy && (
-            <p className="muted" role="status">
-              Updating room…
-            </p>
-          )}
+          {view.busy && <p className="muted">Updating room…</p>}
           {view.error && (
-            <p className="error" role="alert">
+            <p className="error" role="alert" id="room-error">
               {view.error}
             </p>
           )}
@@ -376,9 +419,12 @@ export default function RoomApp({ initialInvitation }: { initialInvitation: stri
               storage contains credential verifiers and temporary room state.
             </p>
             <div className="next-phase">
-              <span>UP NEXT · PHASE 9</span>
-              <strong>Deployment and operational readiness</strong>
-              <p>Prepare hosting, relay configuration and production operations.</p>
+              <span>WHEN A CONNECTION IS INTERRUPTED</span>
+              <strong>Recheck saved files before resuming.</strong>
+              <p>
+                Open Saved transfers, pair again, and reselect the exact source on the sender. Save
+                your final copy outside this browser.
+              </p>
             </div>
           </div>
         </section>

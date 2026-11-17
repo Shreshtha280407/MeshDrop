@@ -8,11 +8,22 @@ Run the normal [local setup](../../README.md). Use regular browser profiles over
 pnpm check
 pnpm bench:p7
 pnpm test:pwa
+pnpm test:a11y
 ```
 
 `pnpm check` includes all earlier phase tests, mobile hardening and production PWA acceptance. `bench:p7` runs focused mobile browser checks and the PWA suite. These are browser-engine/viewport checks, not a substitute for physical iPhone/Safari results. PWA checks start separate local servers on 4173/8788, isolate Worker persistence, build real production assets and test a real service worker. The update test temporarily changes only ignored build output and restores it in `finally`. It runs serially. No test deploys anything.
 
 The production offline scenario transfers 5 MiB, verifies it, revokes the room, takes the receiver offline, reloads the cached shell, revalidates the checkpoint and downloads matching bytes. Cache inspection confirms only public shell assets. Native export API boundary tests use mocked share/picker responses to verify transient activation, cancellation and bytes; they do not claim actual OS share-sheet behavior.
+
+## Keyboard and accessible operation
+
+Tab reaches the skip link, room controls and labelled forms; Shift+Tab moves back. Enter activates buttons and opens details, while Space toggles checkboxes. When an action removes its focused control, MeshDrop returns focus to that section's heading instead of moving focus on every status or progress update. Camera scanning is optional: paste the invitation instead, or choose Stop camera to return to the scan control. Clipboard failure keeps the private field available for manual copy.
+
+Create the room on the sending device, share the private invitation with one intended receiver, approve that receiver, then compare the code independently on both devices. A matching code confirms a connection, not a person's identity. Progress counts receiver-confirmed storage only. Completion and optional system export are separate: save the received file and receipt before clearing browser data. Saved checkpoints list verified/missing bytes and expiry; deletion affects that browser copy, while Forget source removes source metadata. Exported Downloads/Files copies remain outside MeshDrop cleanup.
+
+The interface follows light/dark preferences, provides visible keyboard focus, supports reduced motion and adapts to narrow screens and enlarged text. Advanced measurement details can be collapsed without hiding the basic connection explanation. Updates still require the room to close first. Installing the shell does not enable background delivery or guarantee retention.
+
+`test:a11y` uses the maintained axe engine, native keyboard events, four browser-engine/viewport projects, controlled UI-state fixtures and separate real local transfers. WebKit's real receive test uses a disposable persistent profile and a Chromium sender, as in the existing cross-engine fixture. Its private-context storage limitation remains distinct. These checks do not certify native Safari, physical mobile lifecycle, VoiceOver, NVDA or WCAG conformance. See the [Task 17 report](../reports/task-17-accessibility-ux.md) for exact scope and results.
 
 ## Authorized Android device
 

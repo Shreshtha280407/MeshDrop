@@ -1,19 +1,13 @@
 import { exportNames } from '../../security/safeFilePath';
-import { useEffect, useState } from 'react';
+import { MAX_TRANSFER_FILES } from '@meshdrop/protocol';
+import { useEffect, useRef, useState } from 'react';
+import { readableBytes as bytes, transferAnnouncement } from '../../accessibility';
 import { estimateCapacity } from '@meshdrop/storage';
 import type { CapacityResult, RetentionPolicy } from '@meshdrop/storage';
 import { receivePolicy } from '@meshdrop/platform';
 import type { CapabilityResult } from '@meshdrop/platform';
 import { FileExportControls } from '../mobile/FileExportControls';
 import type { RoomClient, RoomView } from '../pairing/RoomClient';
-const bytes = (value: number) =>
-  value < 1024
-    ? `${value} B`
-    : value < 1024 ** 2
-      ? `${(value / 1024).toFixed(1)} KiB`
-      : value < 1024 ** 3
-        ? `${(value / 1024 ** 2).toFixed(1)} MiB`
-        : `${(value / 1024 ** 3).toFixed(2)} GiB`;
 export function TransferPanel({
   client,
   view,
@@ -24,6 +18,26 @@ export function TransferPanel({
   capabilities: CapabilityResult | null;
 }) {
   const [files, setFiles] = useState<File[]>([]);
+  const inFlight = useRef(new Set<string>());
+  const [working, setWorking] = useState<readonly string[]>([]);
+  const [actionError, setActionError] = useState('');
+  const [receiptStatus, setReceiptStatus] = useState('');
+  function action(key: string, operation: () => Promise<void>) {
+    if (inFlight.current.has(key)) return;
+    inFlight.current.add(key);
+    setWorking([...inFlight.current]);
+    setActionError('');
+    void operation()
+      .catch(() => {
+        setActionError(
+          'The action could not finish. Check the connection, available storage and any saved checkpoint before retrying.',
+        );
+      })
+      .finally(() => {
+        inFlight.current.delete(key);
+        setWorking([...inFlight.current]);
+      });
+  }
   const transfer = view.transfer;
   const isOwner = view.status?.role === 'owner';
   const paired =
@@ -80,12 +94,22 @@ export function TransferPanel({
       <div className="panel-heading">
         <div>
           <p className="eyebrow">FILES STAY BETWEEN DEVICES</p>
-          <h2 id="transfer-title">Send. Verify. Save.</h2>
+          <h2 id="transfer-title" tabIndex={-1} data-focus-target>
+            Send. Verify. Save.
+          </h2>
         </div>
         <span className="pill" data-testid="transfer-state">
           {transfer.state ?? 'idle'}
         </span>
       </div>
+      <p role="status" aria-atomic="true" className="sr-only" data-testid="transfer-announcement">
+        {transferAnnouncement(
+          transfer.state,
+          transfer.storageFull,
+          transfer.localPaused,
+          transfer.remotePaused,
+        )}
+      </p>
       <p className="demo-note">
         Received files stay in this browser with a verified local checkpoint. Save a copy after
         verification. Resume rechecks saved blocks and sends only missing bytes after both devices
@@ -114,16 +138,47 @@ export function TransferPanel({
             type="file"
             multiple
             disabled={!paired || !supported || view.busy}
+            aria-describedby="file-selection-help"
             onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
           />
-          <button type="submit" disabled={!paired || !supported || view.busy || !files.length}>
+          <p className="muted" id="file-selection-help">
+            Select up to {MAX_TRANSFER_FILES} files. The receiver reviews the offer before any file
+            data is sent.
+          </p>
+          {files.length > 0 && (
+            <ul aria-label="Selected files">
+              {files.slice(0, MAX_TRANSFER_FILES).map((file, index) => (
+                <li key={index}>
+                  {file.name} · {bytes(file.size)}
+                </li>
+              ))}
+            </ul>
+          )}
+          {files.length > MAX_TRANSFER_FILES && (
+            <p className="error" role="status">
+              {files.length} files selected. Choose at most {MAX_TRANSFER_FILES} before offering
+              files; the list shows only the first {MAX_TRANSFER_FILES}.
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={
+              !paired ||
+              !supported ||
+              view.busy ||
+              !files.length ||
+              files.length > MAX_TRANSFER_FILES
+            }
+          >
             Offer files
           </button>
         </form>
       )}
       {transfer.recovery && (
-        <div role="status" className="status-note" data-testid="resume-state">
-          <p>{transfer.recovery}</p>
+        <div className="status-note" data-testid="resume-state">
+          <p role="status" aria-atomic="true">
+            {transfer.recovery}
+          </p>
           <p>
             Reused verified bytes:{' '}
             <strong data-testid="reused-bytes">{transfer.reusedBytes}</strong> ·{' '}
@@ -177,8 +232,10 @@ export function TransferPanel({
             id="confirmed-progress"
             max={total || 1}
             value={total === 0 && transfer.state === 'complete' ? 1 : transfer.committedBytes}
+            aria-valuetext={`${bytes(transfer.committedBytes)} of ${bytes(total)} confirmed in receiver storage. ${transfer.state ?? 'Waiting'}.`}
+            aria-describedby="progress-help"
           />
-          <p className="muted">
+          <p className="muted" id="progress-help">
             <strong data-testid="committed-bytes">{transfer.committedBytes}</strong> /{' '}
             <span data-testid="total-bytes">{total}</span> bytes confirmed ·{' '}
             {bytes(transfer.committedBytes)} of {bytes(total)}
@@ -196,13 +253,14 @@ export function TransferPanel({
           <select
             id="partial-retention"
             value={view.retention}
+            aria-describedby="retention-help receive-strategy"
             onChange={(event) => client.setRetention(event.target.value as RetentionPolicy)}
           >
             <option value="24-hours">24 hours after the last committed block</option>
             <option value="7-days">7 days after the last committed block</option>
             <option value="discard">Delete after interruption or reopening</option>
           </select>
-          <p className="muted">
+          <p className="muted" id="retention-help">
             Cancel and Clear transfer delete partial files. Expired data is cleaned when MeshDrop
             opens.
           </p>
@@ -214,7 +272,7 @@ export function TransferPanel({
               {capacity.warnings.join(' ')}
             </p>
           )}
-          <p className="status-note" data-testid="receive-strategy">
+          <p className="status-note" data-testid="receive-strategy" id="receive-strategy">
             {!policy
               ? 'Checking usable storage…'
               : `Receive strategy: ${policy.strategy === 'opfs-checkpoint' ? 'verified browser files with local checkpoints' : 'unavailable'}. Export: ${policy.exportStrategy === 'picker-or-download' ? 'choose a save location or download' : 'browser download or system share / Save to Files'}.`}
@@ -268,8 +326,9 @@ export function TransferPanel({
         <div className="actions">
           <button
             className="secondary"
+            disabled={working.includes('pause')}
             onClick={() => {
-              void client.pauseFiles(!transfer.localPaused);
+              action('pause', () => client.pauseFiles(!transfer.localPaused));
             }}
           >
             {transfer.localPaused ? 'Resume transfer' : 'Pause transfer'}
@@ -279,12 +338,20 @@ export function TransferPanel({
       {transfer.storageFull && (
         <button
           className="secondary"
+          disabled={working.includes('storage')}
+          aria-describedby="storage-retry-help"
           onClick={() => {
-            void client.retryStorage();
+            action('storage', () => client.retryStorage());
           }}
         >
           Retry storage
         </button>
+      )}
+      {transfer.storageFull && (
+        <p id="storage-retry-help" className="status-note">
+          Previously committed blocks remain available. Free space or close other storage-heavy
+          tabs, then retry. Cancelling stops this attempt.
+        </p>
       )}
       {transfer.remotePaused && (
         <p className="status-note">
@@ -299,8 +366,10 @@ export function TransferPanel({
       {transfer.state && !done && (
         <button
           className="secondary"
+          disabled={working.includes('cancel')}
+          aria-describedby="transfer-delete-help"
           onClick={() => {
-            void client.cancelFiles();
+            action('cancel', () => client.cancelFiles());
           }}
         >
           Cancel transfer
@@ -315,10 +384,42 @@ export function TransferPanel({
               ? 'The receiver can now save its copies.'
               : 'Save your copies before clearing this transfer or leaving the page.'}
           </p>
-          <button className="secondary" onClick={() => client.saveReceipt()}>
+          <p className="muted" id="receipt-help">
+            The receipt records transfer verification. It does not identify a person or grant room
+            access.
+          </p>
+          <button
+            className="secondary"
+            aria-describedby="receipt-help"
+            onClick={() => {
+              try {
+                client.saveReceipt();
+                setReceiptStatus(
+                  'Receipt download requested. Check your downloads for the JSON record.',
+                );
+              } catch {
+                setReceiptStatus(
+                  'The receipt download could not start. Keep this page open and try again.',
+                );
+              }
+            }}
+          >
             Save transfer receipt
           </button>
         </div>
+      )}
+      <p className="muted" role="status" aria-atomic="true">
+        {receiptStatus}
+      </p>
+      {working.length > 0 && (
+        <p role="status">
+          Updating transfer controls. You can still cancel preparation or recovery.
+        </p>
+      )}
+      {actionError && (
+        <p className="error" role="alert">
+          {actionError}
+        </p>
       )}
       {transfer.error && (
         <p className="error" role="alert">
@@ -328,13 +429,23 @@ export function TransferPanel({
       {done && (
         <button
           className="secondary"
+          disabled={working.includes('clear')}
+          aria-describedby="transfer-delete-help"
           onClick={() => {
             setFiles([]);
-            void client.clearTransfer();
+            setReceiptStatus('');
+            action('clear', () => client.clearTransfer());
           }}
         >
           Clear transfer
         </button>
+      )}
+      {transfer.state && (
+        <p className="muted" id="transfer-delete-help">
+          Cancel stops this transfer attempt and removes its partial browser data where possible.
+          Clear transfer removes its local checkpoint. Neither deletes copies already saved to
+          Downloads or Files.
+        </p>
       )}
     </section>
   );

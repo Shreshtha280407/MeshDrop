@@ -77,6 +77,8 @@ export function PrivateQr({ invitation }: { invitation: string }) {
     <div className="private-qr">
       <button
         className="secondary"
+        aria-expanded={shown}
+        aria-controls={shown ? 'private-qr-content' : undefined}
         onClick={() => {
           setShown(!shown);
           setError('');
@@ -90,7 +92,12 @@ export function PrivateQr({ invitation }: { invitation: string }) {
             This QR grants invitation access. Show it only to your intended receiver. Owner approval
             and independent code comparison are still required.
           </p>
-          <div ref={target} data-testid="invitation-qr" className="qr-image" />
+          <div
+            id="private-qr-content"
+            ref={target}
+            data-testid="invitation-qr"
+            className="qr-image"
+          />
         </>
       )}
       {error && <p role="status">{error}</p>}
@@ -102,6 +109,7 @@ export function CameraInvitation({ onInvitation }: { onInvitation(value: string)
   const stream = useRef<MediaStream | null>(null);
   const controls = useRef<ScanControls | null>(null);
   const generation = useRef(0);
+  const startButton = useRef<HTMLButtonElement>(null);
   const [active, setActive] = useState(false),
     [message, setMessage] = useState('');
   function stop() {
@@ -115,7 +123,14 @@ export function CameraInvitation({ onInvitation }: { onInvitation(value: string)
   }
   useEffect(() => {
     const visibility = () => {
-      if (document.visibilityState === 'hidden') stop();
+      if (document.visibilityState === 'hidden') {
+        const wasActive = video.current && !video.current.hidden;
+        stop();
+        if (wasActive)
+          setMessage(
+            'Camera stopped while the page was hidden. Start scanning again or paste the invitation.',
+          );
+      }
     };
     const leaving = () => stop();
     document.addEventListener('visibilitychange', visibility);
@@ -128,7 +143,7 @@ export function CameraInvitation({ onInvitation }: { onInvitation(value: string)
   }, []);
   async function scan() {
     stop();
-    setMessage('');
+    setMessage('Starting camera. You can stop scanning or paste the invitation instead.');
     setActive(true);
     const request = generation.current;
     try {
@@ -143,6 +158,9 @@ export function CameraInvitation({ onInvitation }: { onInvitation(value: string)
         return;
       }
       stream.current = camera;
+      setMessage(
+        'Camera active. Point it at the private invitation QR, or stop and paste its link.',
+      );
       const scanner = await new library.BrowserQRCodeReader().decodeFromStream(
         camera,
         video.current!,
@@ -181,6 +199,7 @@ export function CameraInvitation({ onInvitation }: { onInvitation(value: string)
     <div className="camera-invitation">
       <button
         type="button"
+        ref={startButton}
         className="secondary"
         disabled={!supported || active}
         onClick={() => {
@@ -194,8 +213,14 @@ export function CameraInvitation({ onInvitation }: { onInvitation(value: string)
           type="button"
           className="secondary"
           onClick={() => {
+            const focused = document.activeElement;
             stop();
             setMessage('Camera stopped. You can paste the invitation instead.');
+            // Wait for the start button to become enabled again after this explicit stop.
+            requestAnimationFrame(() => {
+              if (document.activeElement === document.body || document.activeElement === focused)
+                startButton.current?.focus();
+            });
           }}
         >
           Stop camera

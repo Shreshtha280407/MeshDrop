@@ -1,7 +1,8 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"],
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["tests", "scripts", "*.config.ts", "packages/*/tests"],

@@ -2,11 +2,14 @@ import { exportNames } from '../../security/safeFilePath';
 import { useEffect, useRef, useState } from 'react';
 import { requestPersistence, StorageClient } from '@meshdrop/storage';
 import { uuidSchema } from '@meshdrop/protocol';
+import { readableBytes, useFocusRecovery } from '../../accessibility';
 import { FileExportControls } from '../mobile/FileExportControls';
 import type { RoomClient, RoomView } from '../pairing/RoomClient';
 import type { RecoveryListing } from '@meshdrop/storage';
 
 export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: RoomView }) {
+  const panel = useRef<HTMLElement>(null);
+  useFocusRecovery(panel);
   const selected = useRef(new Map<string, Map<string, File>>());
   const [selectedCount, setSelectedCount] = useState(0);
   const paired =
@@ -86,11 +89,14 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
       className="demo-panel saved-panel"
       aria-labelledby="saved-title"
       data-testid="saved-transfers"
+      ref={panel}
     >
       <div className="panel-heading">
         <div>
           <p className="eyebrow">LOCAL TO THIS BROWSER</p>
-          <h2 id="saved-title">Saved transfers</h2>
+          <h2 id="saved-title" tabIndex={-1} data-focus-target>
+            Saved transfers
+          </h2>
         </div>
         <span className="pill">Verified on reopen</span>
       </div>
@@ -145,7 +151,10 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
         !listing.checkpoints.length &&
         !listing.sources.length &&
         !listing.unavailable.length && (
-          <p className="muted">No retained transfers in this browser.</p>
+          <p className="muted">
+            No retained transfers in this browser. Received checkpoints appear here after
+            interruption or completion; start a room to send a new file.
+          </p>
         )}
       {listing?.checkpoints.map((checkpoint) => (
         <article
@@ -154,8 +163,9 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
           data-testid="saved-checkpoint"
           data-transfer-id={checkpoint.record.transferId}
           data-verified-bytes={checkpoint.committedBytes}
+          aria-labelledby={`saved-${checkpoint.record.transferId}`}
         >
-          <h3>
+          <h3 id={`saved-${checkpoint.record.transferId}`}>
             {checkpoint.manifest.files[0]?.path}
             {checkpoint.manifest.files.length > 1
               ? ` + ${checkpoint.manifest.files.length - 1} files`
@@ -164,6 +174,11 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
           <p>
             <strong data-testid="recovered-bytes">{checkpoint.committedBytes}</strong> /{' '}
             {checkpoint.manifest.totalBytes} bytes verified locally.
+          </p>
+          <p className="muted">
+            {readableBytes(checkpoint.committedBytes)} verified ·{' '}
+            {readableBytes(checkpoint.manifest.totalBytes - checkpoint.committedBytes)} missing.
+            Recovery always requires fresh pairing and the exact original source.
           </p>
           <p className="muted">
             {checkpoint.record.receipt
@@ -232,6 +247,7 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
           <button
             className="secondary"
             disabled={busy}
+            aria-describedby="saved-delete-help"
             onClick={() => {
               void action(async (storage) => {
                 setPrepared((previous) =>
@@ -260,6 +276,10 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
           <p className="muted">
             Only the manifest was retained. Reselect the original file to verify its full name, size
             and SHA-256. File access lasts for this page session.
+          </p>
+          <p className="muted">
+            Source metadata retained until {new Date(source.expiresAt).toLocaleString()}. Forgetting
+            it does not delete a received checkpoint or the original file.
           </p>
           {source.manifest.files.map((file) => (
             <label key={file.fileId}>
@@ -343,10 +363,14 @@ export function SavedTransfersPanel({ room, view }: { room: RoomClient; view: Ro
         </div>
       ))}
       {Boolean(listing?.cleaned) && (
-        <p className="muted">
+        <p className="muted" role="status" aria-atomic="true">
           Removed {listing?.cleaned} expired or orphaned local storage entries.
         </p>
       )}
+      <p className="muted" id="saved-delete-help">
+        Delete saved removes only that browser checkpoint. Forget source removes only its source
+        metadata. Exported Downloads/Files copies are outside MeshDrop cleanup.
+      </p>
     </section>
   );
 }

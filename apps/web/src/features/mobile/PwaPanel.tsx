@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { useFocusRecovery } from '../../accessibility';
 interface InstallEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 export function PwaPanel({ roomOpen }: { roomOpen: boolean }) {
+  const panel = useRef<HTMLElement>(null);
+  useFocusRecovery(panel);
   const install = useRef<InstallEvent | null>(null);
   const [installReady, setInstallReady] = useState(false);
   const [status, setStatus] = useState(
@@ -72,11 +75,18 @@ export function PwaPanel({ roomOpen }: { roomOpen: boolean }) {
     };
   }, []);
   return (
-    <section className="demo-panel pwa-panel" aria-labelledby="pwa-title" data-testid="pwa-panel">
+    <section
+      ref={panel}
+      className="demo-panel pwa-panel"
+      aria-labelledby="pwa-title"
+      data-testid="pwa-panel"
+    >
       <div className="panel-heading">
         <div>
           <p className="eyebrow">APP SHELL</p>
-          <h2 id="pwa-title">A home-screen shortcut.</h2>
+          <h2 id="pwa-title" tabIndex={-1} data-focus-target>
+            A home-screen shortcut.
+          </h2>
         </div>
         <span className="pill">{offline ? 'Offline' : 'Browser online'}</span>
       </div>
@@ -123,13 +133,14 @@ export function PwaPanel({ roomOpen }: { roomOpen: boolean }) {
       )}
       {waiting && (
         <>
-          <p className="muted">
+          <p className="muted" role="status" id="pwa-update-help">
             An updated shell is ready. Finish this room and close other MeshDrop transfer tabs
             before updating. Reloading loses in-memory room access.
           </p>
           <button
             className="secondary"
             disabled={roomOpen}
+            aria-describedby="pwa-update-help"
             onClick={() => {
               navigator.serviceWorker.addEventListener(
                 'controllerchange',

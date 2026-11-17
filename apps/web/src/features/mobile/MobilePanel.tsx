@@ -21,7 +21,9 @@ export function MobilePanel({
       <div className="panel-heading">
         <div>
           <p className="eyebrow">ON THIS DEVICE</p>
-          <h2 id="mobile-title">Keep both devices open.</h2>
+          <h2 id="mobile-title" tabIndex={-1} data-focus-target>
+            Keep both devices open.
+          </h2>
         </div>
         <span className="pill">Foreground transfers</span>
       </div>
@@ -31,7 +33,7 @@ export function MobilePanel({
         delivery.
       </p>
       {view.lifecycleMessage && (
-        <p className="status-note" role="status" data-testid="lifecycle-message">
+        <p className="status-note" data-testid="lifecycle-message">
           {view.lifecycleMessage}
         </p>
       )}

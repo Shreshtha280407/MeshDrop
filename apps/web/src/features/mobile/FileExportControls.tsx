@@ -18,6 +18,7 @@ export function FileExportControls({
   const releases = useRef<(() => void)[]>([]);
   const [result, setResult] = useState<ExportOutcome | null>(null);
   const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
   useEffect(
     () => () => {
       for (const release of releases.current) release();
@@ -27,13 +28,27 @@ export function FileExportControls({
   );
   const hasPicker =
     typeof (globalThis as { showSaveFilePicker?: unknown }).showSaveFilePicker === 'function';
-  function action(operation: () => Promise<ExportOutcome>) {
+  function action(route: ExportOutcome['route'], operation: () => Promise<ExportOutcome>) {
+    if (pending.current) return;
+    pending.current = true;
     setBusy(true);
     setResult(null);
     // Invoke before yielding: Safari requires share/picker to start during this user gesture.
     void operation()
       .then(setResult)
-      .finally(() => setBusy(false));
+      .catch(() =>
+        setResult({
+          status: 'failed',
+          route,
+          nativeExportVerified: false,
+          message:
+            'Export could not finish. The verified browser copy remains available; try saving again.',
+        }),
+      )
+      .finally(() => {
+        pending.current = false;
+        setBusy(false);
+      });
   }
   return (
     <div className="file-export-controls">
@@ -69,7 +84,9 @@ export function FileExportControls({
           <button
             className="secondary"
             disabled={busy}
-            onClick={() => action(() => saveVerifiedFileWithPicker(file, outputName))}
+            onClick={() =>
+              action('save-picker', () => saveVerifiedFileWithPicker(file, outputName))
+            }
           >
             Choose save location for {path}
           </button>
@@ -78,7 +95,7 @@ export function FileExportControls({
           <button
             className="secondary"
             disabled={busy}
-            onClick={() => action(() => shareVerifiedFile(file, outputName))}
+            onClick={() => action('system-share', () => shareVerifiedFile(file, outputName))}
           >
             Share or save to Files: {path}
           </button>

@@ -1,4 +1,5 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusRecovery } from '../../accessibility';
 import {
   downloadReport,
   MetricsStore,
@@ -240,11 +241,22 @@ export const NetworkPanel = memo(function NetworkPanel({
   client: RoomClient;
   view: Pick<RoomView, 'diagnostics' | 'diagnosticsError'>;
 }) {
+  const panel = useRef<HTMLElement>(null);
+  useFocusRecovery(panel);
   const store = useMemo(() => new MetricsStore(), []);
   const [history, setHistory] = useState<LocalReport[]>([]);
   const [selected, setSelected] = useState('live');
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const [exportStatus, setExportStatus] = useState('');
+  function exportDiagnostics(value: LocalReport, format: 'json' | 'csv') {
+    try {
+      downloadReport(value, format);
+      setExportStatus('Diagnostics download requested. Share it only if you choose.');
+    } catch {
+      setExportStatus('Diagnostics export could not start. The local report remains available.');
+    }
+  }
   const live = view.diagnostics;
   const report =
     selected === 'live' ? live?.report : history.find((report) => report.reportId === selected);
@@ -295,17 +307,30 @@ export const NetworkPanel = memo(function NetworkPanel({
       className="demo-panel network-panel"
       aria-labelledby="network-title"
       data-testid="network-intelligence"
+      ref={panel}
     >
       <div className="panel-heading">
         <div>
           <p className="eyebrow">MEASURED ON THIS DEVICE</p>
-          <h2 id="network-title">Transfer insights</h2>
+          <h2 id="network-title" tabIndex={-1} data-focus-target>
+            Transfer insights
+          </h2>
         </div>
         <span className="pill">Local reports</span>
       </div>
       <p className="demo-note">
         Measurements explain observed behavior. Low throughput alone does not establish Wi-Fi
         congestion, ISP throttling or a remote device problem. No diagnostics are uploaded.
+      </p>
+      <p className="status-note" data-testid="connection-summary">
+        {metric(last, 'connection-path')?.value === 'direct'
+          ? 'Last measured connection: directly between devices.'
+          : metric(last, 'connection-path')?.value === 'relay'
+            ? 'Last measured connection: through a relay.'
+            : 'Connection path not measured yet. A transfer records observations below.'}
+      </p>
+      <p role="status" aria-atomic="true" className="muted">
+        {exportStatus}
       </p>
       <div className="actions">
         <label>
@@ -354,92 +379,102 @@ export const NetworkPanel = memo(function NetworkPanel({
       )}
       {report && (
         <>
-          <p className="muted">
-            {selected === 'live' ? 'Current page session' : 'Saved snapshot'} · elapsed{' '}
-            <strong data-testid="metrics-duration">{(report.durationMs / 1000).toFixed(2)}</strong>{' '}
-            s · history{' '}
-            <strong data-testid="metrics-persistence">
-              {selected === 'live' ? live?.persistence : 'saved'}
-            </strong>
-            . Receiver-confirmed speed uses decimal MB/s and Mbps.
-          </p>
-          {live?.persistence === 'unavailable' && selected === 'live' && (
-            <p role="status" className="status-note">
-              Local history could not be saved. Live measurements and file verification remain
-              independent; export this report if needed.
-            </p>
-          )}
-          <div className="metrics-grid">
-            {(
-              [
-                'ack-interval',
-                'ack-rolling',
-                'application-rtt',
-                'ice-rtt',
-                'send-buffer',
-                'storage-commit',
-                'connection-path',
-                'candidate-state',
-              ] as MetricName[]
-            ).map((name) => (
-              <div className="metric-card" key={name}>
-                <span>{LABELS[name]}</span>
-                <strong data-testid={`metric-${name}`}>{format(metric(last, name))}</strong>
-                <small>{description(metric(last, name))}</small>
-              </div>
-            ))}
-          </div>
-          <p className="status-note">
-            New receiver-confirmed bytes on this page:{' '}
-            <strong data-testid="metrics-new-bytes">{report.summary.newlyConfirmedBytes}</strong>.
-            Current authenticated reuse:{' '}
-            <strong data-testid="metrics-reused-bytes">{report.summary.reusedBytes}</strong> bytes.
-            Reused bytes are excluded from speed measurements.
-          </p>
-          <Timeline key={report.reportId} frames={frames} report={report} />
           <details open>
-            <summary>Observed events ({report.events.length})</summary>
-            <ol className="measurement-events" data-testid="measurement-events">
-              {report.events.map((event) => (
-                <li key={event.eventId} data-event-code={event.code}>
-                  <strong>
-                    {(event.observedAt / 1000).toFixed(2)} s · {event.code}
-                  </strong>
-                  <span>{event.userMessage}</span>
-                  {event.measuredEvidence.reusedBytes !== undefined && (
-                    <small>
-                      Exactly {event.measuredEvidence.reusedBytes} verified bytes reused.
-                    </small>
-                  )}
-                </li>
+            <summary>Advanced connection measurements</summary>
+            <p className="muted">
+              {selected === 'live' ? 'Current page session' : 'Saved snapshot'} · elapsed{' '}
+              <strong data-testid="metrics-duration">
+                {(report.durationMs / 1000).toFixed(2)}
+              </strong>{' '}
+              s · history{' '}
+              <strong data-testid="metrics-persistence">
+                {selected === 'live' ? live?.persistence : 'saved'}
+              </strong>
+              . Receiver-confirmed speed uses decimal MB/s and Mbps.
+            </p>
+            {live?.persistence === 'unavailable' && selected === 'live' && (
+              <p role="status" className="status-note">
+                Local history could not be saved. Live measurements and file verification remain
+                independent; export this report if needed.
+              </p>
+            )}
+            <div className="metrics-grid">
+              {(
+                [
+                  'ack-interval',
+                  'ack-rolling',
+                  'application-rtt',
+                  'ice-rtt',
+                  'send-buffer',
+                  'storage-commit',
+                  'connection-path',
+                  'candidate-state',
+                ] as MetricName[]
+              ).map((name) => (
+                <div className="metric-card" key={name}>
+                  <span>{LABELS[name]}</span>
+                  <strong data-testid={`metric-${name}`}>{format(metric(last, name))}</strong>
+                  <small>{description(metric(last, name))}</small>
+                </div>
               ))}
-            </ol>
+            </div>
+            <p className="status-note">
+              New receiver-confirmed bytes on this page:{' '}
+              <strong data-testid="metrics-new-bytes">{report.summary.newlyConfirmedBytes}</strong>.
+              Current authenticated reuse:{' '}
+              <strong data-testid="metrics-reused-bytes">{report.summary.reusedBytes}</strong>{' '}
+              bytes. Reused bytes are excluded from speed measurements.
+            </p>
+            <Timeline key={report.reportId} frames={frames} report={report} />
+            <details open>
+              <summary>Observed events ({report.events.length})</summary>
+              <ol
+                className="measurement-events"
+                data-testid="measurement-events"
+                tabIndex={0}
+                aria-label="Observed connection events"
+              >
+                {report.events.map((event) => (
+                  <li key={event.eventId} data-event-code={event.code}>
+                    <strong>
+                      {(event.observedAt / 1000).toFixed(2)} s · {event.code}
+                    </strong>
+                    <span>{event.userMessage}</span>
+                    {event.measuredEvidence.reusedBytes !== undefined && (
+                      <small>
+                        Exactly {event.measuredEvidence.reusedBytes} verified bytes reused.
+                      </small>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </details>
+            <div className="actions">
+              <button className="secondary" onClick={() => exportDiagnostics(report, 'json')}>
+                Export diagnostics JSON
+              </button>
+              <button className="secondary" onClick={() => exportDiagnostics(report, 'csv')}>
+                Export diagnostics CSV
+              </button>
+              <button
+                className="secondary"
+                disabled={busy || (selected === 'live' && report.status === 'recording')}
+                onClick={() => {
+                  void remove();
+                }}
+              >
+                Delete local report
+              </button>
+            </div>
+            <p className="muted">
+              Reports include byte counters, timing, categories and events; they omit filenames,
+              file hashes, candidate addresses and credentials. Export only when you choose to
+              share. History retains at most 10 reports / 4 MiB for 7 days.{' '}
+              {report.droppedFrames || report.droppedEvents
+                ? `This bounded snapshot removed ${report.droppedFrames} older sample frames and ${report.droppedEvents} events.`
+                : ''}
+            </p>
           </details>
-          <div className="actions">
-            <button className="secondary" onClick={() => downloadReport(report, 'json')}>
-              Export diagnostics JSON
-            </button>
-            <button className="secondary" onClick={() => downloadReport(report, 'csv')}>
-              Export diagnostics CSV
-            </button>
-            <button
-              className="secondary"
-              disabled={busy || (selected === 'live' && report.status === 'recording')}
-              onClick={() => {
-                void remove();
-              }}
-            >
-              Delete local report
-            </button>
-          </div>
-          <p className="muted">
-            Reports include byte counters, timing, categories and events; they omit filenames, file
-            hashes, candidate addresses and credentials. Export only when you choose to share.
-            History retains at most 10 reports / 4 MiB for 7 days.{' '}
-            {report.droppedFrames || report.droppedEvents
-              ? `This bounded snapshot removed ${report.droppedFrames} older sample frames and ${report.droppedEvents} events.`
-              : ''}
-          </p>
         </>
       )}
     </section>

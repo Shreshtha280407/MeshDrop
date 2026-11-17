@@ -27,17 +27,20 @@ export default function Foundation() {
   }
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <header>
-        <a className="brand" href="/" aria-label="MeshDrop home">
+        <a className="brand" href="/" aria-label={`MeshDrop v${PROTOCOL_VERSION} home`}>
           <img src="/icon.svg" alt="" />
-          MeshDrop<span className="version">v{PROTOCOL_VERSION}</span>
+          MeshDrop <span className="version">v{PROTOCOL_VERSION}</span>
         </a>
         <span className="phase-label">
           <i />
           Foundation / Phase 0
         </span>
       </header>
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="intro">
           <p className="eyebrow">A DIRECT CONNECTION. A SMALLER FOOTPRINT.</p>
           <h1>

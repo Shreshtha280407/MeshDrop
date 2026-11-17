@@ -14,12 +14,21 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
       <div className="panel-heading">
         <div>
           <p className="eyebrow">DEVICE CONNECTION</p>
-          <h2 id="peer-title">Meet your peer.</h2>
+          <h2 id="peer-title" tabIndex={-1} data-focus-target>
+            Meet your peer.
+          </h2>
         </div>
         <span className="pill" data-testid="peer-state">
           {peer.state}
         </span>
       </div>
+      <p className="sr-only" role="status" aria-atomic="true" data-testid="pairing-announcement">
+        {peer.ready
+          ? peer.verification === 'verified' && peer.remoteVerified
+            ? 'Both devices confirmed the comparison. File offers are enabled when storage is supported.'
+            : 'Pairing code ready. Compare independently, then confirm on both devices.'
+          : `Peer connection ${peer.state}.`}
+      </p>
       <p className="demo-note">
         Both devices must stay open. After approval, the encrypted connection starts automatically.
         Confirm the code on both devices to enable file offers.
@@ -43,7 +52,9 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
           <h3>Compare on a separate trusted channel.</h3>
           <p>
             Read this code aloud to the other person, or compare both screens in person. A matching
-            invitation or a message relayed through this room does not verify who they are.
+            invitation or a message relayed through this room does not verify who they are. A
+            matching code confirms the same connection, not a person's identity. Reconnecting can
+            require a new comparison.
           </p>
           <output className="pairing-code" data-testid="pairing-code">
             {peer.code}
@@ -63,8 +74,13 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
               autoComplete="off"
               spellCheck={false}
               maxLength={24}
+              aria-describedby="comparison-help"
               required
             />
+            <p className="muted" id="comparison-help">
+              Enter the code you independently read on the other device. Confirm on both devices; do
+              not copy a comparison sent through this room.
+            </p>
             <label className="checkbox-label">
               <input
                 type="checkbox"
@@ -159,7 +175,7 @@ export function PairingPanel({ client, view }: { client: RoomClient; view: RoomV
           {peer.error}
         </p>
       )}
-      <div className="event-log" aria-live="polite">
+      <div className="event-log" role="region" aria-label="Room event history" tabIndex={0}>
         <span className="log-label">ROOM EVENTS</span>
         {view.events.length ? (
           <ol>

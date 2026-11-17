@@ -57,6 +57,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
+      - run: pnpm test:a11y
       - run: pnpm test:pwa
       # Raw failure reports can contain short-lived invitation values.
       # Share only reviewed, sanitized evidence from docs/reports/evidence.
