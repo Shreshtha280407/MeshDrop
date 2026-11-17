@@ -1,5 +1,7 @@
 # P9 release verification
 
+**Historical P9 release notes.** Present-tense rollout statements, counts and versions below belong to their dated entries. [CURRENT_STATUS](CURRENT_STATUS.md) records current source, later hardening and deliberately skipped release-certification work; it does not claim current main is deployed.
+
 25–26 October continuation: production and preview are live on Cloudflare
 Pages/Workers with Metered Free relay. Actual hosted UDP/TCP/TLS transfers, two
 simultaneous small-file pairs, physical Android 8 MiB relay delivery and 32 MiB
@@ -9,7 +11,7 @@ rollback/restoration passed. Both environments share provider account quotas.
 No paid plan or billing activation was used. The final full check passed 642
 distinct tests, types, lint/formatting, secret checks and builds; patched dependency
 audit found zero known vulnerabilities. Further iPhone work is deferred at the
-user's request. See the [current audit](reports/continuation-2026-10-25.md) for
+user's request. See the [dated P9 audit](reports/continuation-2026-10-25.md) for
 measured scopes, native Android results and remaining platform limitations.
 
 The entries below are historical; pending status and test counts describe the

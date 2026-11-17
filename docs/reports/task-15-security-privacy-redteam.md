@@ -1,5 +1,7 @@
 # Task 15 — internal adversarial security and privacy review
 
+Current acceptance is recorded in the **dated addendum at the end** and [current status](../CURRENT_STATUS.md). Original investigation and pre-push statements below remain point-in-time history.
+
 Status: **LOCAL HARDENING VALIDATED — HOSTED CI PENDING MANUAL PUSH**.
 This is an internal adversarial security review, not an independent third-party
 penetration test or a production authorization. Final Task 15 PASS requires green
@@ -266,3 +268,14 @@ for operator review. Production deployments, configuration, secret, DNS, admissi
 migration and live-session mutations: **0**. Paid services and provider quota used
 by adversarial tests: **0**. Task10D/Task11B and deployment workflows were not run.
 No Task 16 work is started.
+
+## Final acceptance addendum — 17 November 2026
+
+Independently rechecked during Task 18 through authenticated GitHub run and job metadata. This addendum records later acceptance; it does not pretend hosted evidence existed when the original local report was written.
+
+- Final tested implementation SHA: `f8565c1e35d0e0e218cae94b48e191fa3479a9de`.
+- Phase Gates: [43467956839](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43467956839).
+- Completed jobs: **core SUCCESS, browser SUCCESS, foundation SUCCESS**.
+- Final task verdict: **PASS — ADVERSARIAL SECURITY AND PRIVACY HARDENED**.
+
+Task10D and Task11B remain SKIPPED. These CI results do not establish deployment, production authorization, independently authenticated human release approval or an independent recovery witness. `productionApproved=false`. The original failure/limitation records and test counts are retained.

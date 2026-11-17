@@ -2,7 +2,7 @@
 
 P2 implements six connectivity tickets from the supplied phase plan. Signaling remains the P1 authorized Worker/SQLite room plane; user-file transfer belongs to P3. Wire version remains 1, with additive server lifecycle variants.
 
-This is the P2 baseline. [P3](transfer-p3.md) extends it with signed remote pairing confirmation, usable-OPFS checks, file controls and type-2 binary frames. Its temporary storage mode supersedes the memory-only P2 capability described below; persistent recovery remains unavailable.
+This document retains the historical P2 baseline. Current source/evidence is indexed in [CURRENT_STATUS](../CURRENT_STATUS.md); [P4 storage](storage-p4.md) and [P5 resume](resume-p5.md) now implement persistent recovery. P2-only limitations below are not current missing features. [P3](transfer-p3.md) extends it with signed remote pairing confirmation, usable-OPFS checks, file controls and type-2 binary frames. Its temporary storage mode supersedes the memory-only P2 capability described below; persistent recovery was still unavailable at that P3 checkpoint.
 
 ## Connection epochs and signaling
 
@@ -24,7 +24,7 @@ The UI starts **unverified**. A user must enter the code observed on the other d
 
 ## Capabilities and signed ping/pong
 
-The strict hello advertises `protocolVersion`, `preferredFrameBytes`, `maxMessageBytes`, `supportedHashes`, `storageModes`, and `resumeMode`. Current sessions honestly offer memory only and resume unavailable; OPFS/direct-save/persistent recovery are not implemented yet. Frame ceilings take the minimum of both peers' preferred/message limits and the 16 KiB protocol ceiling, including the 64-byte DATA header. The local offer also accounts for SCTP `maxMessageSize`. SHA-256 support and a compatible storage mode are required.
+The strict hello advertises `protocolVersion`, `preferredFrameBytes`, `maxMessageBytes`, `supportedHashes`, `storageModes`, and `resumeMode`. At the P2 checkpoint, sessions offered memory only and resume unavailable; OPFS/direct-save/persistent recovery had not yet been implemented. Later P3–P5 contracts supersede that capability advertisement. Frame ceilings take the minimum of both peers' preferred/message limits and the 16 KiB protocol ceiling, including the 64-byte DATA header. The local offer also accounts for SCTP `maxMessageSize`. SHA-256 support and a compatible storage mode are required.
 
 Signed `PING` and `PONG` carry version, type, roomId, peerId, epoch, transcript hash, UUID messageId and monotonic seq. Signatures use the authenticated hello key. The receiver checks all context, signature, sequence and PONG correlation. A signed-message replay fails closed; older epoch packets are discarded. Control messages are capped at 16 KiB UTF-8, outgoing pings and browser buffering are bounded, and signing/sending is serialized so asynchronous cryptography cannot reorder sequences. File bytes and acknowledgments are not part of P2.
 
@@ -32,7 +32,7 @@ Signed `PING` and `PONG` carry version, type, roomId, peerId, epoch, transcript 
 
 `POST /v1/sessions/:id/ice-credentials {}` requires an approved member in an approved, active room. Response: `{ iceServers, relayAvailable, expiresAt }`, no-store, with existing Origin/TLS/request throttles. Public STUN endpoints are configurable through `STUN_URLS`. With optional coturn REST configuration, username is `expiryUnixSeconds:randomUUID` and credential is `base64(HMAC-SHA1(TURN_SHARED_SECRET, username))`. TTL defaults to 300 seconds, is capped at 600 and room expiry. A new request mints fresh credentials for each approved peer/epoch; these credentials authorize relay service until their TTL, not immediate per-room revocation at coturn. Relay quotas and production abuse controls still belong to deployment/hardening.
 
-`TURN_URLS` and a server-only shared secret must be configured together; malformed/partial configuration fails closed. Disabled relay returns `relayAvailable: false`, never fake credentials. This implements coturn-compatible TURN REST, not Cloudflare's managed TURN credential API. The default Cloudflare endpoint is used only for STUN.
+`TURN_URLS` and a server-only shared secret must be configured together; malformed/partial configuration fails closed. Disabled relay returns `relayAvailable: false`, never fake credentials. This P2 contract describes coturn-compatible TURN REST. Later provider adapters are described in [TURN operations](../../infrastructure/turn/README.md); this is not a current claim that managed adapters are absent. The default Cloudflare endpoint is used only for STUN.
 
 `getStats()` inspection returns only direct/relay/unknown, candidate categories and UDP/TCP. It does not expose addresses, ports, raw candidate strings, SDP or relay passwords in UI/events/evidence. No throughput, loss or route-quality claims are made in P2.
 

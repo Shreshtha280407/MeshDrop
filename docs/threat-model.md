@@ -1,5 +1,7 @@
 # MeshDrop threat model
 
+Current verification/source/roadmap: [CURRENT_STATUS](CURRENT_STATUS.md). This model describes application boundaries; historical hosted observations are not current deployment verification or independent certification.
+
 Original P0–P8 review: 2026-10-18. Internal adversarial re-audit: 2026-11-13 (Task 15). Neither review is an independent third-party penetration test. Historical phase evidence below remains scoped to its original tests; later local controls do not establish hosted release authorization.
 
 Assets: capabilities, peer identity, room isolation, file bytes, checkpoint integrity, local capacity, diagnostics and addresses. Attackers include unauthenticated callers, leaked-invite holders, malicious approved peers, compromised signaling and stale/replayed clients. Local corruption and eviction are also threats to correctness.

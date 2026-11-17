@@ -1,5 +1,7 @@
 # Task 14 — concurrency, load and abuse resilience
 
+Current acceptance is recorded in the **dated addendum at the end** and [current status](../CURRENT_STATUS.md). Original investigation and pre-push statements below remain point-in-time history.
+
 Status: **LOCAL HARDENING VALIDATED — HOSTED CI PENDING MANUAL PUSH**.
 Final Task 14 PASS requires a manually pushed implementation and successful
 core/browser/foundation jobs. The operator explicitly requested that this task
@@ -246,3 +248,14 @@ the new source SHA's Phase Gates core/browser/foundation all complete SUCCESS.
 Until then this task does not meet the hosted-CI condition for final Task 14 PASS.
 Real hosted/user/relay capacity, provider rate accuracy and native resource
 reclamation require separately authorized measurements. Task 15 is not started.
+
+## Final acceptance addendum — 17 November 2026
+
+Independently rechecked during Task 18 through authenticated GitHub run and job metadata. This addendum records later acceptance; it does not pretend hosted evidence existed when the original local report was written.
+
+- Final tested implementation SHA: `5a535558118a2d533a6b9bf7fcb3d1d01f1e6802`.
+- Phase Gates: [43286704187](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43286704187).
+- Completed jobs: **core SUCCESS, browser SUCCESS, foundation SUCCESS**.
+- Final task verdict: **PASS — CONCURRENCY AND ABUSE RESILIENCE HARDENED**.
+
+Task10D and Task11B remain SKIPPED. These CI results do not establish deployment, production authorization, independently authenticated human release approval or an independent recovery witness. `productionApproved=false`. The original failure/limitation records and test counts are retained.

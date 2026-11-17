@@ -29,6 +29,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm check:secrets
+      - run: pnpm check:docs
       - run: pnpm audit:release
       - run: pnpm test:security
       - run: pnpm test:unit

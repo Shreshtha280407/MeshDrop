@@ -1,12 +1,13 @@
 # TURN operations
 
+Current source, evidence and release boundaries: [CURRENT_STATUS](../../docs/CURRENT_STATUS.md). Provider configuration/pricing observations below are dated P9 evidence, not a Task 18 readback of any live account. Current production publication remains blocked. No provider, plan, credential or billing change is performed by this audit.
+
 Cloudflare Pages/Workers host the control plane. They do not host coturn or
 provide free unlimited relay bandwidth. A TURN service needs a public VPS or a
 managed provider. No paid service is provisioned automatically. This project's
 current authorization is **free services only, with no billing activation or
-paid plan**. Preview and production now use `TURN_PROVIDER=metered` with a verified Free
-0.5 GB shared monthly hard stop. Cloudflare Realtime TURN and coturn remain
-optional alternatives, disabled in the current deployment.
+paid plan**. P9 recorded preview and production using `TURN_PROVIDER=metered` with a verified Free
+0.5 GB shared monthly hard stop. That historical account observation does not establish today's plan/balance. Cloudflare Realtime TURN and coturn are optional implemented alternatives, not enabled by this audit.
 
 ## Cloudflare Realtime TURN
 
@@ -27,9 +28,7 @@ configuration without making credential requests; the public smoke test checks
 actual issuance separately. A five-second deadline reserve keeps issued TTLs
 inside the room lifetime, and clients use the earliest conservative expiry.
 
-Cloudflare currently includes the first 1,000 GB/month shared across TURN and
-SFU, then charges $0.05/GB egress. That is an allowance, **not a hard spending
-cap**. No account-wide hard cap has been verified for this project. Do not enable
+The earlier P9 guide quoted a 1,000 GB/month allowance and $0.05/GB egress; those are historical documentation values, not currently verified prices. Provider allowances/prices may change. An allowance is **not a hard spending cap**. No account-wide hard cap has been verified for this project. Do not enable
 a billable relay merely because its initial usage is free. Do not add payment
 details or subscribe under the current free-only authorization. Provider usage
 and alerts at 50/80/95% of an approved budget are required before release;
@@ -88,8 +87,7 @@ Configuration reference: [coturn's maintained configuration example](https://git
 
 ## Metered Free relay pool
 
-The `metered` adapter supports the verified $0/month 500 MB plan whose service
-stops at its monthly quota. It requires `METERED_DOMAIN`, `METERED_SECRET_KEY`
+The `metered` adapter targets the P9-verified $0/month 500 MB hard-stop plan. Any separately authorized current configuration must independently verify its present plan/quota; the old record does not supply that proof. It requires `METERED_DOMAIN`, `METERED_SECRET_KEY`
 and the explicit `METERED_FREE_ONLY=true`; leave other providers' settings empty.
 The adapter rejects a changed quota, nonzero overage or invalid usage response.
 This validation supplements the provider's hard stop; a lagging API counter

@@ -32,7 +32,7 @@ transfer transport/storage, representative local browsers, and synthetic relay
 responses. They establish no hosted user capacity, real relay concurrency, native
 mobile background behavior or provider-wide memory limit. See the
 [Task 14 report](../../docs/reports/task-14-concurrency-load.md) for exact limits,
-observations and pending hosted CI.
+observations and its dated final hosted-CI addendum. Current evidence is indexed in [project status](../../docs/CURRENT_STATUS.md).
 
 P3's correctness/memory gate runs with `pnpm bench:p3` while the local development server is running. It verifies exact 100 MiB and 1 GiB downloads, intermediate committed progress, bounded owned queues and page/worker JavaScript memory. See the [streaming runbook](../../docs/runbooks/streaming-verification.md) for artifact paths, reproduction and measurement limits, and the [P3 report](../../docs/reports/phase-3.md) for recorded results.
 

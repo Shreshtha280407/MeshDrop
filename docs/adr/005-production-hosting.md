@@ -1,7 +1,6 @@
 # ADR 005: same-origin Pages gateway and isolated signaling Workers
 
-**Status:** accepted; public preview deployed. Production and remaining release
-acceptance are pending.
+**Status:** accepted architecture decision. The initial preview and later P9 production observations are [historical evidence](../reports/continuation-2026-10-25.md). Current source publication/acceptance remains blocked; see [current status](../CURRENT_STATUS.md).
 
 MeshDrop already uses Cloudflare-native SQLite room actors and WebSocket
 hibernation. Host its React build on Pages and route control traffic through a

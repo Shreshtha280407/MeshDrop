@@ -1,13 +1,15 @@
 # Measured support and release coverage
 
+**Current entry point:** [project status](CURRENT_STATUS.md). Historical public P7/P9 records below do not establish that current main is deployed. Current local engine/accessibility evidence is in [Task 17](reports/task-17-accessibility-ux.md); later isolated native-device evidence is in the dated Task 13 section below. Task 13 remains PARTIAL.
+
 Evidence is device/browser/scenario specific. Browser API presence, an emulated
 viewport and a WebKit engine test do not certify a physical iPhone or macOS Safari.
 The [production site](https://meshdrop-7ce2dc2e-production.pages.dev) and
-[preview](https://meshdrop-8ab9cb08-preview.pages.dev) pass actual hosted
-UDP/TCP/TLS relay delivery. The physical Oppo additionally passed production
+[preview](https://meshdrop-8ab9cb08-preview.pages.dev) recorded actual hosted
+UDP/TCP/TLS relay delivery in the 25–26 October 2026 P9 evidence. The physical Oppo additionally passed production
 8 MiB relay delivery and 32 MiB actual Wi-Fi outage/recovery with native exports,
 independent hashes, receipts and diagnostics. Earlier preview direct Wi-Fi and
-mobile-data results remain valid. See the [latest audit](reports/continuation-2026-10-25.md)
+mobile-data results remain valid. See the [dated P9 audit](reports/continuation-2026-10-25.md)
 and [device matrix](../tests/devices/browser-matrix.md) for exact measured scopes.
 The table below retains the historical P7/P9 observations, including failures.
 Task 13 resumed device work against an isolated unpublished build; its narrower,
@@ -34,7 +36,7 @@ not a universal mobile maximum. Browser eviction and OS background restrictions
 can interrupt delivery or remove saved data. WebRTC transport requires both
 devices online and the app open; installing a PWA does not change this contract.
 
-## Task 13 isolated current-build evidence — 2026-11-11
+## Task 13 isolated device evidence — 2026-11-11
 
 [Sanitized device evidence](reports/evidence/task-13-device-cloud.json) and
 [investigation report](reports/task-13-cross-platform-reliability.md) preserve
@@ -67,7 +69,7 @@ Task10D remains **SKIPPED — HOSTED TRUST EVIDENCE NOT ESTABLISHED**. Task11B r
 **SKIPPED — HOSTED PREVIEW VALIDATION NOT ESTABLISHED**. Task 13 creates no release
 authorization; `productionApproved=false`.
 
-## P9 release evidence
+## Historical P9 release evidence — 25–26 October 2026
 
 - Passed: preview and production HTTPS/WSS control-plane delivery, approval and revocation.
 - Passed: real hosted Metered Free UDP/TCP/TLS 1 MiB transfer/export/receipt/diagnostics in both environments; two simultaneous 1 MiB pairs per environment.

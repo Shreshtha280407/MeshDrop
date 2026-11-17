@@ -1,5 +1,7 @@
 # MeshDrop privacy model
 
+Current source and evidence scope: [CURRENT_STATUS](CURRENT_STATUS.md). Later local hardening does not verify the build currently served at a historical public origin or a provider's present retention settings.
+
 Originally reviewed 2026-10-18 for P8; re-audited locally on 2026-11-13 for Task 15. This describes application controls and their limits. Public deployment/provider policy verification requires separate hosted evidence.
 
 ## What each component can see
@@ -10,7 +12,7 @@ Originally reviewed 2026-10-18 for P8; re-audited locally on 2026-11-13 for Task
 | Worker / room actor      | Room and peer identifiers, presented bearer authority/tickets, origin, admission decisions, forwarded SDP/ICE (which may reveal addresses), request/connection timing | Scoped SHA-256 credential verifiers, room/peer state, epochs, bounded ticket/replay/rate metadata and expiry; no raw capabilities, SDP/ICE, filenames, file manifests, hashes, receipts or file bodies in application storage |
 | Approved peer            | Offered labels, sizes, digests and accepted bytes; WebRTC connection information                                                                                      | Received files and local transfer/receipt metadata under that peer's browser policy; exported copies are under their control                                                                                                  |
 | TURN relay if configured | Endpoints, timing and volume of encrypted WebRTC traffic                                                                                                              | Depends on relay operation; no relay logging/retention deployment has been verified in P8                                                                                                                                     |
-| Host/network provider    | Traffic/request metadata; signaling TLS termination can read signaling content                                                                                        | Provider-managed logs/retention are external to the application and must be configured/reviewed in P9                                                                                                                         |
+| Host/network provider    | Traffic/request metadata; signaling TLS termination can read signaling content                                                                                        | Provider-managed logs/retention are external; their present configuration is not established by later local tests                                                                                                             |
 
 There is no cloud file-upload/download route, account database, analytics SDK, QR-generation service or camera-frame upload. A direct peer path can expose network addresses to the other peer; diagnostics report only a connection category and selected metrics. Private files are origin-private browser data, not a vault encrypted against a compromised browser profile, operating system or same-origin script.
 

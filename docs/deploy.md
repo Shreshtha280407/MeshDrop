@@ -1,30 +1,27 @@
 # Cloudflare deployment
 
-**Task 04 safety update:** use the [release provenance and admission procedure](release-provenance.md).
-Preparation now produces versioned, secret-free manifests and journals in unique
-run directories. Dry-run requires the exact directory. Publication intentionally
-fails closed until a separately authorized hosted preflight/readback adapter is
-implemented and reviewed; the historical publication examples below do not bypass
-that gate. No hosted deployment or acceptance was performed in Task 04.
+**Current boundary:** start with [CURRENT_STATUS](CURRENT_STATUS.md) and the [release provenance/admission procedure](release-provenance.md). Versioned preparation, read-only provider observations and approval/recovery verification foundations exist. The real publisher and hosted approval/acceptance authority remain unconfigured and fail closed. The read-only adapter does not enable publication. Task10D and Task11B were deliberately skipped; their trust/isolated-preview evidence is not established. Historical examples below grant no permission to configure or mutate hosted resources.
 
 P9 runs on Cloudflare Pages plus separate private Workers with SQLite Durable
 Objects. [Production](https://meshdrop-7ce2dc2e-production.pages.dev) and
-[preview](https://meshdrop-8ab9cb08-preview.pages.dev) are live. The laptop can be
+[preview](https://meshdrop-8ab9cb08-preview.pages.dev) were recorded as deployed in the dated P9 evidence; current deployment identity/availability was not read during Task 18. The laptop can be
 switched off unless it is transferring a file; no tunnel or local server hosts
 the deployed site. Hosted control-plane and UDP/TCP/TLS relay checks, real HTTPS
-alert-journal delivery, request analytics and environment isolation pass. Physical
-production Android receive/export and Wi-Fi outage/recovery pass. The compatible
-v2 paired rollback drill passed in preview. See the [latest audit](reports/continuation-2026-10-25.md)
+alert-journal delivery, request analytics and environment isolation passed in those historical scenarios. Physical
+production Android receive/export and Wi-Fi outage/recovery also have dated evidence. The compatible
+v2 paired rollback drill passed in preview. See the [dated P9 audit](reports/continuation-2026-10-25.md)
 for actual scope and limits.
 
 The owner requires free services only. No billing activation, paid plan or payment
 method is authorized. Both environments use Metered Free with a shared 0.5 GB
-monthly service hard stop; the latest provider check reports zero Cloudflare
-subscriptions and zero relay overage. The Cloudflare Realtime TURN adapter is
+monthly service hard stop in P9 configuration; the historical provider check reported zero Cloudflare
+subscriptions and zero relay overage. Current account plans/balances were not queried. The Cloudflare Realtime TURN adapter is
 implemented but disabled because an included allowance alone is not a hard
 spending cap. See [TURN operations](../infrastructure/turn/README.md).
 
 ## Environments and request path
+
+The original P9 projects could share provider-account quotas. The later [isolated preview/canary contract](preview-canary.md) instead requires a genuinely separate preview account plus independently reviewed production deny pins. The old public preview is not proof that this later contract has been configured or validated.
 
 Each environment has its own Pages project, signaling Worker, SQLite namespace,
 rate-limit namespaces, operator secret and optional TURN service/secret. Local
@@ -78,11 +75,9 @@ online and MeshDrop open. See [ADR 005](adr/005-production-hosting.md).
 
    `.meshdrop-artifacts/deploy/preview/` contains a frozen Worker bundle, static
    assets, the Pages gateway, two Wrangler configurations and a SHA-256 manifest.
-   There are no static secrets in those bundles/configurations. `publish` verifies
-   the prepared configuration and file hashes before uploading. The deployment
-   directory is ignored and can contain a private `.env` during publishing.
+   There are no static secrets in those bundles/configurations. Current `publish` validates the exact release directory and records a blocked publication before credential access; it does not upload. Private runtime configuration stays outside public evidence.
 
-## Provision and publish
+## Historical provisioning reference; publication remains blocked
 
 A brand-new account needs a free Workers subdomain even with `workers_dev: false`.
 Run `pnpm deploy:cloud bootstrap preview` once to initialize one only when absent;
@@ -91,11 +86,11 @@ the dashboard to finish first-time setup. This does not buy a domain or expose
 the signaling Worker. The account-level subdomain is shared infrastructure;
 preview and production room namespaces and URLs remain separate.
 
-After reviewing account, target project and origin:
+The provisioning command below is a real external mutation requiring separate operator authorization. The publication example names the required exact directory, but deliberately fails closed in current source; it is not an executable rollout procedure:
 
 ```sh
 pnpm deploy:cloud provision preview   # once; creates only the named Pages project
-pnpm deploy:cloud publish preview     # Worker + secrets, then Pages, then /ready
+pnpm deploy:cloud publish preview .meshdrop-artifacts/deploy/preview/run-EXACT_DIRECTORY # blocked
 ```
 
 The production branch for each standalone Pages project is `release`, independent
@@ -111,8 +106,7 @@ deployments use the existing Pages project without it. OAuth needs
 `workers_scripts:write`; the legacy `workers:write` scope alone cannot deploy this
 Worker with current permissions.
 
-Repeat prepare/dry-run/provision/publish for `production` only after preview
-acceptance. An already existing Pages project does not need `provision` again.
+Production publication remains unavailable even after local preparation or a preview result. Do not repeat this reference as a production rollout or reopen admission; current release trust and explicit authorization requirements still apply. An already existing Pages project does not need `provision` again.
 Each `.env` must use a project name ending in its own environment. Public origin
 defaults to `https://PAGES_PROJECT.pages.dev`; a custom origin requires its domain
 binding and TLS to be configured before changing `PUBLIC_ORIGIN`. Changing origin

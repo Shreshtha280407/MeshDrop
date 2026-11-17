@@ -1,5 +1,7 @@
 # Task 13 — cross-platform browser and device reliability
 
+Current acceptance is recorded in the **dated addendum at the end** and [current status](../CURRENT_STATUS.md). Original investigation and pre-push statements below remain point-in-time history.
+
 Status: **PARTIAL — APPLICATION HARDENING COMPLETE, EXTERNAL DEVICE EVIDENCE INCOMPLETE**.
 
 ## Baseline and scope
@@ -272,3 +274,16 @@ git add -- docs/reports/task-13-cross-platform-reliability.md
 git commit -m "record Task 13 cross-platform validation"
 git push origin main
 ```
+
+## Final acceptance addendum — 17 November 2026
+
+Independently rechecked during Task 18 through authenticated GitHub run and job metadata. This addendum records later acceptance; it does not pretend hosted evidence existed when the original local report was written.
+
+- Final tested implementation SHA: `a635662f55d91716d58aaac61a100e43efed8d8b`.
+- Phase Gates: [43074089192](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43074089192).
+- Completed jobs: **core SUCCESS, browser SUCCESS, foundation SUCCESS**.
+- Final task verdict: **PARTIAL — APPLICATION HARDENING COMPLETE, EXTERNAL DEVICE EVIDENCE INCOMPLETE**.
+
+The later report-only publication SHA `d07d11bf79147504a76dead3081b1ed5cd4c7cf3` and [run 43075936777](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43075936777) also have all three jobs SUCCESS. That does not resolve the Free-provider export and cross-network limitations.
+
+Task10D and Task11B remain SKIPPED. These CI results do not establish deployment, production authorization, independently authenticated human release approval or an independent recovery witness. `productionApproved=false`. The original failure/limitation records and test counts are retained.

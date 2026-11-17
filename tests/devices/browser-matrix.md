@@ -1,6 +1,22 @@
-# Phase 7 device and browser matrix
+# Measured device and browser matrix
 
-Recorded 2026-10-18; latest hosted relay and physical Android continuation 2026-10-25–26. Results apply to the tested build, profiles and synthetic sizes. Linux engines and viewport emulation do not certify another operating system.
+For current project claims, start with [current status](../../docs/CURRENT_STATUS.md) and the [support matrix](../../docs/support-matrix.md). Engine/viewport tests, physical Android and native cloud devices remain separate evidence. Public P7/P9 observations are historical, not a current-source deployment claim.
+
+## Later isolated evidence — Task 13, 11 November 2026
+
+| Platform                                                   | Verified scope                                                                                                     | Incomplete scope                                                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Real cloud iPhone Safari                                   | 8 MiB normal/recovery committed bytes and final hashes; synthetic-source 2 MiB reverse with matching laptop export | Both native iPhone 8 MiB downloads remain NATIVE_EXPORT_NOT_OBSERVABLE on Free automation                   |
+| Real cloud iPad Safari                                     | 2 MiB reverse and receive/recovery, 1 MiB reuse, independently hashed exports                                      | Native picker/install/physical lifecycle; no Android-tablet inference                                       |
+| Native cloud Windows 11 Chrome 157                         | Cross-network 2 MiB receive/recovery/export; separate same-host sender-engine control                              | True cross-network reverse remains unverified after ICE checking; same-host pass is not cross-network proof |
+| Native cloud macOS Tahoe Safari 26.4                       | 2 MiB receive/recovery/reverse with exact exported bytes, 1 MiB reuse                                              | Native picker/share/install and larger sizes; earlier WebKit OPFS failure retained                          |
+| Local Chromium/Firefox/WebKit and mobile-emulated Chromium | Current Task 17 keyboard, automated accessibility, reflow and exact-byte local transfer checks                     | Not native Safari, physical mobile or NVDA/VoiceOver certification                                          |
+
+Sources: [Task 13](../../docs/reports/task-13-cross-platform-reliability.md), [device evidence](../../docs/reports/evidence/task-13-device-cloud.json), [Task 17](../../docs/reports/task-17-accessibility-ux.md). Reverse file selection is synthetic, not native picker certification. Task 13 remains PARTIAL.
+
+## Historical P7/P9 observations
+
+Recorded 2026-10-18, with hosted relay and physical Android continuation 2026-10-25–26. Results apply to the tested build, profiles and synthetic sizes. Linux engines and viewport emulation do not certify another operating system.
 
 | Platform                                                                   | Actual coverage                                                                                                                                                                                                                             | Limits / outstanding work                                                                                                                                                                            |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -24,4 +40,4 @@ See the [Phase 7 report](../../docs/reports/phase-7.md), [contract](../../docs/p
 
 The [real iPhone evidence](../../docs/reports/evidence/phase-7-ios-cloud.json) preserves the passing normal/recovery/export demonstrations, reverse directions and larger incomplete export cases. The [additional cloud matrix](../../docs/reports/evidence/phase-7-device-cloud-matrix.json) records the iPad, Windows and macOS WebKit results. Provider session metadata reports iOS 26.6; Safari user-agent text retains iPhone OS 18_7, so both observations are retained without treating the user-agent OS token as the device-version authority.
 
-Latest hosted/device scope: [25–26 October audit](../../docs/reports/continuation-2026-10-25.md), [Android production relay evidence](../../docs/reports/evidence/phase-9-android-production-relay.json) and [retained iPhone relay evidence](../../docs/reports/evidence/phase-7-ios-relay-continuation.json).
+Dated P9 hosted/device scope: [25–26 October audit](../../docs/reports/continuation-2026-10-25.md), [Android production relay evidence](../../docs/reports/evidence/phase-9-android-production-relay.json) and [retained iPhone relay evidence](../../docs/reports/evidence/phase-7-ios-relay-continuation.json).

@@ -27,8 +27,9 @@ and short retention. No third-party analytics, remote QR scanner, or automatic
 diagnostics upload is included. Camera access for local QR decoding is optional.
 
 Closed cloud rooms retain a short tombstone before alarm cleanup. Browser
-checkpoint retention is 24 hours or 7 days according to the selected policy,
-enforced on next access. Browser clearing/eviction can delete data earlier. Local
+checkpoint retention is 24 hours, 7 days or discard according to the selected
+policy. Cleanup runs on later access; discard removes an unlocked checkpoint on
+reopening, rather than promising a minimum saved lifetime. Browser clearing/eviction can delete data earlier. Local
 diagnostics history is bounded to ten reports, 4 MiB and seven days. Public UI assets
 can be cached by the PWA; private API responses and transfer data are not placed
 in the service-worker cache. Saved exports/downloads belong to the user and are

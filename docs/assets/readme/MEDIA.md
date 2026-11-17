@@ -5,6 +5,8 @@ application revision `1f5af25`.
 The README combines a visual product walkthrough with setup, architecture,
 failure handling, and independently checked results.
 
+Current project verification is indexed in [CURRENT_STATUS](../../CURRENT_STATUS.md). All media below is dated demonstration evidence, not proof that the current source or Task 17 UI is deployed.
+
 ## Demo Video — 10 November 2026
 
 [demo-video.mp4](demo-video.mp4) is the **4 minute 32 second**, 1920×1080
@@ -20,6 +22,17 @@ every exported archive was independently SHA-256 checked against its source.
 The first archive was saved in the physical phone's Android Downloads. Phone-source
 fixtures were preloaded through the local development server before recording and
 selected in the real file input; transfer, storage, and verification were not mocked.
+
+Exact transferred archive sizes (including archive overhead) are retained in the JSON:
+
+| Chapter               | Real/emulated endpoints                                |      Bytes | Export evidence                |
+| --------------------- | ------------------------------------------------------ | ---------: | ------------------------------ |
+| Laptop → OPPO         | Laptop Chromium → physical Android                     | 16,777,604 | Source and saved SHA-256 match |
+| OPPO → laptop         | Physical Android → laptop Chromium                     | 16,777,604 | Source and saved SHA-256 match |
+| Laptop → laptop       | Two isolated profiles on the same physical laptop      | 67,109,252 | Source and saved SHA-256 match |
+| OPPO → mobile browser | Physical Android → explicitly emulated mobile Chromium |  8,388,996 | Source and saved SHA-256 match |
+
+Signaling used the local app/ADB setup. A public-network or forced-TURN path is not established by this video; no specific relay-path result is inferred from its title.
 
 Timestamped live Playwright screenshots were composed at their original timing,
 with external title cards, role labels, and captions. The poster is an extracted
@@ -88,7 +101,8 @@ automated for demonstration; this does not establish a real person's identity.
   recordings, downloads, receipts, and local runtime state stay outside Git.
 
 The application files were not modified for the recordings. These are focused
-README demonstrations; the **642-test** full application gate cited by the
-README is the separately dated **25–26 October 2026** result, not a fresh full
-suite run. Broader platform, native export/install, and public-network limits
+README demonstrations. The **642-test** full gate is the separately dated
+**25–26 October 2026 P9** result, not current-source verification. The current
+README/status document separately records the later 1,816-case baseline and
+Task 18 validation; media is not counted as additional automated tests. Broader platform, native export/install, and public-network limits
 remain in the [support matrix](../../support-matrix.md).

@@ -1,6 +1,6 @@
 # Production operations
 
-For new releases, follow the [Task 04 provenance and admission procedure](release-provenance.md).
+Current source/evidence: [CURRENT_STATUS](CURRENT_STATUS.md). This is a reference for separately authorized operators; Task 18 executes no live operations. For new releases, follow the [provenance and admission procedure](release-provenance.md).
 The publisher now requires an independently verified hosted preflight/readback
 adapter and currently fails closed before credential access. Preparation,
 publication and explicit acceptance are separate; historical examples below
@@ -28,11 +28,7 @@ Existing P2P transport may continue while signaling is down, but new admission o
 recovery cannot be promised until the service returns. Do not clear users' site
 data as an outage fix.
 
-Set `ADMISSION_PAUSED=true` in the affected deployment `.env`, prepare/dry-run and
-publish to stop **new rooms** while existing room operations and closure remain
-available. Readiness becomes 503 intentionally; the publish health step reports
-that condition after applying the release. This is admission drain, not a total
-network kill switch. Restore `false` through the same reviewed path.
+When actually deployed, `ADMISSION_PAUSED=true` stops new rooms while preserving existing-room operations/closure; readiness intentionally returns 503. It is admission drain, not a network kill switch. The current blocked publisher cannot apply a drain or reopen admission. A desired local value is not live readback. Reopening requires the existing exact release-bound acknowledgement and independently authenticated authority; setting `false` alone is insufficient. There is no automatic reopening or rollback. Any live incident mutation needs a separately authorized operator procedure.
 
 ## Abuse and revocation
 
@@ -170,14 +166,13 @@ record before a future production rollback.
 Room/invitation/ticket defaults are 900/300/30 seconds. Actor alarms purge all
 room/peer/invitation/ticket/budget rows after closure plus the 60-second tombstone;
 alarms may execute late. Verify this with local integration tests, and monitor DO
-storage growth remotely. Browser file retention is separate (24 hours or 7 days,
-enforced on the next access); Cancel/Clear/Delete saved purges that transfer's
+storage growth remotely. Browser file retention is separate (24 hours, seven days or discard;
+cleanup on later access, discard on unlocked reopening); Cancel/Clear/Delete saved purges that transfer's
 scoped bytes. Clearing a cloud room cannot erase browser files.
 
 Local automation covers rate limits, TTL/alarm cleanup, proof denial, operator
 revocation, admission drain, configuration failure and gateway outage behavior.
-Actual deployed quota-monitor availability and failed-join alert delivery now
-pass; see the latest audit. Paired rollback is verified in preview, while a
+Quota-monitor availability and failed-join alert delivery passed in dated P9 scenarios; see [current status](CURRENT_STATUS.md) for source/evidence boundaries. Paired rollback is verified in preview, while a
 production rollback and seamless physical Wi-Fi/mobile handover are unclaimed. The P9 Oppo test exercised a real
 Wi-Fi outage/recovery and a separate mobile-data transfer, not seamless handover.
 Never deliberately exhaust a paid public quota as

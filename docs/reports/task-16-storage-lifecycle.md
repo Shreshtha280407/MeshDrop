@@ -1,5 +1,7 @@
 # Task 16 — Storage lifecycle, retention and crash recovery
 
+Current acceptance is recorded in the **dated addendum at the end** and [current status](../CURRENT_STATUS.md). Original investigation and pre-push statements below remain point-in-time history.
+
 Local review date: 14 November 2026. This is an internal application review with isolated local tests, not independent storage certification or hosted release authorization.
 
 ## Status and baseline
@@ -175,3 +177,16 @@ productionApproved: false
 ```
 
 No Cloudflare/GitHub configuration, publication/acceptance boundary or protocol/security invariant was changed. Task 17 has not started.
+
+## Final acceptance addendum — 17 November 2026
+
+Independently rechecked during Task 18 through authenticated GitHub run and job metadata. This addendum records later acceptance; it does not pretend hosted evidence existed when the original local report was written.
+
+- Final tested implementation SHA: `a9b3a903e3a1ccde56dfd326311f392ad80e6f92`.
+- Phase Gates: [43625992715](https://github.com/Shreshtha280407/MeshDrop/actions/runs/43625992715).
+- Completed jobs: **core SUCCESS, browser SUCCESS, foundation SUCCESS**.
+- Final task verdict: **PARTIAL — APPLICATION STORAGE HARDENED, PLATFORM LIMITATION REMAINS**.
+
+Hosted CI success does not supply physical power-loss durability, secure erasure, browser/OS eviction guarantees or native platform certification; the task remains PARTIAL.
+
+Task10D and Task11B remain SKIPPED. These CI results do not establish deployment, production authorization, independently authenticated human release approval or an independent recovery witness. `productionApproved=false`. The original failure/limitation records and test counts are retained.

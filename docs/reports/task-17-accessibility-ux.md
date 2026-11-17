@@ -1,5 +1,7 @@
 # Task 17 — Accessibility, UX and product polish
 
+Current acceptance is recorded in the **dated addendum at the end** and [current status](../CURRENT_STATUS.md). Original investigation and pre-push statements below remain point-in-time history.
+
 Review dates: 15–17 November 2026. This is an internal application review using automated WCAG-oriented checks, keyboard tests and local browser engines. It is not WCAG certification, a formal accessibility audit, native Safari certification, or NVDA/VoiceOver certification.
 
 ## Verdict and baseline
@@ -207,3 +209,14 @@ PRs = 0
 Release publication/acceptance blockers and all pairing, epoch, replay, storage, retention, hash and receipt rules remain intact. Task 18 has not begun.
 
 Method references: [Playwright accessibility testing](https://playwright.dev/docs/accessibility-testing), [axe-core API](https://github.com/dequelabs/axe-core/blob/develop/doc/API.md), [WAI status messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html), [WAI focus visibility](https://www.w3.org/WAI/WCAG22/Understanding/focus-visible.html), [WAI reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html).
+
+## Final acceptance addendum — 17 November 2026
+
+Independently rechecked during Task 18 through authenticated GitHub run and job metadata. This addendum records later acceptance; it does not pretend hosted evidence existed when the original local report was written.
+
+- Final tested implementation SHA: `b3f95d14a103f45f25bbca5b4cfd9c5bb61c7e07`.
+- Phase Gates: [44062526570](https://github.com/Shreshtha280407/MeshDrop/actions/runs/44062526570).
+- Completed jobs: **core SUCCESS, browser SUCCESS, foundation SUCCESS**.
+- Final task verdict: **PASS — ACCESSIBILITY AND PRODUCT UX HARDENED**.
+
+Task10D and Task11B remain SKIPPED. These CI results do not establish deployment, production authorization, independently authenticated human release approval or an independent recovery witness. `productionApproved=false`. The original failure/limitation records and test counts are retained.

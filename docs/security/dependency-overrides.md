@@ -11,8 +11,7 @@ graph introduces this package through development tooling: `eslint@10.12.0`,
 dependency. CI audits development dependencies too and fails at severity `low`;
 that policy is unchanged.
 
-Published ESLint 10.x, including 10.14.0, still requests minimatch 10.x. The
-current config-array and typescript-estree releases do too. Updating those
+At the 4 November review, published ESLint 10.x, including 10.14.0, requested minimatch 10.x, as did the reviewed config-array and typescript-estree releases. These are dated upstream observations; the current resolved graph remains in the lockfile. Updating those
 parents alone cannot satisfy the advisory. The root pnpm override therefore
 pins only the vulnerable 10.x range to `11.0.1`, without upgrading the parent
 toolchain or changing application code.

@@ -1,5 +1,7 @@
 # Task 12 — large-file and unstable-network reliability
 
+Current acceptance is recorded in the **dated addendum at the end** and [current status](../CURRENT_STATUS.md). Original investigation and pre-push statements below remain point-in-time history.
+
 Status: **PASS — TRANSFER RELIABILITY HARDENED**.
 
 ## Source and baseline
@@ -237,3 +239,14 @@ No deployment workflow is invoked by a push; deployment remains manual/blocked.
 `productionApproved=false`; `acceptanceEnabled=false`;
 `humanAuthorizationVerified=false`; `independentWitnessVerified=false`.
 No following task or production release is automatically authorized.
+
+## Final acceptance addendum — 17 November 2026
+
+Independently rechecked during Task 18 through authenticated GitHub run and job metadata. This addendum records later acceptance; it does not pretend hosted evidence existed when the original local report was written.
+
+- Final tested implementation SHA: `21dfae25c4273d01d286a200ae0e6d2bcf1b6367`.
+- Phase Gates: [42671820721](https://github.com/Shreshtha280407/MeshDrop/actions/runs/42671820721), attempt 2.
+- Completed jobs: **core SUCCESS, browser SUCCESS, foundation SUCCESS**.
+- Final task verdict: **PASS — TRANSFER RELIABILITY HARDENED**.
+
+Task10D and Task11B remain SKIPPED. These CI results do not establish deployment, production authorization, independently authenticated human release approval or an independent recovery witness. `productionApproved=false`. The original failure/limitation records and test counts are retained.
