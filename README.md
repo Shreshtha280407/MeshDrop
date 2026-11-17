@@ -21,7 +21,6 @@ MeshDrop delivers files between browsers without accounts or a central file-uplo
 - **Measured hardening:** 1,816 distinct automated full-check cases at the final roadmap acceptance source; 1 GiB logical streaming simulation and real 64 MiB browser transfers; 100 local logical paired rooms with 200 real local signaling sockets. These are separate scopes, not hosted capacity claims.
 - **Usable interfaces:** keyboard workflows, bounded announcements, reduced motion, responsive layouts and 99 automated accessibility scans with zero reported violations in the final Task 17 check. No formal accessibility certification is claimed.
 
-
 ## See it in action
 
 ### Real Android phone + desktop workspace
