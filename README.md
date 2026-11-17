@@ -22,33 +22,85 @@ MeshDrop delivers files between browsers without accounts or a central file-uplo
 - **Usable interfaces:** keyboard workflows, bounded announcements, reduced motion, responsive layouts and 99 automated accessibility scans with zero reported violations in the final Task 17 check. No formal accessibility certification is claimed.
 
 
-## See MeshDrop in action
+## See it in action
 
-These are recorded runs of the actual application—not UI mockups. Each clip retains its original measured scope and verification evidence. The complete media provenance, source revisions, hashes, devices and capture limitations are documented in [README media and verification](docs/assets/readme/MEDIA.md).
+### Real Android phone + desktop workspace
 
-### Full walkthrough
+<a href="docs/assets/readme/android-transfer.mp4"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/android-desktop.webp"><img src="docs/assets/readme/android-transfer.gif" alt="Real desktop and OPPO Android recording: request admission, approve the receiver, compare pairing codes, transfer a file, verify it, and save an actual Android download." width="100%"></picture></a>
 
-**[Watch the 4 minute 32 second MeshDrop demo](docs/assets/readme/demo-video.mp4)**
+<p align="center"><sub>Captured on a physical OPPO F19 Pro / Android 13 and a fresh desktop browser. An 8 MiB synthetic file was downloaded on the phone, retrieved over ADB, and independently SHA-256 checked. The local app used an ADB reverse tunnel; this recording does not establish public-network performance. <a href="docs/assets/readme/android-transfer.mp4">Watch the full recording ↗</a></sub></p>
 
-Laptop → physical OPPO · physical OPPO → laptop · two isolated laptop browser profiles · physical OPPO → explicitly emulated mobile Chromium. Every exported archive shown in this walkthrough was independently SHA-256 checked against its source. This was a local demonstration and does not establish public-network or TURN performance. [Exact chapter sizes and recording metadata](docs/assets/readme/demo-video.json).
+<details>
+<summary><b>Inspect the desktop and phone screenshots</b></summary>
 
-### Physical Android transfer
+<table>
+<tr>
+<td width="72%" valign="top" align="center">
+<b>Desktop workspace</b><br><br>
+<img src="docs/assets/readme/android-desktop.webp" alt="The real desktop sender workspace after the Android file transfer reached verified completion." width="100%">
+</td>
+<td width="28%" valign="top" align="center">
+<b>Physical Android phone</b><br><br>
+<img src="docs/assets/readme/android-phone.webp" alt="Native screenshot from the OPPO phone showing the received file, matching SHA-256, committed bytes, and verified completion." width="100%">
+</td>
+</tr>
+</table>
 
-<a href="docs/assets/readme/android-transfer.mp4"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/android-desktop.webp"><img src="docs/assets/readme/android-transfer.gif" alt="Real MeshDrop recording of a desktop sender transferring a synthetic file to a physical OPPO Android phone, followed by verified completion." width="100%"></picture></a>
+[Phone home](docs/assets/readme/android-home.webp) · [Phone pairing](docs/assets/readme/android-pairing.webp) · [Phone insights](docs/assets/readme/android-insights.webp) · [Desktop insights](docs/assets/readme/desktop-insights.webp)
 
-<p align="center"><sub>Physical OPPO F19 Pro / Android 13 + fresh desktop Chromium. An 8 MiB synthetic file was downloaded on the phone, retrieved over ADB and independently SHA-256 checked. The local app used an ADB reverse tunnel, so this recording does not establish public-network performance. <a href="docs/assets/readme/android-transfer.mp4">Watch the full recording ↗</a></sub></p>
+</details>
 
-### Verified browser-to-browser transfer
+<details>
+<summary><b>Desktop browser-to-browser walkthrough</b></summary>
 
-<a href="docs/assets/readme/browser-transfer.mp4"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/verified.webp"><img src="docs/assets/readme/browser-transfer.gif" alt="Two isolated browser profiles complete invitation, approval, pairing-code confirmation, a verified 16 MiB MeshDrop transfer, export and receipt checks." width="100%"></picture></a>
+<a href="docs/assets/readme/browser-transfer.mp4"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/verified.webp"><img src="docs/assets/readme/browser-transfer.gif" alt="Two isolated browser profiles complete invitation, approval, code confirmation, a 16 MiB transfer, verified export, receipt, and local diagnostics." width="100%"></picture></a>
 
-<p align="center"><sub>Two isolated Chromium profiles using the real local frontend, Worker, SQLite room actors, WebSockets and WebRTC. The exported 16 MiB file independently matched its source SHA-256; receipt and diagnostics checks passed with zero JavaScript page errors in the recorded run. <a href="docs/assets/readme/browser-transfer.mp4">Watch the full recording ↗</a></sub></p>
+Recorded against the real local Worker, SQLite room actors, WebSockets, and WebRTC. The exported **16 MiB** file matched its source SHA-256; receipt and diagnostics checks passed with **zero JavaScript page errors**. [Watch the recording](docs/assets/readme/browser-transfer.mp4).
 
-### Interrupted transfer → verified recovery
+</details>
 
-<a href="docs/assets/readme/browser-recovery.mp4"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/recovery.webp"><img src="docs/assets/readme/browser-recovery.gif" alt="A controlled local MeshDrop recovery recording where a 32 MiB transfer pauses after 12 MiB, reconnects with a fresh pairing epoch and sends only the remaining bytes." width="100%"></picture></a>
+## Try it locally
 
-<p align="center"><sub>Controlled local recovery evidence: a 32 MiB transfer pauses after 12 MiB of verified data, restarts ICE, advances the connection epoch, repeats pairing comparison and sends exactly the remaining 20 MiB. The final saved file independently matches the original SHA-256. This is not a universal public-network recovery guarantee. <a href="docs/assets/readme/browser-recovery.mp4">Watch the full recording ↗</a></sub></p>
+Use **Node 24 LTS** and **pnpm 10.34.7**. The supported Node range is `>=22.12.0 <27`. Install pnpm with `npm install --global pnpm@10.34.7` if needed.
+
+```bash
+git clone https://github.com/Shreshtha280407/MeshDrop.git
+cd MeshDrop
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+| Service          | Local address                                         |
+| ---------------- | ----------------------------------------------------- |
+| Web app          | [127.0.0.1:5173](http://127.0.0.1:5173)               |
+| Signaling health | [127.0.0.1:8787/health](http://127.0.0.1:8787/health) |
+
+Open the app in **two independent regular browser profiles**. Create an invitation in the first, paste it into the second, request admission, and approve the receiver. Compare the codes, confirm on both sides, offer a file, and accept it on the receiver. Wait for **Verified and stored**, then save the file and receipt.
+
+Local direct transfers need no cloud login, provider key, or `.env`. Development servers bind to loopback. For another physical device, use the deployed HTTPS app or the [authorized Android setup](docs/runbooks/mobile-pwa.md); an arbitrary HTTP LAN address does not provide the required secure browser context.
+
+<details>
+<summary><b>Configuration and deployment</b></summary>
+
+For local overrides, copy `apps/signaling/.env.example` to an ignored `.env` beside the Wrangler configuration. Keep provider and operator secrets server-side; never place them in frontend `VITE_*` variables or tracked source. Leave optional TURN settings unset for direct-only local development.
+
+Preview and production use separate Cloudflare Pages projects, private signaling Workers, room namespaces, and operator proofs. They share provider-account quotas. Deployment tooling prepares frozen bundles and hashes before publication; builds and Worker dry runs do not deploy anything.
+
+The hosted Metered Free relay uses a **shared 0.5 GB monthly hard stop**. Exhausted quota or unavailable credentials can leave only direct connectivity. There is no unlimited-relay claim.
+
+[Deployment guide](docs/deploy.md) · [Operations runbook](docs/runbook.md) · [Relay configuration and policy](infrastructure/turn/README.md) · [Secret handling](docs/security/secrets.md)
+
+</details>
+
+### Resume the missing bytes
+
+<a href="docs/assets/readme/browser-recovery.mp4"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/readme/recovery.webp"><img src="docs/assets/readme/browser-recovery.gif" alt="A real 32 MiB local transfer pauses after 12 MiB, restarts ICE, confirms a fresh pairing code, and completes by sending only the remaining 20 MiB." width="100%"></picture></a>
+
+The recording pauses a **32 MiB** transfer after **12 MiB**, explicitly restarts ICE, advances the connection epoch, and repeats code comparison. The sender prepares the original source; the receiver resumes its verified checkpoint. Exactly **20 MiB** is sent on the new attempt, and the saved file matches the original SHA-256.
+
+This is a controlled local connection restart. Separate [physical production evidence](docs/reports/evidence/phase-9-android-production-relay.json) records a real Android Wi-Fi outage and recovery.
+
+If a tab was closed, reopen the same origin and browser profile, establish new room admission, and inspect **Saved transfers**. Recovery depends on surviving storage and the exact original file; old in-memory room credentials are not restored. [Recovery guide](docs/runbooks/resume.md).
 
 ## Architecture
 
